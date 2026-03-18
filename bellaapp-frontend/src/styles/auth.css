@@ -1,13 +1,22 @@
+.logo {
+  max-width: 400px;
+  margin-bottom: 30px;
+}
+
 .auth-page {
   min-height: 100vh;
   display: flex;
   background: var(--background);
 }
-
+.auth-left {
+  text-align: center;
+}
 .auth-left,
 .auth-right {
   flex: 1;
+  height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -17,28 +26,22 @@
   max-width: 450px;
 }
 
-.auth-brand h1 {
+.auth-titulo {
   font-size: 3.2rem;
   margin-bottom: 16px;
-  color: var(--text);
+  color: var(--primary-dark);
+  align-items: center;
 }
 
 .auth-subtitle {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--primary-dark);
-  margin-bottom: 16px;
-}
-
-.auth-description {
-  font-size: 1rem;
+  font-size: 17px;
   color: var(--text-light);
   line-height: 1.7;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 430px;
+  max-width: 550px;
   background-color: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(10px);
   padding: 36px;

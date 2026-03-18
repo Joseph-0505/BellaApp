@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../../styles/auth.css";
+import logo from "../../assets/logo.png";
 
 export default function AuthPage() {
   const [mode, setMode] = useState("login");
@@ -56,11 +57,11 @@ export default function AuthPage() {
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-brand">
-          <h1>BellaApp</h1>
+          <img className="logo" src={logo} alt="logo"/>
+          <h1 className="auth-titulo">
+            Bem-vinda
+          </h1>
           <p className="auth-subtitle">
-            Sistema de agendamento para clínicas de estética
-          </p>
-          <p className="auth-description">
             Gerencie seus horários, clientes e atendimentos de forma simples e profissional.
           </p>
         </div>
@@ -86,7 +87,7 @@ export default function AuthPage() {
             </button>
           </div>
 
-          <h2>{mode === "login" ? "Entrar na sua clínica" : "Cadastrar sua clínica"}</h2>
+          
 
           <form onSubmit={handleSubmit} className="auth-form">
 
