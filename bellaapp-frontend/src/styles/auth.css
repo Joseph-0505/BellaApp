@@ -4,12 +4,13 @@
 }
 
 .auth-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   background: var(--background);
 }
 .auth-left {
   text-align: center;
+  margin-right: -500px;
 }
 .auth-left,
 .auth-right {
