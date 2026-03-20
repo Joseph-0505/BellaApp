@@ -3,6 +3,32 @@
   background: linear-gradient(180deg, #fff, #fff8fb);
 }
 
+.revenue-state {
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+}
+
+.revenue-state.bom {
+  color: #1a7f4d;
+  background: #ecfbf3;
+  border-color: #c7f0db;
+}
+
+.revenue-state.atencao {
+  color: #9b6a00;
+  background: #fff8e8;
+  border-color: #f3dfaf;
+}
+
+.revenue-state.critico {
+  color: #9d1d3f;
+  background: #fff0f4;
+  border-color: #f1c2d1;
+}
+
 .revenue-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -12,8 +38,59 @@
 
 .revenue-value {
   display: block;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   line-height: 1.1;
+}
+
+.meta-progress {
+  margin-top: 12px;
+}
+
+.meta-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+  margin-bottom: 6px;
+}
+
+.meta-progress-track {
+  height: 9px;
+  border-radius: 999px;
+  background: #f3e7ed;
+  overflow: hidden;
+}
+
+.meta-progress-fill {
+  display: block;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.meta-progress-fill.bom {
+  background: linear-gradient(90deg, #1a7f4d, #2ba56a);
+}
+
+.meta-progress-fill.atencao {
+  background: linear-gradient(90deg, #e9b749, #d4a017);
+}
+
+.meta-progress-fill.critico {
+  background: linear-gradient(90deg, #b3264d, #d94a72);
+}
+
+.delta-previsto {
+  margin-top: 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.delta-previsto.up {
+  color: #1a7f4d;
+}
+
+.delta-previsto.down {
+  color: #9d1d3f;
 }
 
 @media (max-width: 680px) {

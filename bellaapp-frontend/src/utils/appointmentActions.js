@@ -13,3 +13,5 @@ export function actionClass(action) {
   if (action === "Cancelar") return "is-danger";
   return "";
 }
+
+
