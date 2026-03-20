@@ -1,0 +1,23 @@
+.revenue-card {
+  border: 1px solid var(--secondary);
+  background: linear-gradient(180deg, #fff, #fff8fb);
+}
+
+.revenue-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.revenue-value {
+  display: block;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+@media (max-width: 680px) {
+  .revenue-grid {
+    grid-template-columns: 1fr;
+  }
+}

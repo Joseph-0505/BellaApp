@@ -1,0 +1,24 @@
+.btn-primary {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  opacity: 1;
+}
+@media (max-width: 680px) {
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,5 +1,6 @@
 import statusLabel from "./StatusLabel";
 import statusClass from "./StatusClass";
+import "../../styles/dashboard/status-badge.css";
 
 export default function StatusBadge({ status }) {
   return (

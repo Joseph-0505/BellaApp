@@ -1,0 +1,42 @@
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-agendado {
+  background: #f3eef7;
+  color: #6d4f8b;
+}
+
+.status-confirmado {
+  background: #e8f8f0;
+  color: #1a7f4d;
+}
+
+.status-pendente {
+  background: #fff3dd;
+  color: #8a5a00;
+}
+
+.status-cancelado {
+  background: #ffe7eb;
+  color: #9d1d3f;
+}
+
+.status-em_atendimento {
+  background: #eaf3ff;
+  color: #1c4d8c;
+}
+
+.status-concluido {
+  background: #e6f7f0;
+  color: #136b45;
+}
+
+.status-faltou {
+  background: #fbe8e8;
+  color: #8d2b2b;
+}

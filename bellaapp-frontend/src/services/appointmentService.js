@@ -59,7 +59,7 @@ const mockDashboard = {
     {
       id: "a1",
       tipo: "pendencia",
-      mensagem: "5 agendamentos pendentes de confirmacao.",
+      mensagem: "5 agendamentos pendentes de confirmação.",
       prioridade: "alta",
     },
     {
@@ -71,7 +71,7 @@ const mockDashboard = {
     {
       id: "a3",
       tipo: "ociosidade",
-      mensagem: "Horario ocioso entre 14:00 e 15:00.",
+      mensagem: "Horário ocioso entre 14:00 e 15:00.",
       prioridade: "baixa",
     },
   ],
