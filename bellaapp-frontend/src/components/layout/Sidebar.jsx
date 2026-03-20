@@ -11,21 +11,21 @@ export default function Sidebar(){
             </div>
       
              <nav className="sidebar-nav">
-             <NavLink to="/dashboard" className="sidebar-link">
-             Dashboard
-             </NavLink>
+                 <NavLink to="/" className="sidebar-link" end>
+                 Dashboard
+                 </NavLink>
 
-             <NavLink to="/agenda" className="sidebar-link">
-             Agenda
-             </NavLink>
+                 <NavLink to="/agenda" className="sidebar-link">
+                 Agenda
+                </NavLink>
 
-             <NavLink to="/clientes" className="sidebar-link">
-             Clientes
-             </NavLink>
+                <NavLink to="/clientes" className="sidebar-link">
+                Clientes
+                </NavLink>
 
-             <NavLink to="/servicos" className="sidebar-link">
-             Serviços
-             </NavLink>
+                <NavLink to="/servicos" className="sidebar-link">
+                Serviços
+                </NavLink>
       
             </nav>
          </aside>

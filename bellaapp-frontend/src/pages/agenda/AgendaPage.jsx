@@ -1,3 +1,7 @@
 export default function AgendaPage() {
-  return <h1>Agenda</h1>;
+  return (
+    <div style={{ background: "yellow" }}>
+      <h1>AGENDA TESTE</h1>
+    </div>
+  );
 }

@@ -1,4 +1,7 @@
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 250px;
   height: 100vh;
   background-color: var(--background);
@@ -6,6 +9,8 @@
   padding: 24px 20px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
 }
 
 .sidebar-header {
@@ -40,4 +45,12 @@
 .sidebar-link.active {
   background-color: var(--primary);
   color: var(--white);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
 }
