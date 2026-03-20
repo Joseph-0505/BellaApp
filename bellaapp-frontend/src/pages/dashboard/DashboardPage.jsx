@@ -100,16 +100,36 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, [loadDashboard]);
 
+
+function handleAgendaAction(appt, action) {
+  const mapStatus = {
+    Confirmar: "confirmado",
+    "Iniciar atendimento": "em_atendimento",
+    Concluir: "concluido",
+    Cancelar: "cancelado",
+  };
+
+  const nextStatus = mapStatus[action];
+  if (!nextStatus) return;
+
+  setAgendaHoje((prev) =>
+    prev.map((item) =>
+      item.id === appt.id ? { ...item, status: nextStatus } : item
+    )
+  );
+}
+
+
   if (loading) return <DashboardLoading />;
   if (error) return <DashboardError message={error} onRetry={loadDashboard} />;
 
   return (
     <section className="dashboard-page">
      <DashboardHeader
-  totalAtendimentos={resumo.agendamentosHoje || 0}
-  faturamentoPrevisto={resumo.faturamentoPrevisto || 0}
-  nomeClinica="BellaApp Estética"  // ou vem do backend: resumo.nomeClinica
-/>
+      totalAtendimentos={resumo.agendamentosHoje || 0}
+      faturamentoPrevisto={resumo.faturamentoPrevisto || 0}
+      nomeClinica="BellaApp Estética"/> 
+
 
       <section className="kpi-grid">
         {kpis.map((item) => (
@@ -129,7 +149,7 @@ export default function DashboardPage() {
       />
 
       <section className="dash-main-grid">
-        <AgendaTable appointments={agendaHoje} />
+       <AgendaTable appointments={agendaHoje} onAction={handleAgendaAction} />
         <aside className="side-stack">
           <AlertList alertas={alertas} />
           <TopServicesList topServicos={topServicos} />

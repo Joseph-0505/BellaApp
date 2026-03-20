@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
+import AppointmentActionsMenu from "../buttons/DropdownActions";
 import "../../styles/dashboard/agenda-table.css";
+import { getActionsByStatus } from "../../utils/appointmentActions";
 
-export default function AgendaTable({ appointments }) {
+
+export default function AgendaTable({ appointments, onAction }) {
   return (
     <article className="panel">
       <div className="panel-header">
@@ -21,13 +24,14 @@ export default function AgendaTable({ appointments }) {
               <th>Servico</th>
               <th>Profissional</th>
               <th>Status</th>
+              <th className="th-actions">Ações</th>
             </tr>
           </thead>
 
           <tbody>
             {appointments.length === 0 ? (
               <tr>
-                <td colSpan="5">Sem agendamentos para hoje.</td>
+                <td colSpan="6">Sem agendamentos para hoje.</td>
               </tr>
             ) : (
               appointments.map((appt) => (
@@ -38,6 +42,13 @@ export default function AgendaTable({ appointments }) {
                   <td>{appt.profissionalNome}</td>
                   <td>
                     <StatusBadge status={appt.status} />
+                  </td>
+                  <td className="td-actions">
+                    <AppointmentActionsMenu
+                      rowId={appt.id}
+                      actions={getActionsByStatus(appt.status)}
+                      onAction={(action) => onAction?.(appt, action)}
+                    />
                   </td>
                 </tr>
               ))
