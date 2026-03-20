@@ -1,9 +1,10 @@
 import {riskColor, riskLabel, statusColor} from "../../utils/agendaUtils";
 
-export default function AgendaSlotCard({ appointment }) {
+export default function AgendaSlotCard({ appointment, onClick}) {
   return (
     <div
       className="agenda-slot-card"
+      onClick={onClick}
       style={{
         background: statusColor(appointment.status),
         borderLeft: "4px solid " + riskColor(appointment.riscoNoShow),

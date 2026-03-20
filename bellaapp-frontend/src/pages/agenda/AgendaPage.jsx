@@ -5,6 +5,7 @@ import AgendaHeader from "../../components/agenda/AgendaHeader";
 import AgendaWeekTable from "../../components/agenda/AgendaWeekTable";
 import AgendaFilters from "../../components/agenda/AgendaFilters";
 import AgendaSidebar from "../../components/agenda/AgendaSidebar";
+import AppointmentModal from "../../components/modals/AppointmentModal";
 import "../../styles/agenda/agenda.css";
 import "../../styles/dashboard/agenda-table.css";
 
@@ -13,6 +14,7 @@ import "../../styles/dashboard/agenda-table.css";
 export default function AgendaPage() {
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("todos");
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const [agendaData, setAgendaData] = useState({
     days: [],
@@ -21,6 +23,14 @@ export default function AgendaPage() {
   });
 
   const [loading, setLoading] = useState(true);
+
+function openModal(appointment) {
+  setSelectedAppointment(appointment);
+}
+
+function closeModal() {
+  setSelectedAppointment(null);
+}
 
   /* ================= LOAD DATA ================= */
 
@@ -143,6 +153,7 @@ export default function AgendaPage() {
             days={agendaData.days}
             hours={agendaData.hours}
             appointments={filtered}
+            onSelect={openModal}
             riskLabel={riskLabel}
             riskColor={riskColor}
             statusColor={statusColor}
@@ -152,6 +163,11 @@ export default function AgendaPage() {
          <AgendaSidebar
             livresAgora={livresAgora}
             resumoAgenda={resumoAgenda}
+          />
+          {/*MODAL*/}
+          <AppointmentModal
+            appointment={selectedAppointment}
+            onClose={closeModal}
           />
         </div>
       </article>

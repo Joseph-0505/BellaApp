@@ -2,7 +2,7 @@
 import AgendaSlotCard from "./AgendaSlotCard";
 
 
-export default function AgendaWeekTable({ days, hours, appointments }) {
+export default function AgendaWeekTable({ days, hours, appointments, onSelect }) {
   return (
     <div className="agenda-table-wrap">
       <table className="agenda-table agenda-week-table">
@@ -28,7 +28,10 @@ export default function AgendaWeekTable({ days, hours, appointments }) {
                 return (
                   <td key={d.key + hour}>
                     {appt ? (
-                      <AgendaSlotCard appointment={appt} />
+                      <AgendaSlotCard 
+                       appointment={appt}
+                       onClick={() => onSelect(appt)}
+                       />
                     ) : (
                       <span className="agenda-slot-free">Livre</span>
                     )}
