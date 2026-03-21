@@ -1,38 +1,151 @@
+.premium-modal {
+  width: 420px;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
 }
 
-.modal-content {
-  background: white;
-  padding: 20px;
+/* HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.status-badge.confirmado {
+  background: #dff3e7;
+  color: #1a7f4d;
+}
+
+.status-badge.pendente {
+  background: #f8ecd6;
+  color: #9b6a00;
+}
+
+/* INFO */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-group p {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+/* VALOR */
+.modal-highlight {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f7f7f7;
   border-radius: 12px;
-  width: 400px;
+  text-align: center;
 }
 
+.modal-highlight strong {
+  font-size: 20px;
+  color: #111;
+}
+
+/* BOTÕES */
 .modal-actions {
   display: flex;
   gap: 10px;
   margin-top: 20px;
 }
 
-.btn-confirm {
+.btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-success {
   background: #1a7f4d;
   color: white;
 }
-.btn-edit {
+
+.btn-warning {
   background: #9b6a00;
   color: white;
 }
-.btn-cancel {
+
+.btn-danger {
   background: #9d1d3f;
   color: white;
+}
+
+/* CLOSE */
+.modal-close {
+  margin-top: 15px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+}
+.reschedule-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.reschedule-box input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.slot-btn {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.slot-btn:hover {
+  background: #f5f5f5;
+}
+
+.slot-btn.selected {
+  background: #1a7f4d;
+  color: white;
+  border-color: #1a7f4d;
 }

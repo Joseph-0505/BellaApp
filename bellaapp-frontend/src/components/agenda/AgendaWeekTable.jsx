@@ -1,6 +1,4 @@
-
 import AgendaSlotCard from "./AgendaSlotCard";
-
 
 export default function AgendaWeekTable({ days, hours, appointments, onSelect }) {
   return (
@@ -21,17 +19,20 @@ export default function AgendaWeekTable({ days, hours, appointments, onSelect })
               <td>{hour}</td>
 
               {days.map((d) => {
-                const appt = appointments.find(
-                  (a) => a.day === d.key && a.hour === hour
-                );
+                const appt = appointments.find((a) => {
+                  const day = a.day?.split("T")[0];
+                  const hourFormatted = a.hour?.padStart(5, "0");
+
+                  return day === d.key && hourFormatted === hour;
+                });
 
                 return (
                   <td key={d.key + hour}>
                     {appt ? (
-                      <AgendaSlotCard 
-                       appointment={appt}
-                       onClick={() => onSelect(appt)}
-                       />
+                      <AgendaSlotCard
+                        appointment={appt}
+                        onClick={() => onSelect(appt)}
+                      />
                     ) : (
                       <span className="agenda-slot-free">Livre</span>
                     )}
