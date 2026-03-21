@@ -9,7 +9,8 @@ export default function AppointmentModal({
   appointment,
   onClose,
   onUpdate,
-  availableSlots = [],
+  appointments = [],
+  hours = [],
 }) {
   useEscClose(onClose);
 
@@ -25,19 +26,22 @@ export default function AppointmentModal({
 
   const {
     mode,
+    availableDays,
+    daySlots,
     selectedDay,
     selectedHour,
     loading: rescheduleLoading,
-    availableSlots: slots,
     startReschedule,
     cancelReschedule,
+    selectDay,
     selectSlot,
     saveReschedule,
   } = useReschedule({
     appointment,
     onUpdate,
     onClose,
-    availableSlots,
+    appointments,
+    hours,
   });
 
   if (!appointment) return null;
@@ -114,11 +118,30 @@ export default function AppointmentModal({
 
         {mode === "reschedule" && (
           <div className="reschedule-box">
+            <h3>Escolha um dia</h3>
+
+            <div className="days-grid">
+              {availableDays.map((day) => {
+                const isSelected = selectedDay === day.key;
+                return (
+                  <button
+                    type="button"
+                    key={day.key}
+                    className={`slot-btn ${isSelected ? "selected" : ""}`}
+                    onClick={() => selectDay(day.key)}
+                    disabled={day.count === 0}
+                  >
+                    {day.label}
+                  </button>
+                );
+              })}
+            </div>
+
             <h3>Escolha um novo horário</h3>
 
-            {slots.length > 0 ? (
+            {selectedDay && daySlots.length > 0 ? (
               <div className="slots-grid">
-                {slots.map((slot) => {
+                {daySlots.map((slot) => {
                   const isSelected =
                     selectedDay === slot.day &&
                     selectedHour === slot.hour;
@@ -130,13 +153,15 @@ export default function AppointmentModal({
                       className={`slot-btn ${isSelected ? "selected" : ""}`}
                       onClick={() => selectSlot(slot.day, slot.hour)}
                     >
-                      {slot.label} - {slot.hour}
+                      {slot.hour}
                     </button>
                   );
                 })}
               </div>
+            ) : selectedDay ? (
+              <p>Nenhum horário disponível para este dia.</p>
             ) : (
-              <p>Nenhum horário disponível no momento.</p>
+              <p>Selecione um dia para ver os horários livres.</p>
             )}
 
             <div className="modal-actions">

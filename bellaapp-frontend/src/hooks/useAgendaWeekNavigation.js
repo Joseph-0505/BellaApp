@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 
 const WEEKDAY_OFFSET = { seg: 0, ter: 1, qua: 2, qui: 3, sex: 4, sab: 5, "sáb": 5, dom: 6 };
 
-function toIsoLocal(date) {
+export function toIsoLocal(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return y + "-" + m + "-" + d;
 }
 
-function getMonday(baseDate) {
+export function getMonday(baseDate) {
   const d = new Date(baseDate);
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -18,7 +18,7 @@ function getMonday(baseDate) {
   return d;
 }
 
-function getWeekDays(date) {
+export function getWeekDays(date) {
   const monday = getMonday(date);
   const week = [];
   for (let i = 0; i < 7; i++) {
@@ -30,6 +30,15 @@ function getWeekDays(date) {
     });
   }
   return week;
+}
+
+export function formatWeekRangeLabel(date) {
+  const monday = getMonday(date);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const start = monday.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+  const end = sunday.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+  return start + " a " + end;
 }
 
 export function normalizeDate(dateStr, baseDate) {

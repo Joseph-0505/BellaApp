@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { actionClass } from "../../utils/appointmentActions";
 
-export default function AppointmentActionsMenu({ rowId, actions, onAction }) {
+export default function AppointmentActionsMenu({ actions, onAction }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 

@@ -1,33 +1,92 @@
 import { useMemo } from "react";
 
-export default function useAgendaMetrics({ appointments, term, status, weekDays, hours }) {
-  const filtered = useMemo(() => {
-    return appointments.filter((a) => {
-      const t = (term || "").toLowerCase();
-      const matchTerm =
-        !t ||
-        a.cliente.toLowerCase().includes(t) ||
-        a.servico.toLowerCase().includes(t);
+export default function useAgendaMetrics({
+  appointments,
+  term,
+  status,
+  weekDays,
+  hours,
+}) {
+  const weekKeys = useMemo(() => new Set(weekDays.map((day) => day.key)), [weekDays]);
 
-      const matchStatus = status === "todos" || a.status === status;
+  const weekAppointments = useMemo(() => {
+    return appointments.filter((appointment) => {
+      const dayKey = appointment.day?.split("T")[0] || appointment.day;
+      return weekKeys.has(dayKey);
+    });
+  }, [appointments, weekKeys]);
+
+  const visibleAppointments = useMemo(() => {
+    const normalizedTerm = (term || "").toLowerCase().trim();
+
+    return weekAppointments.filter((appointment) => {
+      const matchTerm =
+        !normalizedTerm ||
+        appointment.cliente.toLowerCase().includes(normalizedTerm) ||
+        appointment.servico.toLowerCase().includes(normalizedTerm);
+
+      const matchStatus = status === "todos" || appointment.status === status;
       return matchTerm && matchStatus;
     });
-  }, [appointments, term, status]);
+  }, [status, term, weekAppointments]);
+
+  const visibleAppointmentIds = useMemo(
+    () => new Set(visibleAppointments.map((appointment) => appointment.id)),
+    [visibleAppointments]
+  );
 
   const resumoAgenda = useMemo(() => {
-    const receitaProjetada = filtered.reduce((acc, a) => acc + Number(a.valorEstimado || 0), 0);
-    const riscoAlto = filtered.filter((a) => a.riscoNoShow === "alto").length;
-    const pendentes = filtered.filter((a) => a.status === "pendente").length;
-    return { receitaProjetada, riscoAlto, pendentes };
-  }, [filtered]);
+    const totalAtendimentos = weekAppointments.length;
+    const receitaProjetada = weekAppointments.reduce(
+      (acc, appointment) => acc + Number(appointment.valorEstimado || 0),
+      0
+    );
+    const confirmados = weekAppointments.filter(
+      (appointment) => appointment.status === "confirmado"
+    ).length;
+    const pendentes = weekAppointments.filter(
+      (appointment) => appointment.status === "pendente"
+    ).length;
+    const riscoAlto = weekAppointments.filter(
+      (appointment) => appointment.riscoNoShow === "alto"
+    ).length;
+    const totalSlots = weekDays.length * hours.length;
+    const livresTotal = Math.max(totalSlots - totalAtendimentos, 0);
+    const taxaOcupacao =
+      totalSlots > 0 ? Math.round((totalAtendimentos / totalSlots) * 100) : 0;
+
+    return {
+      confirmados,
+      livresTotal,
+      pendentes,
+      receitaProjetada,
+      riscoAlto,
+      taxaOcupacao,
+      totalAtendimentos,
+    };
+  }, [hours.length, weekAppointments, weekDays.length]);
 
   const livresAgora = useMemo(() => {
-    const busyKeys = new Set(filtered.map((a) => a.day + "-" + a.hour));
-    return weekDays
-      .flatMap((d) => hours.map((h) => ({ day: d.key, label: d.label, hour: h })))
-      .filter((slot) => !busyKeys.has(slot.day + "-" + slot.hour))
-      .slice(0, 5);
-  }, [filtered, weekDays, hours]);
+    const busyKeys = new Set(
+      weekAppointments.map(
+        (appointment) =>
+          `${appointment.day}-${String(appointment.hour || "").padStart(5, "0")}`
+      )
+    );
 
-  return { filtered, resumoAgenda, livresAgora };
+    return weekDays
+      .flatMap((day) => hours.map((hour) => ({ day: day.key, label: day.label, hour })))
+      .filter((slot) => !busyKeys.has(`${slot.day}-${slot.hour}`));
+  }, [hours, weekAppointments, weekDays]);
+
+  const hasFilters = Boolean((term || "").trim()) || status !== "todos";
+
+  return {
+    hasFilters,
+    livresAgora,
+    resumoAgenda,
+    visibleAppointmentIds,
+    visibleAppointments,
+    weekAppointments,
+  };
 }

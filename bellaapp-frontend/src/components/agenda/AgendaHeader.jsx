@@ -1,6 +1,6 @@
-import NovoAgendamentoBtn from "../../components/buttons/NovoAgendamentoBtn";
-import NovoClienteBtn from "../../components/buttons/NovoClienteBtn";
-import EncaixeRapidoBtn from "../../components/buttons/EncaixeRapidoBtn";
+import { formatWeekRangeLabel } from "../../hooks/useAgendaWeekNavigation";
+import LinkButton from "../buttons/LinkButton";
+import Header from "../layout/Header";
 import "../../styles/agenda/agenda-header.css";
 
 export default function AgendaHeader({
@@ -8,45 +8,40 @@ export default function AgendaHeader({
   onPrevWeek,
   onNextWeek,
   onToday,
+  onNewAppointment,
 }) {
-  function formatWeek(date) {
-    const start = new Date(date);
+  const leftContent = (
+    <div className="agenda-nav">
+      <button type="button" onClick={onPrevWeek} aria-label="Semana anterior">
+        {"<"}
+      </button>
+      <h2>{formatWeekRangeLabel(currentDate)}</h2>
+      <button type="button" onClick={onNextWeek} aria-label="Proxima semana">
+        {">"}
+      </button>
+    </div>
+  );
 
-    const day = start.getDay();
-    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-    start.setDate(diff);
-
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-
-    const options = { day: "2-digit", month: "long" };
-
-    return `Semana de ${start.toLocaleDateString(
-      "pt-BR",
-      options
-    )} a ${end.toLocaleDateString("pt-BR", options)}`;
-  }
+  const actions = (
+    <>
+      <button type="button" className="btn-today" onClick={onToday}>
+        Hoje
+      </button>
+      <button type="button" className="btn-primary" onClick={onNewAppointment}>
+        Novo Agendamento
+      </button>
+      <LinkButton to="/clientes" className="btn-soft">
+        Novo Cliente
+      </LinkButton>
+    </>
+  );
 
   return (
-  <div className="agenda-header">
-    <h1 className="agenda-h1">Agenda</h1>
-    <div className="agenda-header-row">
-      <div className="agenda-nav">
-        <button onClick={onPrevWeek}>←</button>
-        <h2>{formatWeek(currentDate)}</h2>
-        <button onClick={onNextWeek}>→</button>
-      </div>
-
-      <div className="agenda-actions">
-        <button className="btn-today" onClick={onToday}>
-          Hoje
-        </button>
-
-        <NovoAgendamentoBtn />
-        <NovoClienteBtn />
-        <EncaixeRapidoBtn />
-      </div>
-    </div>
-  </div>
-);
+    <Header
+      title="Agenda"
+      leftContent={leftContent}
+      actions={actions}
+      className="agenda-header"
+    />
+  );
 }

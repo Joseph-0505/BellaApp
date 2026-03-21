@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import AgendaHeader from "../../components/agenda/AgendaHeader";
 import AgendaWeekTable from "../../components/agenda/AgendaWeekTable";
@@ -16,7 +16,7 @@ import "../../styles/dashboard/agenda-table.css";
 export default function AgendaPage() {
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("todos");
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
 
   const {
     currentDate,
@@ -27,16 +27,20 @@ export default function AgendaPage() {
   } = useAgendaWeekNavigation();
 
   const {
+    error,
     loading,
     hours,
     normalizedAppointments,
-    updateAppointmentStatus,
+    updateAppointment,
   } = useAgendaData(currentDate);
 
   const {
-    filtered,
+    hasFilters,
     resumoAgenda,
     livresAgora,
+    visibleAppointmentIds,
+    visibleAppointments,
+    weekAppointments,
   } = useAgendaMetrics({
     appointments: normalizedAppointments,
     term,
@@ -45,52 +49,82 @@ export default function AgendaPage() {
     hours,
   });
 
+  const selectedAppointment = useMemo(
+    () =>
+      normalizedAppointments.find((appointment) => appointment.id === selectedAppointmentId) ||
+      null,
+    [normalizedAppointments, selectedAppointmentId]
+  );
+
   function openModal(appointment) {
-    setSelectedAppointment(appointment);
+    setSelectedAppointmentId(appointment.id);
   }
 
   function closeModal() {
-    setSelectedAppointment(null);
+    setSelectedAppointmentId(null);
   }
 
+  function focusAvailableSlots() {
+    document
+      .getElementById("agenda-available-slots")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
     <section className="dashboard-page">
       <AgendaHeader
         currentDate={currentDate}
+        onNewAppointment={focusAvailableSlots}
         onNextWeek={nextWeek}
         onPrevWeek={prevWeek}
         onToday={goToday}
       />
 
       <article className="panel">
-        <AgendaFilters
-          term={term}
-          setTerm={setTerm}
-          status={status}
-          setStatus={setStatus}
-        />
+        {loading ? <p className="agenda-feedback">Carregando agenda...</p> : null}
+        {error ? <p className="agenda-feedback agenda-feedback-error">{error}</p> : null}
 
-        <div className="agenda-layout-grid">
-          <AgendaWeekTable
-            days={weekDays}
-            hours={hours}
-            appointments={filtered}
-            onSelect={openModal}
-          />
+        {!loading && !error ? (
+          <>
+            <AgendaFilters
+              term={term}
+              setTerm={setTerm}
+              status={status}
+              setStatus={setStatus}
+            />
 
-          <AgendaSidebar
-            livresAgora={livresAgora}
-            resumoAgenda={resumoAgenda}
-          />
+            {hasFilters ? (
+              <p className="agenda-feedback">
+                Mostrando {visibleAppointments.length} de {weekAppointments.length} agendamentos
+                desta semana. Os demais continuam ocupando seus horarios na grade.
+              </p>
+            ) : null}
 
-          <AppointmentModal
-            appointment={selectedAppointment}
-            onClose={closeModal}
-            onUpdate={updateAppointmentStatus}
-            availableSlots={livresAgora}
-          />
-        </div>
+            <div className="agenda-layout-grid">
+              <AgendaWeekTable
+                appointments={weekAppointments}
+                days={weekDays}
+                filtersActive={hasFilters}
+                hours={hours}
+                onSelect={openModal}
+                visibleAppointmentIds={visibleAppointmentIds}
+              />
+
+              <AgendaSidebar
+                livresAgora={livresAgora}
+                resumoAgenda={resumoAgenda}
+              />
+
+              <AppointmentModal
+                appointment={selectedAppointment}
+                appointments={normalizedAppointments}
+                hours={hours}
+                onClose={closeModal}
+                onUpdate={updateAppointment}
+              />
+            </div>
+          </>
+        ) : null}
       </article>
     </section>
   );

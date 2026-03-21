@@ -1,23 +1,23 @@
 import formatCurrency  from "../../utils/formatters";
-import NovoAgendamentoBtn from "../buttons/NovoAgendamentoBtn";
-import NovoClienteBtn from "../buttons/NovoClienteBtn";
+import LinkButton from "../buttons/LinkButton";
+import Header from "../layout/Header";
 
 
 export default function DashboardHeader({ totalAtendimentos, faturamentoPrevisto, nomeClinica }) {
   return (
-    <header className="dash-header">
-      <div>
-        <h1>{nomeClinica || "Painel da Clínica"}</h1>
-        <p>
-          Hoje você tem {totalAtendimentos} atendimentos e faturamento previsto de{" "}
-          {formatCurrency(faturamentoPrevisto)}.
-        </p>
-      </div>
-
-      <div className="dash-actions">
-          <NovoAgendamentoBtn/>
-          <NovoClienteBtn/>
-      </div>
-    </header>
+    <Header
+      title={nomeClinica || "Painel da Clínica"}
+      subtitle={`Hoje você tem ${totalAtendimentos} atendimentos e faturamento previsto de ${formatCurrency(faturamentoPrevisto)}.`}
+      actions={
+        <>
+          <LinkButton to="/agendamento" className="btn-primary">
+            Novo Agendamento
+          </LinkButton>
+          <LinkButton to="/cliente" className="btn-soft">
+            Novo Cliente
+          </LinkButton>
+        </>
+      }
+    />
   );
 }

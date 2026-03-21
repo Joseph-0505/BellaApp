@@ -93,6 +93,10 @@ function normalize(data) {
 }
 
 export async function getDashboardData() {
+  if (USE_MOCK_WHEN_API_FAILS && !import.meta.env.VITE_API_URL) {
+    return normalize(mockDashboard);
+  }
+
   try {
     const data = await apiGet("/dashboard");
     return normalize(data);

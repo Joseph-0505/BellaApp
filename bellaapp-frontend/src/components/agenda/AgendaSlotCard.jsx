@@ -1,9 +1,12 @@
-import {riskColor, riskLabel, statusColor} from "../../utils/agendaUtils";
+import { riskColor, riskLabel, statusColor } from "../../utils/agendaUtils";
+import formatCurrency from "../../utils/formatters";
 
-export default function AgendaSlotCard({ appointment, onClick}) {
+export default function AgendaSlotCard({ appointment, isDimmed = false, onClick }) {
   return (
-    <div
-      className="agenda-slot-card"
+    <button
+      type="button"
+      className={`agenda-slot-card${isDimmed ? " is-dimmed" : ""}`}
+      aria-label={`Abrir agendamento de ${appointment.cliente}`}
       onClick={onClick}
       style={{
         background: statusColor(appointment.status),
@@ -28,8 +31,8 @@ export default function AgendaSlotCard({ appointment, onClick}) {
       </p>
 
       <p className="agenda-slot-meta">
-        Estimado: R$ {appointment.valorEstimado}
+        Estimado: {formatCurrency(appointment.valorEstimado)}
       </p>
-    </div>
+    </button>
   );
 }

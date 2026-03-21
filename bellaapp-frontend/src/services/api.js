@@ -14,7 +14,7 @@ async function request(path, options = {}) {
     try {
       const body = await response.json();
       message = body.message || message;
-    } catch (_) {
+    } catch {
       const text = await response.text();
       if (text) message = text;
     }
