@@ -1,9 +1,9 @@
 import "../../styles/modals/appointment-modal.css";
 import formatCurrency from "../../utils/formatters.js";
 
-import useAppointmentActions from "../../hooks/useAppointmentActions";
-import useEscClose from "../../hooks/useEscClose";
-import useReschedule from "../../hooks/useReschedule";
+import useAppointmentActions from "../../hooks/useAppointmentActions.js";
+import useEscClose from "../../hooks/useEscClose.js";
+import useReschedule from "../../hooks/useReschedule.js";
 
 export default function AppointmentModal({
   appointment,
