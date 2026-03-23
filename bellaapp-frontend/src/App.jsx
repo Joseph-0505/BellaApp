@@ -20,8 +20,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
       <Route element={<DashboardLayout/>}>
        <Route path="/dashboard" element={<DashboardPage />} />
        <Route path="/agenda" element={<AgendaPage />} />
-       <Route path="/clientes" element={<ClientesPage />} />
-       <Route path="/servicos" element={<ServicosPage />} />
+        <Route path="/clientes" element={<ClientesPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard"/>}/>
