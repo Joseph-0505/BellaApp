@@ -3,30 +3,35 @@ import { useState } from "react";
 export default function useAppointmentActions({ appointment, onUpdate, onClose }) {
   const [loading, setLoading] = useState(false);
 
-  const STATUS = {
-    CONFIRMADO: "confirmado",
-    CANCELADO: "cancelado",
-  };
-
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!onUpdate || loading) return;
 
-    setLoading(true);
-
-    onUpdate(appointment.id, STATUS.CONFIRMADO);
-    onClose();
+    try {
+      setLoading(true);
+      const result = await onUpdate(appointment.id, "confirmado");
+      if (result !== false) {
+        onClose();
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleCancel() {
+  async function handleCancel() {
     if (!onUpdate || loading) return;
 
     const confirm = window.confirm("Tem certeza que deseja cancelar?");
     if (!confirm) return;
 
-    setLoading(true);
-
-    onUpdate(appointment.id, STATUS.CANCELADO);
-    onClose();
+    try {
+      setLoading(true);
+      const result = await onUpdate(appointment.id, "cancelado");
+      if (result !== false) {
+        onClose();
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return {

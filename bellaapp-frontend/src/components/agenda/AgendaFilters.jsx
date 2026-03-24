@@ -21,7 +21,6 @@ export default function AgendaFilters({
         <option value="todos">Todos status</option>
         <option value="confirmado">Confirmado</option>
         <option value="pendente">Pendente</option>
-        <option value="em_atendimento">Em atendimento</option>
         <option value="cancelado">Cancelado</option>
         <option value="concluido">Concluido</option>
       </select>

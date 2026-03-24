@@ -1,7 +1,5 @@
-import { useState, useMemo } from "react";
-import {
-  getWeekDays,
-} from "./useAgendaWeekNavigation";
+import { useMemo, useState } from "react";
+import { getWeekDays } from "./useAgendaWeekNavigation";
 
 export default function useReschedule({
   appointment,
@@ -17,7 +15,7 @@ export default function useReschedule({
 
   const baseDate = useMemo(() => {
     if (!appointment?.day) return new Date();
-    return new Date(appointment.day + "T00:00:00");
+    return new Date(`${appointment.day}T00:00:00`);
   }, [appointment]);
 
   const weekDays = useMemo(() => getWeekDays(baseDate), [baseDate]);
@@ -27,15 +25,13 @@ export default function useReschedule({
 
     const busyKeys = new Set(
       appointments
-        .filter((a) => a.id !== appointment.id)
-        .map((a) => a.day + "-" + a.hour)
+        .filter((item) => item.id !== appointment.id)
+        .map((item) => `${item.day}-${item.hour}`)
     );
 
     return weekDays
-      .flatMap((day) =>
-        hours.map((hour) => ({ day: day.key, label: day.label, hour }))
-      )
-      .filter((slot) => !busyKeys.has(slot.day + "-" + slot.hour));
+      .flatMap((day) => hours.map((hour) => ({ day: day.key, label: day.label, hour })))
+      .filter((slot) => !busyKeys.has(`${slot.day}-${slot.hour}`));
   }, [appointment, appointments, hours, weekDays]);
 
   const availableDays = useMemo(() => {
@@ -69,29 +65,32 @@ export default function useReschedule({
   }
 
   function selectDay(day) {
-    setSelectedDay("");
-    setSelectedHour("");
     setSelectedDay(day);
+    setSelectedHour("");
   }
 
-  function saveReschedule() {
+  async function saveReschedule() {
     if (!appointment || !onUpdate || loading) return;
 
     if (!selectedDay || !selectedHour) {
-      alert("Selecione um horário.");
+      alert("Selecione um horario.");
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
+      const result = await onUpdate(appointment.id, {
+        status: "pendente",
+        day: selectedDay,
+        hour: selectedHour,
+      });
 
-    onUpdate(appointment.id, {
-      status: "pendente",
-      day: selectedDay,
-      hour: selectedHour,
-    });
-
-    setLoading(false);
-    onClose();
+      if (result !== false) {
+        onClose();
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return {

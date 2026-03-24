@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import AgendaHeader from "../../components/agenda/AgendaHeader";
 import AgendaWeekTable from "../../components/agenda/AgendaWeekTable";
 import AgendaFilters from "../../components/agenda/AgendaFilters";
 import AgendaSidebar from "../../components/agenda/AgendaSidebar";
 import AppointmentModal from "../../components/modals/AppointmentModal";
+import NovoAgendamento from "../../components/modals/NovoAgendamento";
 
+import { clearSession } from "../../services/api";
 import useAgendaWeekNavigation from "../../hooks/useAgendaWeekNavigation";
 import useAgendaData from "../../hooks/useAgendaData";
 import useAgendaMetrics from "../../hooks/useAgendaMetrics";
@@ -14,9 +17,11 @@ import "../../styles/agenda/agenda.css";
 import "../../styles/dashboard/agenda-table.css";
 
 export default function AgendaPage() {
+  const navigate = useNavigate();
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("todos");
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
 
   const {
     currentDate,
@@ -27,12 +32,23 @@ export default function AgendaPage() {
   } = useAgendaWeekNavigation();
 
   const {
+    clients,
     error,
+    errorStatus,
     loading,
     hours,
     normalizedAppointments,
+    services,
+    createAppointment,
     updateAppointment,
   } = useAgendaData(currentDate);
+
+  useEffect(() => {
+    if (errorStatus === 401) {
+      clearSession();
+      navigate("/login", { replace: true });
+    }
+  }, [errorStatus, navigate]);
 
   const {
     hasFilters,
@@ -50,9 +66,7 @@ export default function AgendaPage() {
   });
 
   const selectedAppointment = useMemo(
-    () =>
-      normalizedAppointments.find((appointment) => appointment.id === selectedAppointmentId) ||
-      null,
+    () => normalizedAppointments.find((appointment) => appointment.id === selectedAppointmentId) || null,
     [normalizedAppointments, selectedAppointmentId]
   );
 
@@ -64,17 +78,33 @@ export default function AgendaPage() {
     setSelectedAppointmentId(null);
   }
 
-  function focusAvailableSlots() {
-    document
-      .getElementById("agenda-available-slots")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  async function handleNewAppointment(appointment) {
+    try {
+      await createAppointment(appointment);
+    } catch (requestError) {
+      alert(requestError.message || "Nao foi possivel criar o agendamento.");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleUpdateAppointment(id, changes) {
+    try {
+      await updateAppointment(id, changes);
+    } catch (requestError) {
+      alert(requestError.message || "Nao foi possivel atualizar o agendamento.");
+      return false;
+    }
+
+    return true;
   }
 
   return (
     <section className="dashboard-page">
       <AgendaHeader
         currentDate={currentDate}
-        onNewAppointment={focusAvailableSlots}
+        onNewAppointment={() => setIsNewAppointmentOpen(true)}
         onNextWeek={nextWeek}
         onPrevWeek={prevWeek}
         onToday={goToday}
@@ -120,12 +150,24 @@ export default function AgendaPage() {
                 appointments={normalizedAppointments}
                 hours={hours}
                 onClose={closeModal}
-                onUpdate={updateAppointment}
+                onUpdate={handleUpdateAppointment}
               />
             </div>
           </>
         ) : null}
       </article>
+
+      {isNewAppointmentOpen ? (
+        <NovoAgendamento
+          apiMode
+          clients={clients}
+          defaultDate={weekDays[0]?.key}
+          hours={hours}
+          onClose={() => setIsNewAppointmentOpen(false)}
+          onSave={handleNewAppointment}
+          services={services}
+        />
+      ) : null}
     </section>
   );
 }

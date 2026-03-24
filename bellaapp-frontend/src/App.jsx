@@ -1,35 +1,58 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import AuthPage from "./pages/auth/AuthPage";
-import DashboardPage from "./pages/dashboard/DashboardPage";
-import AgendaPage from "./pages/agenda/AgendaPage";
-import ClientesPage from "./pages/clientes/ClientesPage";
-import ServicosPage from "./pages/servicos/ServicosPage";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import DashboardLayout from "./components/layout/DashboardLayout";
+import { isAuthenticated } from "./services/api";
+import AgendaPage from "./pages/agenda/AgendaPage";
+import AuthPage from "./pages/auth/AuthPage";
+import ClientesPage from "./pages/clientes/ClientesPage";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+import ServicosPage from "./pages/servicos/ServicosPage";
 
- function App() {
+function ProtectedLayout() {
+  if (!isAuthenticated()) {
+    return <Navigate replace to="/login" />;
+  }
+
+  return <DashboardLayout />;
+}
+
+function PublicOnlyRoute({ children }) {
+  if (isAuthenticated()) {
+    return <Navigate replace to="/dashboard" />;
+  }
+
+  return children;
+}
+
+function RootRedirect() {
+  return <Navigate replace to={isAuthenticated() ? "/dashboard" : "/login"} />;
+}
+
+function App() {
   return (
-  <BrowserRouter>
-    <Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <AuthPage />
+            </PublicOnlyRoute>
+          }
+        />
 
-     {/* Pública */}
-     <Route path="/login" element={<AuthPage />} />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/agenda" element={<AgendaPage />} />
+          <Route path="/clientes" element={<ClientesPage />} />
+          <Route path="/servicos" element={<ServicosPage />} />
+        </Route>
 
-      {/* Protegida*/}
-      <Route element={<DashboardLayout/>}>
-       <Route path="/dashboard" element={<DashboardPage />} />
-       <Route path="/agenda" element={<AgendaPage />} />
-        <Route path="/clientes" element={<ClientesPage />} />
-      </Route>
-
-      <Route path="/" element={<Navigate to="/dashboard"/>}/>
-
-    </Routes>
-  </BrowserRouter>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="*" element={<RootRedirect />} />
+      </Routes>
+    </BrowserRouter>
   );
-  
 }
 
 export default App;
-

@@ -1,31 +1,181 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+const SESSION_STORAGE_KEY = "bellaapp.session";
 
-async function request(path, options = {}) {
-  const response = await fetch(API_BASE_URL + path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+export class ApiError extends Error {
+  constructor(message, { code = "API_ERROR", details = null, status = 500 } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+    this.details = details;
+    this.status = status;
+  }
+}
 
-  if (!response.ok) {
-    let message = "Erro na requisicao";
-    try {
-      const body = await response.json();
-      message = body.message || message;
-    } catch {
-      const text = await response.text();
-      if (text) message = text;
-    }
-    throw new Error(message);
+function hasWindow() {
+  return typeof window !== "undefined";
+}
+
+function readStoredSession() {
+  if (!hasWindow()) {
+    return null;
   }
 
-  return response.json();
+  const rawSession = window.localStorage.getItem(SESSION_STORAGE_KEY);
+  if (!rawSession) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawSession);
+  } catch {
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    return null;
+  }
 }
 
-export function apiGet(path) {
-  return request(path, { method: "GET" });
+function writeStoredSession(session) {
+  if (!hasWindow()) {
+    return;
+  }
+
+  if (!session) {
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
 }
 
-export { API_BASE_URL };
+function buildUrl(path, query) {
+  const url = new URL(path, `${API_BASE_URL}/`);
+
+  if (!query) {
+    return url.toString();
+  }
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        url.searchParams.append(key, String(item));
+      });
+      return;
+    }
+
+    url.searchParams.set(key, String(value));
+  });
+
+  return url.toString();
+}
+
+async function parseResponseBody(response) {
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  return text ? { message: text } : null;
+}
+
+function extractErrorPayload(body) {
+  if (!body || typeof body !== "object") {
+    return {};
+  }
+
+  const apiError = body.error && typeof body.error === "object" ? body.error : null;
+
+  return {
+    code: apiError?.code || body.code || "API_ERROR",
+    details: apiError?.details || body.details || null,
+    message: apiError?.message || body.message || "Erro na requisicao.",
+  };
+}
+
+async function request(path, options = {}) {
+  const {
+    auth = true,
+    body,
+    headers = {},
+    method = "GET",
+    query,
+    ...rest
+  } = options;
+
+  const token = auth ? getAccessToken() : "";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const resolvedHeaders = {
+    ...(isFormData ? {} : body !== undefined ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...headers,
+  };
+
+  const response = await fetch(buildUrl(path, query), {
+    method,
+    headers: resolvedHeaders,
+    ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
+    ...rest,
+  });
+
+  const responseBody = await parseResponseBody(response);
+
+  if (!response.ok) {
+    const { code, details, message } = extractErrorPayload(responseBody);
+    throw new ApiError(message, {
+      code,
+      details,
+      status: response.status,
+    });
+  }
+
+  return responseBody;
+}
+
+export function getSession() {
+  return readStoredSession();
+}
+
+export function setSession(session) {
+  writeStoredSession(session);
+}
+
+export function clearSession() {
+  writeStoredSession(null);
+}
+
+export function getAccessToken() {
+  return getSession()?.token || "";
+}
+
+export function getCurrentUser() {
+  return getSession()?.user || null;
+}
+
+export function isAuthenticated() {
+  return Boolean(getAccessToken());
+}
+
+export function apiGet(path, options = {}) {
+  return request(path, { ...options, method: "GET" });
+}
+
+export function apiPost(path, body, options = {}) {
+  return request(path, { ...options, body, method: "POST" });
+}
+
+export function apiPut(path, body, options = {}) {
+  return request(path, { ...options, body, method: "PUT" });
+}
+
+export function apiDelete(path, options = {}) {
+  return request(path, { ...options, method: "DELETE" });
+}
+
+export { API_BASE_URL, SESSION_STORAGE_KEY };

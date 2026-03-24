@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { getAgendaData } from "../services/agendaService";
-import { normalizeDate } from "./useAgendaWeekNavigation";
+import { useEffect, useState } from "react";
+import {
+  createAgendaAppointment,
+  getAgendaData,
+  updateAgendaAppointment,
+} from "../services/agendaService";
 
 export default function useAgendaData(currentDate) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState(0);
   const [hours, setHours] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const loadReferenceDateRef = useRef(currentDate);
+  const [clients, setClients] = useState([]);
+  const [services, setServices] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -16,18 +22,24 @@ export default function useAgendaData(currentDate) {
       try {
         setLoading(true);
         setError("");
+        setErrorStatus(0);
 
-        const data = await getAgendaData();
+        const data = await getAgendaData(currentDate);
         if (!active) return;
 
         setHours(data?.hours || []);
         setAppointments(data?.appointments || []);
+        setClients(data?.clients || []);
+        setServices(data?.services || []);
       } catch (err) {
         if (!active) return;
 
         setHours([]);
         setAppointments([]);
+        setClients([]);
+        setServices([]);
         setError(err.message || "Falha ao carregar a agenda.");
+        setErrorStatus(err.status || 0);
       } finally {
         if (active) {
           setLoading(false);
@@ -40,24 +52,34 @@ export default function useAgendaData(currentDate) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [currentDate, reloadKey]);
 
-  const normalizedAppointments = useMemo(() => {
-    return appointments.map((appointment) => ({
-      ...appointment,
-      day: normalizeDate(appointment.day, loadReferenceDateRef.current),
-    }));
-  }, [appointments]);
-
-  function updateAppointment(id, changes) {
-    const patch = typeof changes === "string" ? { status: changes } : changes;
-
-    setAppointments((prev) =>
-      prev.map((appointment) =>
-        appointment.id === id ? { ...appointment, ...patch } : appointment
-      )
-    );
+  async function createAppointment(input) {
+    const result = await createAgendaAppointment(input);
+    setReloadKey((current) => current + 1);
+    return result;
   }
 
-  return { error, loading, hours, normalizedAppointments, updateAppointment };
+  async function updateAppointment(id, changes) {
+    const currentAppointment = appointments.find((appointment) => appointment.id === id);
+    if (!currentAppointment) {
+      return false;
+    }
+
+    const result = await updateAgendaAppointment(currentAppointment, changes);
+    setReloadKey((current) => current + 1);
+    return result;
+  }
+
+  return {
+    clients,
+    error,
+    errorStatus,
+    hours,
+    loading,
+    normalizedAppointments: appointments,
+    services,
+    createAppointment,
+    updateAppointment,
+  };
 }

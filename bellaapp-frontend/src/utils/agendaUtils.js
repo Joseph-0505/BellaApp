@@ -13,6 +13,6 @@ export function riskColor(risk) {
 export function statusColor(status) {
   if (status === "confirmado") return "#dff3e7";
   if (status === "pendente") return "#f8ecd6";
-  if (status === "em_atendimento") return "#dfe9f8";
+  if (status === "concluido") return "#dfe9f8";
   return "#f3f3f3";
 }
