@@ -11,7 +11,18 @@ function pickAvatarTone(name) {
   return AVATAR_TONES[score % AVATAR_TONES.length];
 }
 
+function formatClientDate(isoDate) {
+  if (!isoDate) {
+    return null;
+  }
+
+  return new Date(isoDate).toLocaleDateString("pt-BR");
+}
+
 function toClientViewModel(client) {
+  const latestVisit = formatClientDate(client.latestVisitAt);
+  const nextAppointment = formatClientDate(client.nextAppointmentAt);
+
   return {
     id: client.id,
     name: client.name,
@@ -19,12 +30,12 @@ function toClientViewModel(client) {
     phone: client.phone,
     cpf: client.cpf || "",
     notes: client.notes || "",
-    latestVisit: "Sem historico",
-    latestVisitNote: client.notes || "Nenhum atendimento registrado",
-    nextAppointment: "Sem agenda",
-    professional: "Nao definido",
-    totalSpent: 0,
-    status: "ativo",
+    latestVisit: latestVisit || client.latestVisit || "Sem historico",
+    latestVisitNote: client.latestVisitNote || client.notes || "Nenhum atendimento registrado",
+    nextAppointment: nextAppointment || client.nextAppointment || "Sem agenda",
+    professional: client.professional || "Nao definido",
+    totalSpent: Number(client.totalSpent || 0),
+    status: client.status || "novo",
     avatarTone: pickAvatarTone(client.name),
   };
 }

@@ -31,6 +31,7 @@ export default function NovoServico({
   onClose,
   onSave,
   showCatalogExtras = true,
+  showProfessionalsField = showCatalogExtras,
   submitLabel = "Salvar servico",
   title = "Novo Servico",
 }) {
@@ -180,16 +181,18 @@ export default function NovoServico({
                 </select>
               </div>
 
-              <div className="form-modal-field">
-                <label htmlFor="novo-servico-profissionais">Profissionais</label>
-                <input
-                  id="novo-servico-profissionais"
-                  name="professionals"
-                  value={formData.professionals}
-                  onChange={handleChange}
-                  placeholder="Dra. Ana, Camila Souza"
-                />
-              </div>
+              {showProfessionalsField ? (
+                <div className="form-modal-field">
+                  <label htmlFor="novo-servico-profissionais">Profissionais</label>
+                  <input
+                    id="novo-servico-profissionais"
+                    name="professionals"
+                    value={formData.professionals}
+                    onChange={handleChange}
+                    placeholder="Dra. Ana, Camila Souza"
+                  />
+                </div>
+              ) : null}
             </>
           ) : null}
 
@@ -211,8 +214,11 @@ export default function NovoServico({
 
         {showCatalogExtras ? (
           <div className="form-modal-helper">
-            <strong>Observacao:</strong> profissionais podem ser informados separados por virgula. O servico entra
-            ativo e pode ser reutilizado em outras telas com `initialValues`.
+            <strong>Observacao:</strong> risco e icone ja podem ser persistidos pela API.{" "}
+            {showProfessionalsField
+              ? "Profissionais podem ser informados separados por virgula."
+              : "Profissionais ainda nao sao persistidos neste fluxo."}{" "}
+            O servico entra ativo e pode ser reutilizado em outras telas com `initialValues`.
           </div>
         ) : (
           <div className="form-modal-helper">

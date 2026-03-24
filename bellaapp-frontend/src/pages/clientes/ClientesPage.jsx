@@ -286,7 +286,7 @@ export default function ClientesPage() {
                 setPage(1);
               }}
               disabled
-              title="O backend atual nao expoe status de clientes."
+              title="A API ja devolve status por cliente, mas o filtro ainda nao esta ligado na listagem paginada."
             >
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>

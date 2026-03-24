@@ -248,6 +248,7 @@ export default function ServicosPage() {
           limit: pageSize,
           search: deferredSearch,
           active: status === "todos" ? undefined : status === "ativos",
+          risk: risk === "todos" ? undefined : risk,
         });
 
         if (!active) {
@@ -286,7 +287,7 @@ export default function ServicosPage() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, navigate, page, pageSize, reloadKey, status]);
+  }, [deferredSearch, navigate, page, pageSize, reloadKey, risk, status]);
 
   const visibleServices = useMemo(() => services, [services]);
   const totalPages = Math.max(meta.totalPages || 0, 1);
@@ -308,6 +309,16 @@ export default function ServicosPage() {
 
       return currentTop;
     }, null);
+  }, [visibleServices]);
+
+  const riskCounters = useMemo(() => {
+    return visibleServices.reduce(
+      (accumulator, service) => {
+        accumulator[service.risk] = (accumulator[service.risk] || 0) + 1;
+        return accumulator;
+      },
+      { baixo: 0, medio: 0, alto: 0 }
+    );
   }, [visibleServices]);
 
   async function handleCreateService(serviceData) {
@@ -390,8 +401,6 @@ export default function ServicosPage() {
                   setRisk(event.target.value);
                   setPage(1);
                 }}
-                disabled
-                title="O backend atual nao expoe nivel de risco do servico."
               >
                 {RISK_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -405,8 +414,8 @@ export default function ServicosPage() {
           <div className="services-tip">
             <BulbIcon />
             <p>
-              <strong>Dica:</strong> nome, descricao, preco, duracao e status ja estao vindo do backend. Risco,
-              profissionais e metricas comerciais ainda dependem de suporte adicional da API.
+              <strong>Dica:</strong> nome, descricao, preco, duracao, risco, icone e volume de uso ja podem ser
+              consumidos da API. Profissionais vinculados ao servico ainda dependem de suporte adicional no backend.
             </p>
           </div>
 
@@ -531,19 +540,19 @@ export default function ServicosPage() {
               <div className="services-stat-row">
                 <span className="services-dot services-dot-baixo" />
                 <span>Baixo risco</span>
-                <strong>-</strong>
+                <strong>{riskCounters.baixo}</strong>
               </div>
 
               <div className="services-stat-row">
                 <span className="services-dot services-dot-medio" />
                 <span>Medio risco</span>
-                <strong>-</strong>
+                <strong>{riskCounters.medio}</strong>
               </div>
 
               <div className="services-stat-row">
                 <span className="services-dot services-dot-alto" />
                 <span>Alto risco</span>
-                <strong>-</strong>
+                <strong>{riskCounters.alto}</strong>
               </div>
             </div>
 
@@ -578,7 +587,7 @@ export default function ServicosPage() {
                 </button>
               </>
             ) : (
-              <p>Sem metricas de vendas no backend atual.</p>
+              <p>Sem agendamentos vinculados aos servicos ainda.</p>
             )}
           </article>
 
@@ -610,8 +619,9 @@ export default function ServicosPage() {
         <NovoServico
           onClose={() => setIsNewServiceOpen(false)}
           onSave={handleCreateService}
-          showCatalogExtras={false}
-          description="Cadastre nome, descricao, preco, duracao e status do servico."
+          showCatalogExtras
+          showProfessionalsField={false}
+          description="Cadastre nome, descricao, preco, duracao, risco, icone e status do servico."
         />
       ) : null}
 
@@ -622,8 +632,9 @@ export default function ServicosPage() {
           initialValues={editingService}
           onClose={() => setEditingService(null)}
           onSave={handleUpdateService}
-          showCatalogExtras={false}
-          description="Atualize os campos que existem no backend de servicos."
+          showCatalogExtras
+          showProfessionalsField={false}
+          description="Atualize os campos persistidos pelo backend de servicos."
         />
       ) : null}
     </section>
