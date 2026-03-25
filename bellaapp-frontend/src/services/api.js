@@ -91,11 +91,26 @@ function extractErrorPayload(body) {
   }
 
   const apiError = body.error && typeof body.error === "object" ? body.error : null;
+  const details = apiError?.details || body.details || null;
+  const detailMessages = Array.isArray(details)
+    ? details
+        .map((detail) => (detail && typeof detail === "object" ? detail.message : ""))
+        .filter(Boolean)
+    : [];
+  const fallbackMessage =
+    detailMessages.length > 0
+      ? detailMessages.join(" ")
+      : "Erro na requisicao.";
+  const rawMessage = apiError?.message || body.message || fallbackMessage;
+  const message =
+    rawMessage === "Dados invalidos." && detailMessages.length > 0
+      ? detailMessages.join(" ")
+      : rawMessage;
 
   return {
     code: apiError?.code || body.code || "API_ERROR",
-    details: apiError?.details || body.details || null,
-    message: apiError?.message || body.message || "Erro na requisicao.",
+    details,
+    message,
   };
 }
 

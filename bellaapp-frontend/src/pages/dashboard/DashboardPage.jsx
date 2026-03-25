@@ -129,7 +129,7 @@ export default function DashboardPage() {
       await updateAppointment(appt, { status: nextStatus });
       await loadDashboard();
     } catch (err) {
-      alert(err.message || "Nao foi possivel atualizar o agendamento.");
+      alert(err.message || "Não foi possivel atualizar o agendamento.");
     }
   }
 
@@ -138,7 +138,7 @@ export default function DashboardPage() {
       await createAppointment(appointment);
       await loadDashboard();
     } catch (err) {
-      alert(err.message || "Nao foi possivel criar o agendamento.");
+      alert(err.message || "Não foi possivel criar o agendamento.");
       return false;
     }
 
@@ -162,7 +162,7 @@ export default function DashboardPage() {
         ...current,
       ]);
     } catch (err) {
-      alert(err.message || "Nao foi possivel cadastrar o cliente.");
+      alert(err.message || "Não foi possivel cadastrar o cliente.");
       return false;
     }
 
@@ -207,7 +207,7 @@ export default function DashboardPage() {
           apiMode
           clients={references.clients}
           defaultDate={new Date().toISOString().split("T")[0]}
-          description="Crie um atendimento rapido direto do dashboard."
+          description="Crie um atendimento rápido direto do dashboard."
           hours={["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]}
           onClose={() => setIsNewAppointmentOpen(false)}
           onSave={handleDashboardAppointmentSave}

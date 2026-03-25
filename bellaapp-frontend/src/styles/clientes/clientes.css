@@ -5,32 +5,14 @@
   padding: 20px 6px 32px;
 }
 
-.clientes-hero,
 .clientes-board {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 250, 252, 0.98) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 250, 252, 0.98) 100%
+  );
   border: 1px solid rgba(232, 160, 191, 0.28);
   box-shadow: 0 20px 45px rgba(184, 138, 158, 0.12);
-}
-
-.clientes-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 18px 20px;
-  border-radius: 22px;
-}
-
-.clientes-hero h1 {
-  font-size: clamp(2rem, 2.6vw, 3rem);
-  color: #1f2f41;
-  letter-spacing: -0.04em;
-}
-
-.clientes-hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .clientes-icon-button,
@@ -52,20 +34,6 @@
   width: 44px;
   height: 44px;
   border-radius: 14px;
-}
-
-.clientes-primary-button {
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #eca8c3 0%, #e58db0 100%);
-  color: var(--white);
-  font-weight: 700;
-  box-shadow: 0 14px 24px rgba(229, 141, 176, 0.28);
-}
-
-.clientes-primary-button:hover {
-  transform: translateY(-1px);
 }
 
 .clientes-icon-button:hover,
@@ -104,7 +72,6 @@
 .clientes-search svg,
 .clientes-summary-pill svg,
 .clientes-icon-button svg,
-.clientes-primary-button svg,
 .clientes-page-button svg,
 .cliente-action-button svg,
 .cliente-col-phone svg {
@@ -408,24 +375,20 @@
     padding-inline: 0;
   }
 
-  .clientes-hero,
   .clientes-footer,
   .cliente-row {
     flex-direction: column;
   }
 
-  .clientes-hero,
   .clientes-footer {
     align-items: stretch;
   }
 
-  .clientes-hero-actions,
   .clientes-footer-controls {
     width: 100%;
   }
 
   .clientes-icon-button,
-  .clientes-primary-button,
   .clientes-summary-pill,
   .clientes-page-button,
   .clientes-page-size {

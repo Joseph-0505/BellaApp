@@ -13,7 +13,7 @@ export default function DashboardHeader({
   return (
     <Header
       title={nomeClinica || "Painel da Clinica"}
-      subtitle={`Hoje voce tem ${totalAtendimentos} atendimentos e faturamento previsto de ${formatCurrency(faturamentoPrevisto)}.`}
+      subtitle={`Hoje você tem ${totalAtendimentos} atendimentos e faturamento previsto de ${formatCurrency(faturamentoPrevisto)}.`}
       actions={
         <>
           <button type="button" className="btn-primary" onClick={onNewAppointment}>

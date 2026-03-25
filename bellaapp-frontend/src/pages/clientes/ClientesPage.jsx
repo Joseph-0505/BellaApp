@@ -259,9 +259,7 @@ export default function ClientesPage() {
 
   return (
     <section className="clientes-page">
-      <header className="clientes-hero">
-        <ClientesHeader onNewClient={() => setIsNewClientOpen(true)} />
-      </header>
+      <ClientesHeader onNewClient={() => setIsNewClientOpen(true)} />
 
       <section className="clientes-board">
         <div className="clientes-toolbar">
@@ -327,10 +325,10 @@ export default function ClientesPage() {
         <div className="clientes-table-head">
           <span>Cliente</span>
           <span>Telefone</span>
-          <span>Ultimo Atendimento</span>
-          <span>Proximo Agendamento</span>
+          <span>Último Atendimento</span>
+          <span>Próximo Agendamento</span>
           <span>Total gasto</span>
-          <span>Acoes</span>
+          <span>Ações</span>
         </div>
 
         <div className="clientes-table-body">
@@ -413,7 +411,7 @@ export default function ClientesPage() {
               className="clientes-page-button icon"
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               disabled={currentPage === totalPages}
-              aria-label="Proxima pagina"
+              aria-label="Próxima página"
             >
               <ChevronIcon direction="right" />
             </button>
@@ -427,7 +425,7 @@ export default function ClientesPage() {
               disabled={currentPage === totalPages}
             >
               <ChevronIcon direction="left" />
-              Proxima
+              Próxima
             </button>
 
             <label className="clientes-page-size">
@@ -440,7 +438,7 @@ export default function ClientesPage() {
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>
-                    {size} / pagina
+                    {size} / página
                   </option>
                 ))}
               </select>

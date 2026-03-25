@@ -15,6 +15,30 @@ const INITIAL_FORM_DATA = {
   password: "",
 };
 
+function validatePassword(password) {
+  if (password.length < 8) {
+    return "A senha deve ter no minimo 8 caracteres.";
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return "A senha precisa ter pelo menos uma letra minuscula.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "A senha precisa ter pelo menos uma letra maiuscula.";
+  }
+
+  if (!/\d/.test(password)) {
+    return "A senha precisa ter pelo menos um numero.";
+  }
+
+  if (!/[^A-Za-z\d]/.test(password)) {
+    return "A senha precisa ter pelo menos um simbolo.";
+  }
+
+  return "";
+}
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
@@ -49,6 +73,11 @@ export default function AuthPage() {
       if (mode === "register") {
         if (formData.password !== formData.confirmPassword) {
           throw new Error("As senhas nao coincidem.");
+        }
+
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) {
+          throw new Error(passwordError);
         }
 
         if (formData.cnpj.trim() && !formData.businessName.trim()) {
@@ -179,6 +208,11 @@ export default function AuthPage() {
                 onChange={handleChange}
                 required
               />
+              {mode === "register" ? (
+                <small className="auth-helper">
+                  Minimo de 8 caracteres com letra maiuscula, minuscula, numero e simbolo.
+                </small>
+              ) : null}
             </div>
 
             {mode === "register" ? (
