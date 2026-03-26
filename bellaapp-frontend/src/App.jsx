@@ -7,6 +7,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import ClientesPage from "./pages/clientes/ClientesPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ServicosPage from "./pages/servicos/ServicosPage";
+import ProfissionaisPage from "./pages/profissionais/ProfissionaisPage";
 
 function ProtectedLayout() {
   if (!isAuthenticated()) {
@@ -46,6 +47,7 @@ function App() {
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/servicos" element={<ServicosPage />} />
+          <Route path="/profissionais" element={<ProfissionaisPage />} />
         </Route>
 
         <Route path="/" element={<RootRedirect />} />

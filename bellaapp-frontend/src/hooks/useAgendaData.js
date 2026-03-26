@@ -71,6 +71,10 @@ export default function useAgendaData(currentDate) {
     return result;
   }
 
+  function refreshAgendaData() {
+    setReloadKey((current) => current + 1);
+  }
+
   return {
     clients,
     error,
@@ -80,6 +84,7 @@ export default function useAgendaData(currentDate) {
     normalizedAppointments: appointments,
     services,
     createAppointment,
+    refreshAgendaData,
     updateAppointment,
   };
 }

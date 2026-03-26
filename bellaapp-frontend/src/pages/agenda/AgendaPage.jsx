@@ -7,8 +7,10 @@ import AgendaFilters from "../../components/agenda/AgendaFilters";
 import AgendaSidebar from "../../components/agenda/AgendaSidebar";
 import AppointmentModal from "../../components/modals/AppointmentModal";
 import NovoAgendamento from "../../components/modals/NovoAgendamento";
+import NovoCliente from "../../components/modals/NovoCliente";
 
 import { clearSession } from "../../services/api";
+import { createClient } from "../../services/clientService";
 import useAgendaWeekNavigation from "../../hooks/useAgendaWeekNavigation";
 import useAgendaData from "../../hooks/useAgendaData";
 import useAgendaMetrics from "../../hooks/useAgendaMetrics";
@@ -22,6 +24,7 @@ export default function AgendaPage() {
   const [status, setStatus] = useState("todos");
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
 
   const {
     currentDate,
@@ -40,6 +43,7 @@ export default function AgendaPage() {
     normalizedAppointments,
     services,
     createAppointment,
+    refreshAgendaData,
     updateAppointment,
   } = useAgendaData(currentDate);
 
@@ -82,7 +86,7 @@ export default function AgendaPage() {
     try {
       await createAppointment(appointment);
     } catch (requestError) {
-      alert(requestError.message || "Nao foi possivel criar o agendamento.");
+      alert(requestError.message || "Não foi possivel criar o agendamento.");
       return false;
     }
 
@@ -93,7 +97,19 @@ export default function AgendaPage() {
     try {
       await updateAppointment(id, changes);
     } catch (requestError) {
-      alert(requestError.message || "Nao foi possivel atualizar o agendamento.");
+      alert(requestError.message || "Não foi possivel atualizar o agendamento.");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleNewClient(client) {
+    try {
+      await createClient(client);
+      refreshAgendaData();
+    } catch (requestError) {
+      alert(requestError.message || "Não foi possivel criar o cliente.");
       return false;
     }
 
@@ -104,6 +120,7 @@ export default function AgendaPage() {
     <section className="dashboard-page">
       <AgendaHeader
         currentDate={currentDate}
+        onNewClient={() => setIsNewClientOpen(true)}
         onNewAppointment={() => setIsNewAppointmentOpen(true)}
         onNextWeek={nextWeek}
         onPrevWeek={prevWeek}
@@ -126,7 +143,7 @@ export default function AgendaPage() {
             {hasFilters ? (
               <p className="agenda-feedback">
                 Mostrando {visibleAppointments.length} de {weekAppointments.length} agendamentos
-                desta semana. Os demais continuam ocupando seus horarios na grade.
+                desta semana. Os demais continuam ocupando seus horários na grade.
               </p>
             ) : null}
 
@@ -166,6 +183,15 @@ export default function AgendaPage() {
           onClose={() => setIsNewAppointmentOpen(false)}
           onSave={handleNewAppointment}
           services={services}
+        />
+      ) : null}
+
+      {isNewClientOpen ? (
+        <NovoCliente
+          description="Cadastre um cliente sem sair da agenda para agilizar novos agendamentos."
+          onClose={() => setIsNewClientOpen(false)}
+          onSave={handleNewClient}
+          showCommercialFields={false}
         />
       ) : null}
     </section>

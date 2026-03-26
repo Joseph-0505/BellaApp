@@ -27,7 +27,7 @@ export default function AgendaSummary({ resumo = {} }) {
         </p>
 
         <p className="agenda-item-row">
-          Ocupacao: <strong>{resumo.taxaOcupacao || 0}%</strong>
+          Ocupação: <strong>{resumo.taxaOcupacao || 0}%</strong>
         </p>
 
         <p>

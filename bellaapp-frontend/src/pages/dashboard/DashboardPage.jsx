@@ -74,7 +74,7 @@ export default function DashboardPage() {
       {
         label: "Pendentes",
         value: resumo.pendentes || 0,
-        trend: "Precisam de confirmacao",
+        trend: "Precisam de confirmação",
       },
       {
         label: "Cancelados",

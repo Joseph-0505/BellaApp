@@ -25,7 +25,7 @@ function pickAvatarTone(name) {
 
 export default function NovoCliente({
   closeOnSave = true,
-  description = "Cadastre um cliente e insira as informacoes basicas para a equipe comercial.",
+  description = "Cadastre um cliente e insira as informações básicas para a equipe comercial.",
   initialValues = {},
   onClose,
   onSave,
@@ -168,7 +168,7 @@ export default function NovoCliente({
               </div>
 
               <div className="form-modal-field">
-                <label htmlFor="novo-cliente-proximo">Proximo atendimento</label>
+                <label htmlFor="novo-cliente-proximo">Próximo atendimento</label>
                 <input
                   id="novo-cliente-proximo"
                   name="nextAppointment"
@@ -195,7 +195,7 @@ export default function NovoCliente({
           ) : null}
 
           <div className="form-modal-field form-modal-field-full">
-            <label htmlFor="novo-cliente-observacoes">Observacoes</label>
+            <label htmlFor="novo-cliente-observacoes">Observações</label>
             <textarea
               id="novo-cliente-observacoes"
               name="notes"
@@ -206,17 +206,8 @@ export default function NovoCliente({
           </div>
         </div>
 
-        {showCommercialFields ? (
-          <div className="form-modal-preview">
-            <strong>Previa:</strong> o cliente sera adicionado no topo da lista com status{" "}
-            <strong>{STATUS_OPTIONS.find((option) => option.value === formData.status)?.label || "Novo"}</strong>.
-          </div>
-        ) : (
-          <div className="form-modal-preview">
-            <strong>Previa:</strong> o cliente sera salvo na API com nome, contato, CPF e observacoes basicas.
-          </div>
-        )}
-
+       
+        
         <div className="form-modal-footer">
           <button
             type="button"

@@ -24,7 +24,7 @@ export default function NovoAgendamento({
   apiMode = false,
   clients = [],
   closeOnSave = true,
-  description = "Monte um agendamento rapido com cliente, servico e janela operacional da agenda.",
+  description = "Monte um agendamento rápido com cliente, serviço e janela operacional da agenda.",
   onClose,
   onSave,
   hours = [],
@@ -45,7 +45,7 @@ export default function NovoAgendamento({
       serviceId: services[0]?.id || "",
       cliente: "",
       servico: "",
-      profissional: "Nao definido",
+      profissional: "Não definido",
       data: defaultDate || new Date().toISOString().split("T")[0],
       hora: availableHours[0] || "09:00",
       recurso: "",
@@ -101,9 +101,9 @@ export default function NovoAgendamento({
           hora: formData.hora,
           cliente: selectedClient?.name || "",
           servico: selectedService?.name || "",
-          profissional: "Nao definido",
+          profissional: "Não definido",
           status: formData.status,
-          recurso: "Nao definido",
+          recurso: "Não definido",
           riscoNoShow: "baixo",
           valorEstimado: Number(selectedService?.price || 0),
           duracaoMin: Number(selectedService?.durationMinutes || 0),
@@ -160,7 +160,7 @@ export default function NovoAgendamento({
               </div>
 
               <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-servico">Servico</label>
+                <label htmlFor="novo-agendamento-servico">Serviço</label>
                 <select
                   id="novo-agendamento-servico"
                   name="serviceId"
@@ -191,7 +191,7 @@ export default function NovoAgendamento({
               </div>
 
               <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-servico">Servico</label>
+                <label htmlFor="novo-agendamento-servico">Serviço</label>
                 <input
                   id="novo-agendamento-servico"
                   name="servico"
@@ -240,7 +240,7 @@ export default function NovoAgendamento({
           </div>
 
           <div className="form-modal-field">
-            <label htmlFor="novo-agendamento-hora">Horario</label>
+            <label htmlFor="novo-agendamento-hora">Horário</label>
             <select id="novo-agendamento-hora" name="hora" value={formData.hora} onChange={handleChange}>
               {availableHours.map((hour) => (
                 <option key={hour} value={hour}>
@@ -253,6 +253,16 @@ export default function NovoAgendamento({
           <div className="form-modal-field">
             <label htmlFor="novo-agendamento-status">Status inicial</label>
             <select id="novo-agendamento-status" name="status" value={formData.status} onChange={handleChange}>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+            <div className="form-modal-field">
+            <label htmlFor="novo-agendamento-profissional">Profissional</label>
+            <select id="novo-agendamento-profissional" name="profissional" value={formData.profissional} onChange={handleChange}>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -320,20 +330,7 @@ export default function NovoAgendamento({
           </div>
         </div>
 
-        <div className="form-modal-helper">
-          {apiMode ? (
-            <>
-              <strong>API:</strong> o agendamento sera salvo com cliente, servico, data, horario, status e
-              observacoes.
-            </>
-          ) : (
-            <>
-              <strong>Agenda:</strong> esse modal agora aceita `initialValues`, `hours`, `title` e `submitLabel`, entao
-              pode ser reutilizado em qualquer pagina.
-            </>
-          )}
-        </div>
-
+        
         <div className="form-modal-footer">
           <button
             type="button"

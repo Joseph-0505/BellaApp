@@ -10,7 +10,7 @@ export default function AgendaFilters({
         className="agenda-input"
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder="Buscar cliente ou servico"
+        placeholder="Buscar cliente ou serviço"
       />
 
       <select

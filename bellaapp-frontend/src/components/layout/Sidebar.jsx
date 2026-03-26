@@ -26,6 +26,10 @@ export default function Sidebar(){
                 <NavLink to="/servicos" className="sidebar-link">
                 Serviços
                 </NavLink>
+
+                <NavLink to="/profissionais" className="sidebar-link">
+                Profissionais
+                </NavLink>
       
             </nav>
          </aside>

@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ClientesHeader from "../../components/clientes/ClientesHeader";
+import Header from "../../components/layout/Header";
 import NovoCliente from "../../components/modals/NovoCliente";
 import { clearSession } from "../../services/api";
 import { createClient, deleteClient, listClients, updateClient } from "../../services/clientService";
@@ -259,7 +259,15 @@ export default function ClientesPage() {
 
   return (
     <section className="clientes-page">
-      <ClientesHeader onNewClient={() => setIsNewClientOpen(true)} />
+      <Header
+        title="Clientes"
+        actions={
+         <button type="button" className="btn-soft" onClick={() => setIsNewClientOpen(true)}>
+          + Novo Cliente
+         </button>
+        }
+      />
+
 
       <section className="clientes-board">
         <div className="clientes-toolbar">

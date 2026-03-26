@@ -6,11 +6,11 @@ export default function AgendaSuggestions({ slots = [] }) {
       id="agenda-available-slots"
       className="panel agenda-panel-content"
     >
-      <h2>Horarios livres para novo agendamento</h2>
+      <h2>Horários livres para novo agendamento</h2>
 
       {nextSlots.length === 0 ? (
         <p className="agenda-panel-empty">
-          Nenhum horario livre encontrado nesta semana.
+          Nenhum horário livre encontrado nesta semana.
         </p>
       ) : (
         <ul className="agenda-list">

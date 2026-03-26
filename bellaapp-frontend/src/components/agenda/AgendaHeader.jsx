@@ -1,5 +1,4 @@
 import { formatWeekRangeLabel } from "../../hooks/useAgendaWeekNavigation";
-import LinkButton from "../buttons/LinkButton";
 import Header from "../layout/Header";
 import "../../styles/agenda/agenda-header.css";
 
@@ -8,6 +7,7 @@ export default function AgendaHeader({
   onPrevWeek,
   onNextWeek,
   onToday,
+  onNewClient,
   onNewAppointment,
 }) {
   const leftContent = (
@@ -16,7 +16,7 @@ export default function AgendaHeader({
         {"<"}
       </button>
       <h2>{formatWeekRangeLabel(currentDate)}</h2>
-      <button type="button" onClick={onNextWeek} aria-label="Proxima semana">
+      <button type="button" onClick={onNextWeek} aria-label="Próxima semana">
         {">"}
       </button>
     </div>
@@ -30,9 +30,9 @@ export default function AgendaHeader({
       <button type="button" className="btn-primary" onClick={onNewAppointment}>
         Novo Agendamento
       </button>
-      <LinkButton to="/clientes" className="btn-soft">
+      <button type="button" className="btn-soft" onClick={onNewClient}>
         Novo Cliente
-      </LinkButton>
+      </button>
     </>
   );
 

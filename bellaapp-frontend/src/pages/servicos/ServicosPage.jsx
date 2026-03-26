@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NovoServico from "../../components/modals/NovoServico";
+import Header from "../../components/layout/Header";
 import { clearSession } from "../../services/api";
 import { createService, listServices, updateService } from "../../services/serviceService";
 import "../../styles/servicos/servicos.css";
@@ -353,14 +354,14 @@ export default function ServicosPage() {
 
   return (
     <section className="services-page">
-      <header className="services-topbar">
-        <h1>Servicos</h1>
-
-        <button type="button" className="services-primary-button" onClick={() => setIsNewServiceOpen(true)}>
-          <PlusIcon />
-          Novo Servico
-        </button>
-      </header>
+       <Header
+              title="Serviços"
+              actions={
+               <button type="button" className="btn-primary" onClick={() => setIsNewServiceOpen(true)}>
+                + Novo Serviço
+               </button>
+              }
+            />
 
       <div className="services-content-grid">
         <section className="services-main-panel">
