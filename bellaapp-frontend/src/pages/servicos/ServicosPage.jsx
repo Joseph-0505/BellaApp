@@ -356,6 +356,7 @@ export default function ServicosPage() {
     <section className="services-page">
        <Header
               title="Serviços"
+              subtitle="Gerencie seus serviços, valores e duração de forma simples e eficiente"
               actions={
                <button type="button" className="btn-primary" onClick={() => setIsNewServiceOpen(true)}>
                 + Novo Serviço
@@ -621,7 +622,6 @@ export default function ServicosPage() {
           onClose={() => setIsNewServiceOpen(false)}
           onSave={handleCreateService}
           showCatalogExtras
-          showProfessionalsField={false}
           description="Cadastre nome, descricao, preco, duracao, risco, icone e status do servico."
         />
       ) : null}
@@ -634,7 +634,6 @@ export default function ServicosPage() {
           onClose={() => setEditingService(null)}
           onSave={handleUpdateService}
           showCatalogExtras
-          showProfessionalsField={false}
           description="Atualize os campos persistidos pelo backend de servicos."
         />
       ) : null}

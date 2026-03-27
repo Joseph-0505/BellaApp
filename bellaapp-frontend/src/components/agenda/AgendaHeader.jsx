@@ -39,6 +39,7 @@ export default function AgendaHeader({
   return (
     <Header
       title="Agenda"
+      subtitle="Organize seus atendimentos e tenha total controle da sua agenda"
       leftContent={leftContent}
       actions={actions}
       className="agenda-header"

@@ -14,14 +14,6 @@ const STATUS_OPTIONS = [
   { value: "risco", label: "Risco alto" },
 ];
 
-const PROFESSIONAL_OPTIONS = [
-  { value: "todos", label: "Todos profissionais" },
-  { value: "Dra. Ana", label: "Dra. Ana" },
-  { value: "Dra. Rafaela", label: "Dra. Rafaela" },
-  { value: "Rodrigo Lunda", label: "Rodrigo Lunda" },
-  { value: "Joao Peria", label: "Joao Peria" },
-];
-
 const PAGE_SIZE_OPTIONS = [10, 20, 30];
 
 function SearchIcon() {
@@ -136,7 +128,6 @@ export default function ClientesPage() {
   const [clients, setClients] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
-  const [professional, setProfessional] = useState("todos");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
@@ -261,6 +252,7 @@ export default function ClientesPage() {
     <section className="clientes-page">
       <Header
         title="Clientes"
+        subtitle="Centralize e gerencie todas as informações dos seus clientes com facilidade"
         actions={
          <button type="button" className="btn-soft" onClick={() => setIsNewClientOpen(true)}>
           + Novo Cliente
@@ -295,24 +287,6 @@ export default function ClientesPage() {
               title="A API ja devolve status por cliente, mas o filtro ainda nao esta ligado na listagem paginada."
             >
               {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="clientes-select">
-            <select
-              value={professional}
-              onChange={(event) => {
-                setProfessional(event.target.value);
-                setPage(1);
-              }}
-              disabled
-              title="O backend atual nao expoe profissional principal do cliente."
-            >
-              {PROFESSIONAL_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -459,8 +433,6 @@ export default function ClientesPage() {
         <NovoCliente
           onClose={() => setIsNewClientOpen(false)}
           onSave={handleCreateClient}
-          professionals={PROFESSIONAL_OPTIONS.filter((option) => option.value !== "todos").map((option) => option.value)}
-          showCommercialFields={false}
           description="Cadastre nome, telefone, email, CPF e observacoes basicas do cliente."
         />
       ) : null}
@@ -472,8 +444,6 @@ export default function ClientesPage() {
           initialValues={editingClient}
           onClose={() => setEditingClient(null)}
           onSave={handleUpdateClient}
-          professionals={PROFESSIONAL_OPTIONS.filter((option) => option.value !== "todos").map((option) => option.value)}
-          showCommercialFields={false}
           description="Atualize os dados basicos persistidos pelo backend."
         />
       ) : null}

@@ -16,7 +16,7 @@ const REFRESH_MS = 30000;
 function AlertList({ alertas }) {
   return (
     <article className="panel">
-      <h2>Alertas rapidos</h2>
+      <h2>Alertas rápidos</h2>
       <ul className="alert-list">
         {alertas.length === 0 ? <li>Nenhum alerta no momento.</li> : null}
         {alertas.map((alerta) => (
@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const [agendaHoje, setAgendaHoje] = useState([]);
   const [alertas, setAlertas] = useState([]);
   const [topServicos, setTopServicos] = useState([]);
-  const [references, setReferences] = useState({ clients: [], services: [] });
+  const [references, setReferences] = useState({ clients: [], professionals: [], services: [] });
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
       setAgendaHoje(data.agendaHoje);
       setAlertas(data.alertas);
       setTopServicos(data.topServicos);
-      setReferences(data.references || { clients: [], services: [] });
+      setReferences(data.references || { clients: [], professionals: [], services: [] });
     } catch (err) {
       if (err.status === 401) {
         clearSession();
@@ -204,13 +204,13 @@ export default function DashboardPage() {
 
       {isNewAppointmentOpen ? (
         <NovoAgendamento
-          apiMode
           clients={references.clients}
           defaultDate={new Date().toISOString().split("T")[0]}
           description="Crie um atendimento rápido direto do dashboard."
           hours={["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]}
           onClose={() => setIsNewAppointmentOpen(false)}
           onSave={handleDashboardAppointmentSave}
+          professionals={references.professionals}
           services={references.services}
           title="Agendar no Dashboard"
         />
@@ -221,7 +221,6 @@ export default function DashboardPage() {
           description="Cadastre um cliente sem sair do dashboard."
           onClose={() => setIsNewClientOpen(false)}
           onSave={handleDashboardClientSave}
-          showCommercialFields={false}
           title="Cadastrar Cliente"
         />
       ) : null}

@@ -1,21 +1,30 @@
 import { useState } from "react";
 import FormModalShell from "./FormModalShell";
 
-export default function NovoCliente({
+const STATUS_OPTIONS = [
+  { value: "ativo", label: "Ativo" },
+  { value: "inativo", label: "Inativo" },
+];
+
+function statusLabel(status) {
+  return status === "ativo" ? "Ativo" : "Inativo";
+}
+
+export default function NovoProfissional({
   closeOnSave = true,
-  description = "Cadastre um cliente com os dados basicos persistidos pela API.",
+  description = "Cadastre nome, especialidade, contato e status operacional do profissional.",
   initialValues = {},
   onClose,
   onSave,
-  submitLabel = "Salvar cliente",
-  title = "Novo Cliente",
+  submitLabel = "Salvar profissional",
+  title = "Novo Profissional",
 }) {
   const [formData, setFormData] = useState(() => ({
     name: initialValues.name || "",
+    specialty: initialValues.specialty || initialValues.role || "",
     email: initialValues.email || "",
     phone: initialValues.phone || "",
-    cpf: initialValues.cpf || "",
-    notes: initialValues.notes || "",
+    status: initialValues.status || "ativo",
   }));
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,10 +44,10 @@ export default function NovoCliente({
     try {
       const result = await onSave?.({
         name: formData.name.trim(),
+        specialty: formData.specialty.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
-        cpf: formData.cpf.trim(),
-        notes: formData.notes.trim(),
+        status: formData.status,
       });
 
       if (closeOnSave && result !== false) {
@@ -54,33 +63,56 @@ export default function NovoCliente({
       <form className="form-modal-form" onSubmit={handleSubmit}>
         <div className="form-modal-grid">
           <div className="form-modal-field form-modal-field-full">
-            <label htmlFor="novo-cliente-nome">Nome completo</label>
+            <label htmlFor="novo-profissional-nome">Nome completo</label>
             <input
-              id="novo-cliente-nome"
+              id="novo-profissional-nome"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Ex: Mariana Costa"
+              placeholder="Ex: Dra. Mariana Souza"
               required
             />
           </div>
 
           <div className="form-modal-field">
-            <label htmlFor="novo-cliente-email">E-mail</label>
+            <label htmlFor="novo-profissional-especialidade">Especialidade</label>
             <input
-              id="novo-cliente-email"
-              name="email"
-              type="email"
-              value={formData.email}
+              id="novo-profissional-especialidade"
+              name="specialty"
+              value={formData.specialty}
               onChange={handleChange}
-              placeholder="cliente@empresa.com"
+              placeholder="Ex: Fisioterapeuta"
+              required
             />
           </div>
 
           <div className="form-modal-field">
-            <label htmlFor="novo-cliente-telefone">Telefone</label>
+            <label htmlFor="novo-profissional-status">Status</label>
+            <select id="novo-profissional-status" name="status" value={formData.status} onChange={handleChange}>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-modal-field">
+            <label htmlFor="novo-profissional-email">E-mail</label>
             <input
-              id="novo-cliente-telefone"
+              id="novo-profissional-email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="profissional@empresa.com"
+            />
+          </div>
+
+          <div className="form-modal-field">
+            <label htmlFor="novo-profissional-telefone">Telefone</label>
+            <input
+              id="novo-profissional-telefone"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
@@ -88,28 +120,11 @@ export default function NovoCliente({
               required
             />
           </div>
+        </div>
 
-          <div className="form-modal-field">
-            <label htmlFor="novo-cliente-cpf">CPF</label>
-            <input
-              id="novo-cliente-cpf"
-              name="cpf"
-              value={formData.cpf}
-              onChange={handleChange}
-              placeholder="Digite o CPF"
-            />
-          </div>
-
-          <div className="form-modal-field form-modal-field-full">
-            <label htmlFor="novo-cliente-observacoes">Observacoes</label>
-            <textarea
-              id="novo-cliente-observacoes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Anote preferencias ou qualquer observacao relevante."
-            />
-          </div>
+        <div className="form-modal-preview">
+          <strong>Preview:</strong> {formData.name.trim() || "Novo profissional"} |{" "}
+          {formData.specialty.trim() || "Especialidade"} | {statusLabel(formData.status)}
         </div>
 
         <div className="form-modal-footer">

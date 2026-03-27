@@ -1,9 +1,37 @@
+import FormModalShell from "./FormModalShell";
+import formatCurrency from "../../utils/formatters";
 import "../../styles/modals/appointment-modal.css";
-import formatCurrency from "../../utils/formatters.js";
 
 import useAppointmentActions from "../../hooks/useAppointmentActions.js";
-import useEscClose from "../../hooks/useEscClose.js";
 import useReschedule from "../../hooks/useReschedule.js";
+
+const STATUS_LABELS = {
+  pendente: "Pendente",
+  confirmado: "Confirmado",
+  concluido: "Concluido",
+  cancelado: "Cancelado",
+};
+
+function formatDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`));
+}
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || status || "-";
+}
+
+function InfoField({ label, value, fullWidth = false }) {
+  return (
+    <div className={`form-modal-field${fullWidth ? " form-modal-field-full" : ""}`}>
+      <label>{label}</label>
+      <div className="appointment-modal-value">{value || "-"}</div>
+    </div>
+  );
+}
 
 export default function AppointmentModal({
   appointment,
@@ -12,8 +40,6 @@ export default function AppointmentModal({
   appointments = [],
   hours = [],
 }) {
-  useEscClose(onClose);
-
   const {
     loading: actionLoading,
     handleConfirm,
@@ -44,85 +70,33 @@ export default function AppointmentModal({
     hours,
   });
 
-  if (!appointment) return null;
+  if (!appointment) {
+    return null;
+  }
 
+  const isRescheduling = mode === "reschedule";
+  const title =  "Detalhes do agendamento";
+  const description = isRescheduling ? "Selecione uma nova data e horário para o atendimento atual." : title
+  ? "verifique os detalhes do agendamento." : "";
+    
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-content premium-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
-          <h2>{appointment.cliente}</h2>
-          <span className={`status-badge ${appointment.status}`}>
-            {appointment.status}
-          </span>
-        </div>
+    <FormModalShell description={description} onClose={onClose} size="compact" title={title}>
+      {isRescheduling ? (
+        <div className="form-modal-form">
+          <div className="appointment-modal-summary">
+            <strong>{appointment.cliente}</strong>
+            <span>
+              {appointment.servico} | {formatDate(appointment.day)} | {appointment.hour}
+            </span>
+          </div>
 
-        {mode === "view" && (
-          <>
-            <div className="modal-body">
-              <div className="info-group">
-                <p>
-                  <strong>Serviço</strong>
-                </p>
-                <span>{appointment.servico}</span>
-              </div>
-
-              <div className="info-group">
-                <p>
-                  <strong>Profissional</strong>
-                </p>
-                <span>{appointment.profissional}</span>
-              </div>
-
-              <div className="info-group">
-                <p>
-                  <strong>Recurso</strong>
-                </p>
-                <span>{appointment.recurso}</span>
-              </div>
-            </div>
-
-            <div className="modal-highlight">
-              <span>Valor do atendimento </span>
-              <strong>{formatCurrency(appointment.valorEstimado)}</strong>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="btn btn-success"
-                onClick={handleConfirm}
-                disabled={actionLoading}
-              >
-                {actionLoading ? "Confirmando..." : "Confirmar"}
-              </button>
-
-              <button
-                className="btn btn-warning"
-                onClick={startReschedule}
-              >
-                Reagendar
-              </button>
-
-              <button
-                className="btn btn-danger"
-                onClick={handleCancel}
-                disabled={actionLoading}
-              >
-                Cancelar
-              </button>
-            </div>
-          </>
-        )}
-
-        {mode === "reschedule" && (
-          <div className="reschedule-box">
+          <div className="appointment-modal-section">
             <h3>Escolha um dia</h3>
 
             <div className="days-grid">
               {availableDays.map((day) => {
                 const isSelected = selectedDay === day.key;
+
                 return (
                   <button
                     type="button"
@@ -136,15 +110,15 @@ export default function AppointmentModal({
                 );
               })}
             </div>
+          </div>
 
+          <div className="appointment-modal-section">
             <h3>Escolha um novo horário</h3>
 
             {selectedDay && daySlots.length > 0 ? (
               <div className="slots-grid">
                 {daySlots.map((slot) => {
-                  const isSelected =
-                    selectedDay === slot.day &&
-                    selectedHour === slot.hour;
+                  const isSelected = selectedDay === slot.day && selectedHour === slot.hour;
 
                   return (
                     <button
@@ -159,35 +133,83 @@ export default function AppointmentModal({
                 })}
               </div>
             ) : selectedDay ? (
-              <p>Nenhum horário disponível para este dia.</p>
+              <p className="appointment-modal-empty">Nenhum horário disponível para este dia.</p>
             ) : (
-              <p>Selecione um dia para ver os horários livres.</p>
+              <p className="appointment-modal-empty">Selecione um dia para ver os horários livres.</p>
             )}
-
-            <div className="modal-actions">
-              <button
-                className="btn btn-success"
-                onClick={saveReschedule}
-                disabled={rescheduleLoading || !selectedDay || !selectedHour}
-              >
-                {rescheduleLoading ? "Salvando..." : "Confirmar reagendamento"}
-              </button>
-
-              <button
-                className="btn btn-danger"
-                onClick={cancelReschedule}
-                disabled={rescheduleLoading}
-              >
-                Voltar
-              </button>
-            </div>
           </div>
-        )}
 
-        <button className="modal-close" onClick={onClose}>
-          Fechar
-        </button>
-      </div>
-    </div>
+          <div className="form-modal-footer">
+            <button
+              type="button"
+              className="form-modal-button form-modal-button-secondary"
+              onClick={cancelReschedule}
+              disabled={rescheduleLoading}
+            >
+              Voltar
+            </button>
+
+            <button
+              type="button"
+              className="form-modal-button form-modal-button-primary"
+              onClick={saveReschedule}
+              disabled={rescheduleLoading || !selectedDay || !selectedHour}
+            >
+              {rescheduleLoading ? "Salvando..." : "Confirmar reagendamento"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="form-modal-form">
+          <div className="form-modal-grid">
+            <InfoField label="Cliente" value={appointment.cliente} />
+            <InfoField label="Serviço" value={appointment.servico} />
+            <InfoField label="Profissional" value={appointment.profissional || "Nao vinculado"} />
+            <InfoField label="Data" value={formatDate(appointment.day)} />
+            <InfoField label="Horário" value={appointment.hour} />
+            <InfoField label="Status" value={statusLabel(appointment.status)} />
+            <InfoField
+              label="Observações"
+              value={appointment.observacoes || "Sem observações registradas."}
+              fullWidth
+            />
+          </div>
+
+          <div className="appointment-modal-highlight">
+            <span>Valor estimado</span>
+            <strong>{formatCurrency(appointment.valorEstimado)}</strong>
+          </div>
+
+          <div className="form-modal-footer">
+            <button
+              type="button"
+              className="form-modal-button form-modal-button-secondary"
+              onClick={startReschedule}
+              disabled={actionLoading}
+            >
+              Reagendar
+            </button>
+
+            <button
+              type="button"
+              className="form-modal-button appointment-modal-button-danger"
+              onClick={handleCancel}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Cancelando..." : "Cancelar"}
+            </button>
+
+            <button
+              type="button"
+              className="form-modal-button form-modal-button-primary"
+              onClick={handleConfirm}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Confirmando..." : "Confirmar"}
+            </button>
+          </div>
+        </div>
+      )}
+    </FormModalShell>
   );
 }

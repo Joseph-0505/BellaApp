@@ -19,10 +19,6 @@ export default function AgendaSummary({ resumo = {} }) {
         </p>
 
         <p className="agenda-item-row">
-          Risco alto: <strong>{resumo.riscoAlto || 0}</strong>
-        </p>
-
-        <p className="agenda-item-row">
           Livres: <strong>{resumo.livresTotal || 0}</strong>
         </p>
 

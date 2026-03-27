@@ -1,71 +1,63 @@
 import { useMemo, useState } from "react";
 import FormModalShell from "./FormModalShell";
+import { DEFAULT_HOURS, API_STATUS_OPTIONS } from "../../utils/agendaUtils";
 
-const API_STATUS_OPTIONS = [
-  { value: "pendente", label: "Pendente" },
-  { value: "confirmado", label: "Confirmado" },
-  { value: "cancelado", label: "Cancelado" },
-];
+function getTodayIsoDate() {
+  return new Date().toISOString().split("T")[0];
+}
 
-const LEGACY_STATUS_OPTIONS = [
-  { value: "pendente", label: "Pendente" },
-  { value: "confirmado", label: "Confirmado" },
-  { value: "concluido", label: "Concluido" },
-  { value: "cancelado", label: "Cancelado" },
-];
+function renderOptions(items, emptyLabel) {
+  if (items.length === 0) {
+    return <option value="">{emptyLabel}</option>;
+  }
 
-const RISK_OPTIONS = [
-  { value: "baixo", label: "Baixo" },
-  { value: "medio", label: "Medio" },
-  { value: "alto", label: "Alto" },
-];
+  return items.map((item) => (
+    <option key={item.id} value={item.id}>
+      {item.name}
+    </option>
+  ));
+}
 
 export default function NovoAgendamento({
-  apiMode = false,
   clients = [],
   closeOnSave = true,
+  defaultDate = "",
   description = "Monte um agendamento rápido com cliente, serviço e janela operacional da agenda.",
+  hours = [],
+  initialValues = {},
   onClose,
   onSave,
-  hours = [],
-  defaultDate = "",
-  initialValues = {},
+  professionals = [],
   services = [],
   submitLabel = "Salvar agendamento",
   title = "Novo Agendamento",
 }) {
-  const availableHours = hours.length > 0 ? hours : ["09:00", "10:00", "11:00", "14:00", "15:00"];
-  const resolvedDate = initialValues.data || initialValues.day || defaultDate || new Date().toISOString().split("T")[0];
-  const resolvedHour = initialValues.hora || initialValues.hour || availableHours[0] || "09:00";
-  const statusOptions = apiMode ? API_STATUS_OPTIONS : LEGACY_STATUS_OPTIONS;
+  const availableHours = hours.length > 0 ? hours : DEFAULT_HOURS;
+  const resolvedDate = initialValues.data || initialValues.day || defaultDate || getTodayIsoDate();
+  const resolvedHour = initialValues.hora || initialValues.hour || availableHours[0] || DEFAULT_HOURS[0];
+  const resolvedProfessionalId =
+    initialValues.professionalId || professionals.find((item) => item.name === initialValues.profissional)?.id || "";
 
-  const [formData, setFormData] = useState(() => {
-    const baseState = {
-      clientId: clients[0]?.id || "",
-      serviceId: services[0]?.id || "",
-      cliente: "",
-      servico: "",
-      profissional: "Não definido",
-      data: defaultDate || new Date().toISOString().split("T")[0],
-      hora: availableHours[0] || "09:00",
-      recurso: "",
-      status: "pendente",
-      riscoNoShow: "baixo",
-      valorEstimado: "",
-      duracaoMin: "60",
-      observacoes: "",
-    };
-
-    return {
-      ...baseState,
-      ...initialValues,
-      data: resolvedDate,
-      hora: resolvedHour,
-      clientId: initialValues.clientId || baseState.clientId,
-      serviceId: initialValues.serviceId || baseState.serviceId,
-    };
-  });
+  const [formData, setFormData] = useState(() => ({
+    clientId: initialValues.clientId || clients[0]?.id || "",
+    serviceId: initialValues.serviceId || services[0]?.id || "",
+    professionalId: resolvedProfessionalId,
+    data: resolvedDate,
+    hora: resolvedHour,
+    status: initialValues.status || "pendente",
+    observacoes: initialValues.observacoes || initialValues.notes || "",
+  }));
   const [submitting, setSubmitting] = useState(false);
+
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === formData.clientId) || null,
+    [clients, formData.clientId]
+  );
+
+  const selectedProfessional = useMemo(
+    () => professionals.find((professional) => professional.id === formData.professionalId) || null,
+    [formData.professionalId, professionals]
+  );
 
   const selectedService = useMemo(
     () => services.find((service) => service.id === formData.serviceId) || null,
@@ -86,48 +78,23 @@ export default function NovoAgendamento({
     setSubmitting(true);
 
     try {
-      let payload;
+      const notes = formData.observacoes.trim();
+      const result = await onSave?.({
+        clientId: formData.clientId,
+        serviceId: formData.serviceId,
+        ...(formData.professionalId ? { professionalId: formData.professionalId } : {}),
+        cliente: selectedClient?.name || "",
+        servico: selectedService?.name || "",
+        profissional: selectedProfessional?.name || "",
+        day: formData.data,
+        hour: formData.hora,
+        data: formData.data,
+        hora: formData.hora,
+        status: formData.status,
+        observacoes: notes,
+        notes,
+      });
 
-      if (apiMode) {
-        const selectedClient = clients.find((client) => client.id === formData.clientId);
-
-        payload = {
-          id: initialValues.id || Date.now(),
-          clientId: formData.clientId,
-          serviceId: formData.serviceId,
-          day: formData.data,
-          hour: formData.hora,
-          data: formData.data,
-          hora: formData.hora,
-          cliente: selectedClient?.name || "",
-          servico: selectedService?.name || "",
-          profissional: "Não definido",
-          status: formData.status,
-          recurso: "Não definido",
-          riscoNoShow: "baixo",
-          valorEstimado: Number(selectedService?.price || 0),
-          duracaoMin: Number(selectedService?.durationMinutes || 0),
-          observacoes: formData.observacoes.trim(),
-          notes: formData.observacoes.trim(),
-        };
-      } else {
-        payload = {
-          id: initialValues.id || Date.now(),
-          day: formData.data,
-          hour: formData.hora,
-          cliente: formData.cliente.trim(),
-          servico: formData.servico.trim(),
-          profissional: formData.profissional.trim(),
-          status: formData.status,
-          recurso: formData.recurso.trim() || "A definir",
-          riscoNoShow: formData.riscoNoShow,
-          valorEstimado: Number(formData.valorEstimado) || 0,
-          duracaoMin: Number(formData.duracaoMin) || 60,
-          observacoes: formData.observacoes.trim(),
-        };
-      }
-
-      const result = await onSave?.(payload);
       if (closeOnSave && result !== false) {
         onClose?.();
       }
@@ -140,92 +107,50 @@ export default function NovoAgendamento({
     <FormModalShell description={description} onClose={onClose} title={title}>
       <form className="form-modal-form" onSubmit={handleSubmit}>
         <div className="form-modal-grid">
-          {apiMode ? (
-            <>
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-cliente">Cliente</label>
-                <select
-                  id="novo-agendamento-cliente"
-                  name="clientId"
-                  value={formData.clientId}
-                  onChange={handleChange}
-                  required
-                >
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="form-modal-field">
+            <label htmlFor="novo-agendamento-cliente">Cliente</label>
+            <select
+              id="novo-agendamento-cliente"
+              name="clientId"
+              value={formData.clientId}
+              onChange={handleChange}
+              required
+            >
+              {renderOptions(clients, "Nenhum cliente cadastrado")}
+            </select>
+          </div>
 
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-servico">Serviço</label>
-                <select
-                  id="novo-agendamento-servico"
-                  name="serviceId"
-                  value={formData.serviceId}
-                  onChange={handleChange}
-                  required
-                >
-                  {services.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-cliente">Cliente</label>
-                <input
-                  id="novo-agendamento-cliente"
-                  name="cliente"
-                  value={formData.cliente}
-                  onChange={handleChange}
-                  placeholder="Ex: Mariana Costa"
-                  required
-                />
-              </div>
+          <div className="form-modal-field">
+            <label htmlFor="novo-agendamento-servico">Serviço</label>
+            <select
+              id="novo-agendamento-servico"
+              name="serviceId"
+              value={formData.serviceId}
+              onChange={handleChange}
+              required
+            >
+              {renderOptions(services, "Nenhum serviço cadastrado")}
+            </select>
+          </div>
 
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-servico">Serviço</label>
-                <input
-                  id="novo-agendamento-servico"
-                  name="servico"
-                  value={formData.servico}
-                  onChange={handleChange}
-                  placeholder="Ex: Limpeza de Pele"
-                  required
-                />
-              </div>
-
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-profissional">Profissional</label>
-                <input
-                  id="novo-agendamento-profissional"
-                  name="profissional"
-                  value={formData.profissional}
-                  onChange={handleChange}
-                  placeholder="Dra. Ana"
-                  required
-                />
-              </div>
-
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-recurso">Recurso / sala</label>
-                <input
-                  id="novo-agendamento-recurso"
-                  name="recurso"
-                  value={formData.recurso}
-                  onChange={handleChange}
-                  placeholder="Cabine 1"
-                />
-              </div>
-            </>
-          )}
+          <div className="form-modal-field">
+            <label htmlFor="novo-agendamento-profissional">Profissional</label>
+            <select
+              id="novo-agendamento-profissional"
+              name="professionalId"
+              value={formData.professionalId}
+              onChange={handleChange}
+            >
+              <option value="">
+                {professionals.length > 0 ? "Selecionar profissional" : "Nenhum profissional cadastrado"}
+              </option>
+              {professionals.map((professional) => (
+                <option key={professional.id} value={professional.id}>
+                  {professional.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="form-modal-field">
             <label htmlFor="novo-agendamento-data">Data</label>
@@ -253,84 +178,26 @@ export default function NovoAgendamento({
           <div className="form-modal-field">
             <label htmlFor="novo-agendamento-status">Status inicial</label>
             <select id="novo-agendamento-status" name="status" value={formData.status} onChange={handleChange}>
-              {statusOptions.map((option) => (
+              {API_STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-            <div className="form-modal-field">
-            <label htmlFor="novo-agendamento-profissional">Profissional</label>
-            <select id="novo-agendamento-profissional" name="profissional" value={formData.profissional} onChange={handleChange}>
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {apiMode ? null : (
-            <>
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-risco">Risco de no-show</label>
-                <select
-                  id="novo-agendamento-risco"
-                  name="riscoNoShow"
-                  value={formData.riscoNoShow}
-                  onChange={handleChange}
-                >
-                  {RISK_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-valor">Valor estimado</label>
-                <input
-                  id="novo-agendamento-valor"
-                  name="valorEstimado"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.valorEstimado}
-                  onChange={handleChange}
-                  placeholder="250"
-                />
-              </div>
-
-              <div className="form-modal-field">
-                <label htmlFor="novo-agendamento-duracao">Duracao (min)</label>
-                <input
-                  id="novo-agendamento-duracao"
-                  name="duracaoMin"
-                  type="number"
-                  min="15"
-                  step="5"
-                  value={formData.duracaoMin}
-                  onChange={handleChange}
-                />
-              </div>
-            </>
-          )}
 
           <div className="form-modal-field form-modal-field-full">
-            <label htmlFor="novo-agendamento-observacoes">Observacoes</label>
+            <label htmlFor="novo-agendamento-observacoes">Observações</label>
             <textarea
               id="novo-agendamento-observacoes"
               name="observacoes"
               value={formData.observacoes}
               onChange={handleChange}
-              placeholder="Ex: confirmar com 24h de antecedencia ou levar ficha assinada."
+              placeholder="Ex: confirmar com 24h de antecedência ou levar ficha assinada."
             />
           </div>
         </div>
 
-        
         <div className="form-modal-footer">
           <button
             type="button"

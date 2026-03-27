@@ -47,9 +47,6 @@ export default function useAgendaMetrics({
     const pendentes = weekAppointments.filter(
       (appointment) => appointment.status === "pendente"
     ).length;
-    const riscoAlto = weekAppointments.filter(
-      (appointment) => appointment.riscoNoShow === "alto"
-    ).length;
     const totalSlots = weekDays.length * hours.length;
     const livresTotal = Math.max(totalSlots - totalAtendimentos, 0);
     const taxaOcupacao =
@@ -60,7 +57,6 @@ export default function useAgendaMetrics({
       livresTotal,
       pendentes,
       receitaProjetada,
-      riscoAlto,
       taxaOcupacao,
       totalAtendimentos,
     };

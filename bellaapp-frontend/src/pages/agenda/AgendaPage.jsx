@@ -41,6 +41,7 @@ export default function AgendaPage() {
     loading,
     hours,
     normalizedAppointments,
+    professionals,
     services,
     createAppointment,
     refreshAgendaData,
@@ -176,12 +177,12 @@ export default function AgendaPage() {
 
       {isNewAppointmentOpen ? (
         <NovoAgendamento
-          apiMode
           clients={clients}
           defaultDate={weekDays[0]?.key}
           hours={hours}
           onClose={() => setIsNewAppointmentOpen(false)}
           onSave={handleNewAppointment}
+          professionals={professionals}
           services={services}
         />
       ) : null}
@@ -191,7 +192,6 @@ export default function AgendaPage() {
           description="Cadastre um cliente sem sair da agenda para agilizar novos agendamentos."
           onClose={() => setIsNewClientOpen(false)}
           onSave={handleNewClient}
-          showCommercialFields={false}
         />
       ) : null}
     </section>

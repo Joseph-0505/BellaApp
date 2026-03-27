@@ -1,3 +1,24 @@
+export const DEFAULT_HOURS = ["09:00", "10:00", "11:00", "14:00", "15:00"];
+
+export const API_STATUS_OPTIONS = [
+  { value: "pendente", label: "Pendente" },
+  { value: "confirmado", label: "Confirmado" },
+  { value: "cancelado", label: "Cancelado" },
+];
+
+export const LEGACY_STATUS_OPTIONS = [
+  { value: "pendente", label: "Pendente" },
+  { value: "confirmado", label: "Confirmado" },
+  { value: "concluido", label: "Concluido" },
+  { value: "cancelado", label: "Cancelado" },
+];
+
+export const RISK_OPTIONS = [
+  { value: "baixo", label: "Baixo" },
+  { value: "medio", label: "Medio" },
+  { value: "alto", label: "Alto" },
+];
+
 export function riskLabel(risk) {
   if (risk === "alto") return "Risco alto";
   if (risk === "medio") return "Risco medio";
@@ -16,3 +37,4 @@ export function statusColor(status) {
   if (status === "concluido") return "#dfe9f8";
   return "#f3f3f3";
 }
+

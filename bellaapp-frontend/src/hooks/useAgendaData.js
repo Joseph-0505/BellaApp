@@ -12,6 +12,7 @@ export default function useAgendaData(currentDate) {
   const [hours, setHours] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [clients, setClients] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [services, setServices] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -30,6 +31,7 @@ export default function useAgendaData(currentDate) {
         setHours(data?.hours || []);
         setAppointments(data?.appointments || []);
         setClients(data?.clients || []);
+        setProfessionals(data?.professionals || []);
         setServices(data?.services || []);
       } catch (err) {
         if (!active) return;
@@ -37,6 +39,7 @@ export default function useAgendaData(currentDate) {
         setHours([]);
         setAppointments([]);
         setClients([]);
+        setProfessionals([]);
         setServices([]);
         setError(err.message || "Falha ao carregar a agenda.");
         setErrorStatus(err.status || 0);
@@ -82,6 +85,7 @@ export default function useAgendaData(currentDate) {
     hours,
     loading,
     normalizedAppointments: appointments,
+    professionals,
     services,
     createAppointment,
     refreshAgendaData,

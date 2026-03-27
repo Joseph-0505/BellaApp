@@ -1,5 +1,14 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
+import NovoProfissional from "../../components/modals/NovoProfissional";
+import { clearSession } from "../../services/api";
+import {
+  createProfessional,
+  deleteProfessional,
+  listProfessionals,
+  updateProfessional,
+} from "../../services/professionalService";
 
 import "../../styles/profissionais/profissionais.css";
 
@@ -11,49 +20,6 @@ const STATUS_OPTIONS = [
 
 const PAGE_SIZE = 4;
 
-const PROFESSIONALS = [
-  {
-    id: "professional-1",
-    name: "Dra. Mariana Souza",
-    specialty: "Fisioterapeuta",
-    email: "mariana@clinica.com",
-    phone: "(11) 98765-4321",
-    status: "ativo",
-    initials: "MS",
-    tone: "rose",
-  },
-  {
-    id: "professional-2",
-    name: "Carlos Mendes",
-    specialty: "Esteticista",
-    email: "carlos@clinica.com",
-    phone: "(21) 91234-5678",
-    status: "ativo",
-    initials: "CM",
-    tone: "sand",
-  },
-  {
-    id: "professional-3",
-    name: "Ana Pereira",
-    specialty: "Dermatologista",
-    email: "ana@clinica.com",
-    phone: "(31) 99876-5432",
-    status: "ativo",
-    initials: "AP",
-    tone: "sage",
-  },
-  {
-    id: "professional-4",
-    name: "Dr. Ricardo Lima",
-    specialty: "Ortopedista",
-    email: "ricardo@clinica.com",
-    phone: "(41) 8765-4321",
-    status: "inativo",
-    initials: "RL",
-    tone: "mist",
-  },
-];
-
 function SearchIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -61,14 +27,6 @@ function SearchIcon() {
         d="M10.5 4a6.5 6.5 0 1 0 4.03 11.6l4.43 4.42 1.06-1.06-4.42-4.43A6.5 6.5 0 0 0 10.5 4Zm0 1.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"
         fill="currentColor"
       />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M11.25 5h1.5v6.25H19v1.5h-6.25V19h-1.5v-6.25H5v-1.5h6.25V5Z" fill="currentColor" />
     </svg>
   );
 }
@@ -92,60 +50,146 @@ function ChevronIcon({ direction = "down" }) {
   );
 }
 
-function normalizeText(value) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
 function statusLabel(status) {
   return status === "ativo" ? "Ativo" : "Inativo";
 }
 
 export default function ProfissionaisPage() {
+  const navigate = useNavigate();
+  const [professionals, setProfessionals] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
   const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({
+    limit: PAGE_SIZE,
+    page: 1,
+    total: 0,
+    totalPages: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [isNewProfessionalOpen, setIsNewProfessionalOpen] = useState(false);
+  const [editingProfessional, setEditingProfessional] = useState(null);
   const deferredSearch = useDeferredValue(search);
 
-  const filteredProfessionals = useMemo(() => {
-    const normalizedSearch = normalizeText(deferredSearch);
+  useEffect(() => {
+    let active = true;
 
-    return PROFESSIONALS.filter((professional) => {
-      const matchesStatus = status === "todos" || professional.status === status;
-      const matchesSearch =
-        normalizedSearch.length === 0 ||
-        [
-          professional.name,
-          professional.specialty,
-          professional.email,
-          professional.phone,
-          statusLabel(professional.status),
-        ].some((field) => normalizeText(field).includes(normalizedSearch));
+    async function loadProfessionalsData() {
+      try {
+        setLoading(true);
+        setError("");
 
-      return matchesStatus && matchesSearch;
-    });
-  }, [deferredSearch, status]);
+        const response = await listProfessionals({
+          page,
+          limit: PAGE_SIZE,
+          search: deferredSearch,
+          status: status === "todos" ? undefined : status,
+        });
 
-  const totalPages = Math.max(Math.ceil(filteredProfessionals.length / PAGE_SIZE), 1);
-  const currentPage = Math.min(page, totalPages);
+        if (!active) {
+          return;
+        }
 
-  const visibleProfessionals = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredProfessionals.slice(start, start + PAGE_SIZE);
-  }, [currentPage, filteredProfessionals]);
+        setProfessionals(response.items);
+        setMeta(response.meta);
+      } catch (requestError) {
+        if (!active) {
+          return;
+        }
+
+        setProfessionals([]);
+        setMeta({
+          limit: PAGE_SIZE,
+          page,
+          total: 0,
+          totalPages: 0,
+        });
+        setError(requestError.message || "Falha ao carregar profissionais.");
+
+        if (requestError.status === 401) {
+          clearSession();
+          navigate("/login", { replace: true });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProfessionalsData();
+
+    return () => {
+      active = false;
+    };
+  }, [deferredSearch, navigate, page, reloadKey, status]);
+
+  const totalPages = Math.max(meta.totalPages || 0, 1);
+  const currentPage = Math.min(meta.page || page, totalPages);
+
+  async function handleCreateProfessional(professionalData) {
+    try {
+      await createProfessional(professionalData);
+      setPage(1);
+      setReloadKey((current) => current + 1);
+    } catch (requestError) {
+      alert(requestError.message || "Nao foi possivel salvar o profissional.");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleUpdateProfessional(professionalData) {
+    if (!editingProfessional) {
+      return false;
+    }
+
+    try {
+      await updateProfessional(editingProfessional.id, professionalData);
+      setEditingProfessional(null);
+      setReloadKey((current) => current + 1);
+    } catch (requestError) {
+      alert(requestError.message || "Nao foi possivel atualizar o profissional.");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleDeleteProfessional(id) {
+    const confirmed = window.confirm("Deseja excluir este profissional?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProfessional(id);
+
+      if (professionals.length === 1 && currentPage > 1) {
+        setPage((current) => Math.max(1, current - 1));
+        return;
+      }
+
+      setReloadKey((current) => current + 1);
+    } catch (requestError) {
+      alert(requestError.message || "Nao foi possivel excluir o profissional.");
+    }
+  }
 
   return (
     <section className="profissionais-page">
-       <Header
-              title="Profissionais"
-              actions={
-               <button type="button" className="btn-primary" onClick={() => setIsNewClientOpen(true)}>
-                + Novo Profissional
-               </button>
-              }
-            />
+      <Header
+        title="Profissionais"
+        subtitle="Centralize especialidades, contatos e disponibilidade do seu time em um unico painel."
+        actions={
+          <button type="button" className="btn-primary" onClick={() => setIsNewProfessionalOpen(true)}>
+            + Novo Profissional
+          </button>
+        }
+      />
 
       <section className="profissionais-board">
         <div className="profissionais-toolbar">
@@ -184,6 +228,9 @@ export default function ProfissionaisPage() {
           </div>
         </div>
 
+        {error ? <p className="agenda-feedback agenda-feedback-error">{error}</p> : null}
+        {loading ? <p className="agenda-feedback">Carregando profissionais...</p> : null}
+
         <div className="profissionais-table-head">
           <span>Foto</span>
           <span>Nome</span>
@@ -195,8 +242,8 @@ export default function ProfissionaisPage() {
         </div>
 
         <div className="profissionais-table-body">
-          {visibleProfessionals.length > 0 ? (
-            visibleProfessionals.map((professional) => (
+          {!loading && professionals.length > 0 ? (
+            professionals.map((professional) => (
               <article key={professional.id} className="profissional-row">
                 <div className="profissional-col profissional-col-photo" data-label="Foto">
                   <div className={`profissional-avatar profissional-avatar-${professional.tone}`}>
@@ -230,7 +277,7 @@ export default function ProfissionaisPage() {
                   <button
                     type="button"
                     className="profissional-action-button profissional-action-button-edit"
-                    title={`Conecte a edicao de ${professional.name} ao seu modal ou formulario.`}
+                    onClick={() => setEditingProfessional(professional)}
                   >
                     Editar
                   </button>
@@ -238,31 +285,33 @@ export default function ProfissionaisPage() {
                   <button
                     type="button"
                     className="profissional-action-button profissional-action-button-delete"
-                    title={`Conecte a exclusao de ${professional.name} ao seu fluxo de confirmacao.`}
+                    onClick={() => handleDeleteProfessional(professional.id)}
                   >
                     Excluir
                   </button>
                 </div>
               </article>
             ))
-          ) : (
+          ) : null}
+
+          {!loading && professionals.length === 0 ? (
             <div className="profissionais-empty">
               <strong>Nenhum profissional encontrado.</strong>
               <span>Ajuste a busca ou o filtro para exibir resultados.</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         <footer className="profissionais-footer">
           <p>
-            Mostrando {visibleProfessionals.length} de {filteredProfessionals.length} profissionais
+            Mostrando {professionals.length} de {meta.total} profissionais
           </p>
 
           <div className="profissionais-pagination">
             <button
               type="button"
               className="profissionais-page-button profissionais-page-button-muted"
-              onClick={() => setPage((currentValue) => Math.max(1, currentValue - 1))}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={currentPage === 1}
             >
               <ChevronIcon direction="left" />
@@ -274,8 +323,8 @@ export default function ProfissionaisPage() {
             <button
               type="button"
               className="profissionais-page-button"
-              onClick={() => setPage((currentValue) => Math.min(totalPages, currentValue + 1))}
-              disabled={currentPage === totalPages || filteredProfessionals.length === 0}
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={currentPage === totalPages || meta.total === 0}
             >
               Proximo
               <ChevronIcon direction="right" />
@@ -283,6 +332,23 @@ export default function ProfissionaisPage() {
           </div>
         </footer>
       </section>
+
+      {isNewProfessionalOpen ? (
+        <NovoProfissional
+          onClose={() => setIsNewProfessionalOpen(false)}
+          onSave={handleCreateProfessional}
+        />
+      ) : null}
+
+      {editingProfessional ? (
+        <NovoProfissional
+          title="Editar Profissional"
+          submitLabel="Salvar alteracoes"
+          initialValues={editingProfessional}
+          onClose={() => setEditingProfessional(null)}
+          onSave={handleUpdateProfessional}
+        />
+      ) : null}
     </section>
   );
 }

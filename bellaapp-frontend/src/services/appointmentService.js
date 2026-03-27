@@ -1,5 +1,6 @@
 import { apiGet, apiPost, apiPut } from "./api";
 import { listClients } from "./clientService";
+import { listProfessionals } from "./professionalService";
 import { listServices } from "./serviceService";
 
 const APPOINTMENTS_BASE_PATH = "/api/v1/appointments";
@@ -69,9 +70,10 @@ function sortByScheduledAt(a, b) {
 }
 
 async function getAppointmentCatalog() {
-  const [clientsResponse, servicesResponse] = await Promise.all([
+  const [clientsResponse, servicesResponse, professionalsResponse] = await Promise.all([
     listClients({ page: 1, limit: 100 }),
     listServices({ page: 1, limit: 100 }),
+    listProfessionals({ page: 1, limit: 100 }),
   ]);
 
   const clients = clientsResponse.items.map((client) => ({
@@ -87,31 +89,40 @@ async function getAppointmentCatalog() {
     active: service.active,
   }));
 
+  const allProfessionals = professionalsResponse.items.map((professional) => ({
+    id: professional.id,
+    name: professional.name,
+    specialty: professional.specialty,
+    status: professional.status,
+  }));
+
   return {
     clients,
+    professionals: allProfessionals.filter((professional) => professional.status === "ativo"),
     services,
     clientById: new Map(clientsResponse.items.map((client) => [client.id, client])),
+    professionalById: new Map(allProfessionals.map((professional) => [professional.id, professional])),
     serviceById: new Map(services.map((service) => [service.id, service])),
   };
 }
 
 function toAgendaAppointment(appointment, catalog) {
   const client = catalog.clientById.get(appointment.clientId);
+  const professional = catalog.professionalById.get(appointment.professionalId);
   const service = catalog.serviceById.get(appointment.serviceId);
 
   return {
     id: appointment.id,
     clientId: appointment.clientId,
+    professionalId: appointment.professionalId || "",
     serviceId: appointment.serviceId,
     scheduledAt: appointment.scheduledAt,
     day: toIsoLocal(new Date(appointment.scheduledAt)),
     hour: formatHour(appointment.scheduledAt),
     cliente: client?.name || "Cliente nao encontrado",
     servico: service?.name || "Servico nao encontrado",
-    profissional: "Nao definido",
+    profissional: professional?.name || "",
     status: mapApiStatusToUi(appointment.status),
-    recurso: "Nao definido",
-    riscoNoShow: "baixo",
     valorEstimado: Number(service?.price || 0),
     duracaoMin: Number(service?.durationMinutes || 0),
     observacoes: appointment.notes || "",
@@ -144,6 +155,7 @@ export async function getAgendaData(referenceDate = new Date()) {
     hours: DEFAULT_HOURS,
     appointments: appointments.map((appointment) => toAgendaAppointment(appointment, catalog)).sort(sortByScheduledAt),
     clients: catalog.clients,
+    professionals: catalog.professionals,
     services: catalog.services.filter((service) => service.active),
   };
 }
@@ -152,6 +164,7 @@ export async function createAppointment(input) {
   const payload = {
     clientId: input.clientId,
     serviceId: input.serviceId,
+    ...(input.professionalId ? { professionalId: input.professionalId } : {}),
     scheduledAt: buildScheduledAt(input.day || input.data, input.hour || input.hora),
     status: mapUiStatusToApi(input.status),
     ...(String(input.notes || input.observacoes || "").trim()
@@ -175,10 +188,15 @@ export async function updateAppointment(currentAppointment, changes) {
       : typeof changes === "object" && Object.prototype.hasOwnProperty.call(changes, "observacoes")
         ? changes.observacoes
         : currentAppointment.notes || currentAppointment.observacoes || "";
+  const nextProfessionalId =
+    typeof changes === "object" && Object.prototype.hasOwnProperty.call(changes, "professionalId")
+      ? changes.professionalId
+      : currentAppointment.professionalId;
 
   const payload = {
     clientId: currentAppointment.clientId,
     serviceId: currentAppointment.serviceId,
+    ...(nextProfessionalId ? { professionalId: nextProfessionalId } : {}),
     scheduledAt: buildScheduledAt(nextDay, nextHour),
     status: mapUiStatusToApi(nextStatus),
     ...(String(nextNotes || "").trim() ? { notes: String(nextNotes).trim() } : {}),
@@ -268,6 +286,7 @@ export async function getDashboardData() {
     agendaHoje: todayAppointments.map((appointment) => ({
       id: appointment.id,
       clientId: appointment.clientId,
+      professionalId: appointment.professionalId,
       serviceId: appointment.serviceId,
       day: appointment.day,
       hour: appointment.hour,
@@ -283,6 +302,7 @@ export async function getDashboardData() {
     topServicos,
     references: {
       clients: catalog.clients,
+      professionals: catalog.professionals,
       services: catalog.services.filter((service) => service.active),
     },
   };
