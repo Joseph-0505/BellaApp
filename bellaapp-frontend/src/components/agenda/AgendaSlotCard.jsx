@@ -1,27 +1,35 @@
-import { statusColor } from "../../utils/agendaUtils";
+import { statusColor, statusLabel } from "../../utils/agendaUtils";
 import formatCurrency from "../../utils/formatters";
 
 export default function AgendaSlotCard({ appointment, isDimmed = false, onClick }) {
+  const status = appointment.status || "cancelado";
+
   return (
     <button
       type="button"
       className={`agenda-slot-card${isDimmed ? " is-dimmed" : ""}`}
       aria-label={`Abrir agendamento de ${appointment.cliente}`}
       onClick={onClick}
+      data-status={status}
       style={{
-        background: statusColor(appointment.status),
-        borderLeft: "4px solid #d6deeb",
+        "--slot-surface": statusColor(status),
       }}
     >
-      <strong>{appointment.cliente}</strong>
+     
+      <div className="agenda-slot-head">
+        <strong className="agenda-slot-title">{appointment.cliente}</strong>
+        <span className="agenda-slot-status">{statusLabel(status)}</span>
+      </div>
 
-      <p className="agenda-slot-text">{appointment.servico}</p>
+      <p className="agenda-slot-service">{appointment.servico}</p>
 
-      {appointment.profissional ? <p className="agenda-slot-text">{appointment.profissional}</p> : null}
+      {appointment.profissional ? (
+        <p className="agenda-slot-text agenda-slot-secondary">{appointment.profissional}</p>
+      ) : null}
 
-      <p className="agenda-slot-meta">
-        Estimado: {formatCurrency(appointment.valorEstimado)}
-      </p>
+      <div className="agenda-slot-footer">
+        <span className="agenda-slot-value">{formatCurrency(appointment.valorEstimado)}</span>
+      </div>
     </button>
   );
 }

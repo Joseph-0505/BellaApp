@@ -8,6 +8,7 @@ export default function AgendaWeekTable({
   appointments,
   visibleAppointmentIds = new Set(),
   filtersActive = false,
+  onCreate,
   onSelect,
 }) {
   const appointmentsBySlot = useMemo(() => {
@@ -26,9 +27,15 @@ export default function AgendaWeekTable({
       <table className="agenda-table agenda-week-table">
         <thead>
           <tr>
-            <th>Hora</th>
+            <th className="agenda-hour-header">Hora</th>
             {days.map((day) => (
-              <th key={day.key}>{day.label}</th>
+              <th className="agenda-day-header-cell" key={day.key}>
+                {/* Split weekday and day number to improve scanability across the week. */}
+                <div className="agenda-day-header">
+                  <span className="agenda-day-weekday">{day.weekdayShort}</span>
+                  <strong className="agenda-day-number">{day.dayNumber}</strong>
+                </div>
+              </th>
             ))}
           </tr>
         </thead>
@@ -36,7 +43,7 @@ export default function AgendaWeekTable({
         <tbody>
           {hours.map((hour) => (
             <tr key={hour}>
-              <td>{hour}</td>
+              <td className="agenda-hour-cell">{hour}</td>
 
               {days.map((day) => {
                 const slotKey = `${day.key}-${hour}`;
@@ -47,7 +54,10 @@ export default function AgendaWeekTable({
                   !visibleAppointmentIds.has(appointment.id);
 
                 return (
-                  <td key={day.key + hour}>
+                  <td
+                    className={`agenda-slot-cell${appointment ? " has-appointment" : " is-empty"}`}
+                    key={day.key + hour}
+                  >
                     {appointment ? (
                       <AgendaSlotCard
                         appointment={appointment}
@@ -55,7 +65,12 @@ export default function AgendaWeekTable({
                         onClick={() => onSelect(appointment)}
                       />
                     ) : (
-                      <EmptySlot />
+                      // Empty slots now point to the existing creation flow, prefilled with day and hour.
+                      <EmptySlot
+                        dayLabel={`${day.weekdayShort} ${day.dayNumber}`}
+                        hour={hour}
+                        onClick={() => onCreate?.({ day: day.key, hour })}
+                      />
                     )}
                   </td>
                 );

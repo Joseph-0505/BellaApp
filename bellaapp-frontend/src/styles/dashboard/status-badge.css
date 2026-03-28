@@ -13,7 +13,7 @@
 
 .status-confirmado {
   background: #e8f8f0;
-  color: #1a7f4d;
+  color: var(--success);
 }
 
 .status-pendente {
@@ -23,12 +23,12 @@
 
 .status-cancelado {
   background: #ffe7eb;
-  color: #9d1d3f;
+  color: var(--danger);
 }
 
 .status-em_atendimento {
   background: #eaf3ff;
-  color: #1c4d8c;
+  color: var(--info);
 }
 
 .status-concluido {

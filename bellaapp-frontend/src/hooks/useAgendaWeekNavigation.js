@@ -24,9 +24,20 @@ export function getWeekDays(date) {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
+    const weekdayShort = d
+      .toLocaleDateString("pt-BR", { weekday: "short" })
+      .replace(".", "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .slice(0, 3)
+      .toUpperCase();
+    const dayNumber = d.toLocaleDateString("pt-BR", { day: "2-digit" });
     week.push({
       key: toIsoLocal(d),
       label: d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit" }),
+      // Expose separated parts so the agenda header can stack weekday and date without extra parsing.
+      weekdayShort,
+      dayNumber,
     });
   }
   return week;

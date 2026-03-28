@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AgendaTable from "../../components/dashboard/AgendaTable";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KpiCard from "../../components/dashboard/KpiCard";
@@ -6,7 +6,13 @@ import RevenueCard from "../../components/dashboard/RevenueCard";
 import TopServicesList from "../../components/dashboard/TopServicesList";
 import NovoAgendamento from "../../components/modals/NovoAgendamento";
 import NovoCliente from "../../components/modals/NovoCliente";
-import { createAppointment, getDashboardData, updateAppointment } from "../../services/appointmentService";
+import ReagendamentoModal from "../../components/modals/ReagendamentoModal";
+import {
+  createAppointment,
+  getAgendaData,
+  getDashboardData,
+  updateAppointment,
+} from "../../services/appointmentService";
 import { createClient } from "../../services/clientService";
 import { clearSession, getCurrentUser } from "../../services/api";
 import "../../styles/dashboard/dashboard.css";
@@ -56,8 +62,13 @@ export default function DashboardPage() {
   const [references, setReferences] = useState({ clients: [], professionals: [], services: [] });
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [rescheduleAppointments, setRescheduleAppointments] = useState([]);
+  const [rescheduleHours, setRescheduleHours] = useState([]);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
 
   const currentUser = getCurrentUser();
+  const appointmentModalRequestRef = useRef(0);
 
   const kpis = useMemo(() => {
     return [
@@ -115,7 +126,52 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, [loadDashboard]);
 
+  function closeReagendamentoModal() {
+    appointmentModalRequestRef.current += 1;
+    setSelectedAppointment(null);
+    setRescheduleAppointments([]);
+    setRescheduleHours([]);
+    setRescheduleLoading(false);
+  }
+
+  async function openReagendamentoModal(appointment) {
+    const requestId = appointmentModalRequestRef.current + 1;
+    appointmentModalRequestRef.current = requestId;
+
+    setSelectedAppointment(appointment);
+    setRescheduleAppointments([]);
+    setRescheduleHours([]);
+    setRescheduleLoading(true);
+
+    try {
+      const data = await getAgendaData(new Date(`${appointment.day}T00:00:00`));
+      if (appointmentModalRequestRef.current !== requestId) {
+        return;
+      }
+
+      setRescheduleAppointments(data.appointments || []);
+      setRescheduleHours(data.hours || []);
+    } catch (err) {
+      if (appointmentModalRequestRef.current !== requestId) {
+        return;
+      }
+
+      closeReagendamentoModal();
+      alert(err.message || "Nao foi possivel carregar os horarios para reagendamento.");
+      return;
+    }
+
+    if (appointmentModalRequestRef.current === requestId) {
+      setRescheduleLoading(false);
+    }
+  }
+
   async function handleAgendaAction(appt, action) {
+    if (action === "Remarcar") {
+      await openReagendamentoModal(appt);
+      return;
+    }
+
     const mapStatus = {
       Confirmar: "confirmado",
       Concluir: "concluido",
@@ -131,6 +187,31 @@ export default function DashboardPage() {
     } catch (err) {
       alert(err.message || "Não foi possivel atualizar o agendamento.");
     }
+  }
+
+  async function handleDashboardAppointmentUpdate(id, changes) {
+    const currentAppointment =
+      agendaHoje.find((appointment) => appointment.id === id) ||
+      (selectedAppointment?.id === id ? selectedAppointment : null);
+
+    if (!currentAppointment) {
+      return false;
+    }
+
+    try {
+      const updatedAppointment = await updateAppointment(currentAppointment, changes);
+
+      if (updatedAppointment) {
+        setSelectedAppointment((current) => (current?.id === id ? updatedAppointment : current));
+      }
+
+      await loadDashboard();
+    } catch (err) {
+      alert(err.message || "Nao foi possivel atualizar o agendamento.");
+      return false;
+    }
+
+    return true;
   }
 
   async function handleDashboardAppointmentSave(appointment) {
@@ -201,6 +282,18 @@ export default function DashboardPage() {
           <TopServicesList topServicos={topServicos} />
         </aside>
       </section>
+
+      {selectedAppointment ? (
+        <ReagendamentoModal
+          appointment={selectedAppointment}
+          appointments={rescheduleAppointments}
+          hours={rescheduleHours}
+          loadWeekData={getAgendaData}
+          onClose={closeReagendamentoModal}
+          onUpdate={handleDashboardAppointmentUpdate}
+          scheduleLoading={rescheduleLoading}
+        />
+      ) : null}
 
       {isNewAppointmentOpen ? (
         <NovoAgendamento

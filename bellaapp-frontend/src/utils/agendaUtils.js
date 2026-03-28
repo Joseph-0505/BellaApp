@@ -38,3 +38,10 @@ export function statusColor(status) {
   return "#f3f3f3";
 }
 
+export function statusLabel(status) {
+  if (status === "confirmado") return "Confirmado";
+  if (status === "pendente") return "Pendente";
+  if (status === "concluido") return "Concluido";
+  if (status === "cancelado") return "Cancelado";
+  return "Agendado";
+}

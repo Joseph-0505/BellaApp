@@ -12,19 +12,19 @@
 }
 
 .revenue-state.bom {
-  color: #1a7f4d;
+  color: var(--success);
   background: #ecfbf3;
   border-color: #c7f0db;
 }
 
 .revenue-state.atencao {
-  color: #9b6a00;
+  color: var(--warning);
   background: #fff8e8;
   border-color: #f3dfaf;
 }
 
 .revenue-state.critico {
-  color: #9d1d3f;
+  color: var(--danger);
   background: #fff0f4;
   border-color: #f1c2d1;
 }
@@ -68,7 +68,7 @@
 }
 
 .meta-progress-fill.bom {
-  background: linear-gradient(90deg, #1a7f4d, #2ba56a);
+  background: linear-gradient(90deg, var(--success), #2ba56a);
 }
 
 .meta-progress-fill.atencao {
@@ -86,11 +86,11 @@
 }
 
 .delta-previsto.up {
-  color: #1a7f4d;
+  color: var(--success);
 }
 
 .delta-previsto.down {
-  color: #9d1d3f;
+  color: var(--danger);
 }
 
 @media (max-width: 680px) {

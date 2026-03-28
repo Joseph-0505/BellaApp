@@ -8,8 +8,10 @@ import AgendaSidebar from "../../components/agenda/AgendaSidebar";
 import AppointmentModal from "../../components/modals/AppointmentModal";
 import NovoAgendamento from "../../components/modals/NovoAgendamento";
 import NovoCliente from "../../components/modals/NovoCliente";
+import ReagendamentoModal from "../../components/modals/ReagendamentoModal";
 
 import { clearSession } from "../../services/api";
+import { getAgendaData as loadAgendaWeekData } from "../../services/agendaService";
 import { createClient } from "../../services/clientService";
 import useAgendaWeekNavigation from "../../hooks/useAgendaWeekNavigation";
 import useAgendaData from "../../hooks/useAgendaData";
@@ -23,8 +25,10 @@ export default function AgendaPage() {
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("todos");
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [newAppointmentInitialValues, setNewAppointmentInitialValues] = useState({});
 
   const {
     currentDate,
@@ -77,10 +81,38 @@ export default function AgendaPage() {
 
   function openModal(appointment) {
     setSelectedAppointmentId(appointment.id);
+    setIsRescheduleOpen(false);
   }
 
   function closeModal() {
     setSelectedAppointmentId(null);
+    setIsRescheduleOpen(false);
+  }
+
+  function openRescheduleModal() {
+    setIsRescheduleOpen(true);
+  }
+
+  function returnToAppointmentModal() {
+    setIsRescheduleOpen(false);
+  }
+
+  // Reuse the existing modal and only prefill the slot when the user starts from an empty cell.
+  function openNewAppointment(slot = null) {
+    setNewAppointmentInitialValues(
+      slot
+        ? {
+            data: slot.day,
+            hora: slot.hour,
+          }
+        : {}
+    );
+    setIsNewAppointmentOpen(true);
+  }
+
+  function closeNewAppointment() {
+    setIsNewAppointmentOpen(false);
+    setNewAppointmentInitialValues({});
   }
 
   async function handleNewAppointment(appointment) {
@@ -122,7 +154,7 @@ export default function AgendaPage() {
       <AgendaHeader
         currentDate={currentDate}
         onNewClient={() => setIsNewClientOpen(true)}
-        onNewAppointment={() => setIsNewAppointmentOpen(true)}
+        onNewAppointment={() => openNewAppointment()}
         onNextWeek={nextWeek}
         onPrevWeek={prevWeek}
         onToday={goToday}
@@ -154,6 +186,7 @@ export default function AgendaPage() {
                 days={weekDays}
                 filtersActive={hasFilters}
                 hours={hours}
+                onCreate={openNewAppointment}
                 onSelect={openModal}
                 visibleAppointmentIds={visibleAppointmentIds}
               />
@@ -163,13 +196,26 @@ export default function AgendaPage() {
                 resumoAgenda={resumoAgenda}
               />
 
-              <AppointmentModal
-                appointment={selectedAppointment}
-                appointments={normalizedAppointments}
-                hours={hours}
-                onClose={closeModal}
-                onUpdate={handleUpdateAppointment}
-              />
+              {!isRescheduleOpen ? (
+                <AppointmentModal
+                  appointment={selectedAppointment}
+                  onClose={closeModal}
+                  onRequestReschedule={openRescheduleModal}
+                  onUpdate={handleUpdateAppointment}
+                />
+              ) : null}
+
+              {isRescheduleOpen ? (
+                <ReagendamentoModal
+                  appointment={selectedAppointment}
+                  appointments={normalizedAppointments}
+                  hours={hours}
+                  loadWeekData={loadAgendaWeekData}
+                  onBack={returnToAppointmentModal}
+                  onClose={closeModal}
+                  onUpdate={handleUpdateAppointment}
+                />
+              ) : null}
             </div>
           </>
         ) : null}
@@ -180,7 +226,8 @@ export default function AgendaPage() {
           clients={clients}
           defaultDate={weekDays[0]?.key}
           hours={hours}
-          onClose={() => setIsNewAppointmentOpen(false)}
+          initialValues={newAppointmentInitialValues}
+          onClose={closeNewAppointment}
           onSave={handleNewAppointment}
           professionals={professionals}
           services={services}
