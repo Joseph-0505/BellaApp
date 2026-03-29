@@ -1,4 +1,4 @@
-import formatCurrency from "../../utils/formatters";
+{/*import formatCurrency from "../../utils/formatters";
 
 export default function AgendaSummary({ resumo = {} }) {
   const occupancy = Math.max(0, Math.min(100, Number(resumo.taxaOcupacao || 0)));
@@ -10,7 +10,7 @@ export default function AgendaSummary({ resumo = {} }) {
   ];
 
   return (
-    <div className="panel agenda-panel-content agenda-summary-panel">
+   /* <div className="panel agenda-panel-content agenda-summary-panel">
       <div className="agenda-summary-head">
         <div>
           <p className="agenda-summary-eyebrow">Resumo da semana</p>
@@ -19,7 +19,7 @@ export default function AgendaSummary({ resumo = {} }) {
         <span className="agenda-summary-badge">{occupancy}% ocupada</span>
       </div>
 
-      {/* Revenue gets a hero treatment so the sidebar is readable in one quick scan. */}
+     
       <div className="agenda-summary-revenue">
         <span className="agenda-summary-label">Receita projetada</span>
         <strong className="agenda-summary-amount">{formatCurrency(resumo.receitaProjetada)}</strong>
@@ -47,3 +47,4 @@ export default function AgendaSummary({ resumo = {} }) {
     </div>
   );
 }
+*/}

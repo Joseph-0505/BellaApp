@@ -1,4 +1,4 @@
-import AgendaSummary from "./AgendaSummary";
+{/*import AgendaSummary from "./AgendaSummary";
 
 export default function AgendaSidebar({ livresAgora, resumoAgenda }) {
   return (
@@ -6,4 +6,4 @@ export default function AgendaSidebar({ livresAgora, resumoAgenda }) {
       <AgendaSummary resumo={resumoAgenda} />
     </aside>
   );
-}
+}*/}

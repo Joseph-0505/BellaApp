@@ -3,7 +3,7 @@ import FormModalShell from "./FormModalShell";
 
 export default function NovoCliente({
   closeOnSave = true,
-  description = "Cadastre um cliente com os dados basicos persistidos pela API.",
+  description = "Edite e mantenha os dados do cliente sempre atualizados com facilidade.",
   initialValues = {},
   onClose,
   onSave,
@@ -101,13 +101,13 @@ export default function NovoCliente({
           </div>
 
           <div className="form-modal-field form-modal-field-full">
-            <label htmlFor="novo-cliente-observacoes">Observacoes</label>
+            <label htmlFor="novo-cliente-observacoes">Observações</label>
             <textarea
               id="novo-cliente-observacoes"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              placeholder="Anote preferencias ou qualquer observacao relevante."
+              placeholder="Anote preferências ou qualquer observação relevante."
             />
           </div>
         </div>

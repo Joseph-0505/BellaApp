@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Home, Calendar, Users, Briefcase, User, ChevronLeft, LogOut } from "lucide-react";
-import "../../styles/sidebar.css";
+import "../../styles/layout/sidebar.css";
 import logo from "../../assets/logo.png";
 import logo2 from "../../assets/logo2.png";
 

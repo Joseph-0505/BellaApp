@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { actionClass } from "../../utils/appointmentActions";
+import "../../styles/botoes/dropdown-actions.css";
 
 const VIEWPORT_GAP = 12;
 const TRIGGER_OFFSET = 8;
@@ -112,7 +113,8 @@ export default function AppointmentActionsMenu({ actions, onAction }) {
                   type="button"
                   className={"menu-item " + actionClass(action)}
                   role="menuitem"
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation();
                     onAction?.(action);
                     setOpen(false);
                   }}
@@ -133,7 +135,10 @@ export default function AppointmentActionsMenu({ actions, onAction }) {
           ref={triggerRef}
           type="button"
           className="menu-trigger"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen((prev) => !prev);
+          }}
           aria-label={"Abrir a\u00e7\u00f5es"}
           aria-expanded={open}
           aria-haspopup="menu"

@@ -11,8 +11,6 @@
 }
 
 .form-modal-card {
-  width: min(100%, 760px);
-  max-height: min(92vh, 820px);
   overflow-y: auto;
   border-radius: 28px;
   border: 1px solid var(--border-primary);
@@ -21,7 +19,7 @@
 }
 
 .form-modal-card.form-modal-card-compact {
-  width: min(100%, 640px);
+  width: min(100%, 700px);
 }
 
 .form-modal-header {

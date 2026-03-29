@@ -101,8 +101,8 @@
   position: fixed;
   top: 50px;
   left: calc(var(--sidebar-width) - 19px);
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 2px solid transparent;
   background: var(--gradient-primary);

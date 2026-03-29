@@ -1,9 +1,3 @@
-.agenda-layout-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 12px;
-}
-
 .agenda-table-wrap {
   overflow-x: auto;
   padding-bottom: 2px;

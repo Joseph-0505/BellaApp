@@ -1,3 +1,4 @@
+import { formatPhone } from "../utils/formatters";
 import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 
 const CLIENTS_BASE_PATH = "/api/v1/clients";
@@ -11,6 +12,19 @@ function pickAvatarTone(name) {
   return AVATAR_TONES[score % AVATAR_TONES.length];
 }
 
+function buildInitials(name) {
+  const initials = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  return initials || "CL";
+}
+
 function formatClientDate(isoDate) {
   if (!isoDate) {
     return null;
@@ -22,20 +36,32 @@ function formatClientDate(isoDate) {
 function toClientViewModel(client) {
   const latestVisit = formatClientDate(client.latestVisitAt);
   const nextAppointment = formatClientDate(client.nextAppointmentAt);
+  const hasLatestVisit = Boolean(latestVisit || client.latestVisit);
+  const hasNextAppointment = Boolean(nextAppointment || client.nextAppointment);
+  const totalSpent = Number(client.totalSpent || 0);
+  const status = client.status || "novo";
 
   return {
     id: client.id,
     name: client.name,
-    email: client.email || "Sem e-mail",
-    phone: client.phone,
+    initials: buildInitials(client.name),
+    email: client.email || "",
+    emailDisplay: client.email || "Sem e-mail cadastrado",
+    phone: client.phone || "",
+    phoneDisplay: formatPhone(client.phone) || client.phone || "Sem telefone",
     cpf: client.cpf || "",
     notes: client.notes || "",
-    latestVisit: latestVisit || client.latestVisit || "Sem historico",
-    latestVisitNote: client.latestVisitNote || client.notes || "Nenhum atendimento registrado",
-    nextAppointment: nextAppointment || client.nextAppointment || "Sem agenda",
-    professional: client.professional || "Nao definido",
-    totalSpent: Number(client.totalSpent || 0),
-    status: client.status || "novo",
+    hasLatestVisit,
+    latestVisit: latestVisit || client.latestVisit || "Sem atendimentos",
+    latestVisitNote: client.latestVisitNote || "Atendimento concluido",
+    latestVisitEmptyLabel: "Registrar primeiro atendimento",
+    hasNextAppointment,
+    nextAppointment: nextAppointment || client.nextAppointment || "Sem agendamento",
+    nextAppointmentEmptyLabel: "Agendar agora",
+    professional: client.professional || "",
+    professionalDisplay: client.professional || "Profissional a confirmar",
+    totalSpent,
+    status,
     avatarTone: pickAvatarTone(client.name),
   };
 }
