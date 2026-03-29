@@ -14,6 +14,12 @@
   padding: 18px;
   box-shadow: var(--shadow);
   gap: 12px;
+  min-width: 0;
+}
+
+.page-header-top > :first-child {
+  min-width: 0;
+  flex: 1;
 }
 
 .page-header-actions {
@@ -21,6 +27,7 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .page-header-bottom {

@@ -4,6 +4,8 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KpiCard from "../../components/dashboard/KpiCard";
 import RevenueCard from "../../components/dashboard/RevenueCard";
 import TopServicesList from "../../components/dashboard/TopServicesList";
+import useDisclosure from "../../hooks/useDisclosure";
+import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
 import NovoAgendamento from "../../components/modals/NovoAgendamento";
 import NovoCliente from "../../components/modals/NovoCliente";
 import ReagendamentoModal from "../../components/modals/ReagendamentoModal";
@@ -14,7 +16,7 @@ import {
   updateAppointment,
 } from "../../services/appointmentService";
 import { createClient } from "../../services/clientService";
-import { clearSession, getCurrentUser } from "../../services/api";
+import { getCurrentUser } from "../../services/api";
 import "../../styles/dashboard/dashboard.css";
 
 const REFRESH_MS = 30000;
@@ -60,15 +62,16 @@ export default function DashboardPage() {
   const [alertas, setAlertas] = useState([]);
   const [topServicos, setTopServicos] = useState([]);
   const [references, setReferences] = useState({ clients: [], professionals: [], services: [] });
-  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
-  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [rescheduleAppointments, setRescheduleAppointments] = useState([]);
   const [rescheduleHours, setRescheduleHours] = useState([]);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const newAppointmentModal = useDisclosure();
+  const newClientModal = useDisclosure();
 
   const currentUser = getCurrentUser();
   const appointmentModalRequestRef = useRef(0);
+  const redirectToLogin = useUnauthorizedRedirect();
 
   const kpis = useMemo(() => {
     return [
@@ -106,8 +109,7 @@ export default function DashboardPage() {
       setReferences(data.references || { clients: [], professionals: [], services: [] });
     } catch (err) {
       if (err.status === 401) {
-        clearSession();
-        window.location.href = "/login";
+        redirectToLogin();
         return;
       }
 
@@ -115,7 +117,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [redirectToLogin]);
 
   useEffect(() => {
     loadDashboard();
@@ -258,8 +260,8 @@ export default function DashboardPage() {
       <DashboardHeader
         faturamentoPrevisto={resumo.faturamentoPrevisto || 0}
         nomeClinica={currentUser?.businessProfile?.businessName || currentUser?.name || "Painel da Clinica"}
-        onNewAppointment={() => setIsNewAppointmentOpen(true)}
-        onNewClient={() => setIsNewClientOpen(true)}
+        onNewAppointment={newAppointmentModal.open}
+        onNewClient={newClientModal.open}
         totalAtendimentos={resumo.agendamentosHoje || 0}
       />
 
@@ -295,13 +297,13 @@ export default function DashboardPage() {
         />
       ) : null}
 
-      {isNewAppointmentOpen ? (
+      {newAppointmentModal.isOpen ? (
         <NovoAgendamento
           clients={references.clients}
           defaultDate={new Date().toISOString().split("T")[0]}
           description="Crie um atendimento rápido direto do dashboard."
           hours={["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]}
-          onClose={() => setIsNewAppointmentOpen(false)}
+          onClose={newAppointmentModal.close}
           onSave={handleDashboardAppointmentSave}
           professionals={references.professionals}
           services={references.services}
@@ -309,10 +311,10 @@ export default function DashboardPage() {
         />
       ) : null}
 
-      {isNewClientOpen ? (
+      {newClientModal.isOpen ? (
         <NovoCliente
           description="Cadastre um cliente sem sair do dashboard."
-          onClose={() => setIsNewClientOpen(false)}
+          onClose={newClientModal.close}
           onSave={handleDashboardClientSave}
           title="Cadastrar Cliente"
         />

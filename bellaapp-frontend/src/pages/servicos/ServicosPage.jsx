@@ -1,8 +1,8 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import NovoServico from "../../components/modals/NovoServico";
 import Header from "../../components/layout/Header";
-import { clearSession } from "../../services/api";
+import useDisclosure from "../../hooks/useDisclosure";
+import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
 import { createService, listServices, updateService } from "../../services/serviceService";
 import "../../styles/servicos/servicos.css";
 
@@ -216,14 +216,13 @@ function statusLabel(status) {
 }
 
 export default function ServicosPage() {
-  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ativos");
   const [risk, setRisk] = useState("todos");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isNewServiceOpen, setIsNewServiceOpen] = useState(false);
+  const newServiceModal = useDisclosure();
   const [editingService, setEditingService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -235,6 +234,7 @@ export default function ServicosPage() {
     totalPages: 0,
   });
   const deferredSearch = useDeferredValue(search);
+  const redirectToLogin = useUnauthorizedRedirect();
 
   useEffect(() => {
     let active = true;
@@ -273,8 +273,7 @@ export default function ServicosPage() {
         setError(requestError.message || "Falha ao carregar servicos.");
 
         if (requestError.status === 401) {
-          clearSession();
-          navigate("/login", { replace: true });
+          redirectToLogin();
         }
       } finally {
         if (active) {
@@ -288,7 +287,7 @@ export default function ServicosPage() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, navigate, page, pageSize, reloadKey, risk, status]);
+  }, [deferredSearch, page, pageSize, redirectToLogin, reloadKey, risk, status]);
 
   const visibleServices = useMemo(() => services, [services]);
   const totalPages = Math.max(meta.totalPages || 0, 1);
@@ -358,7 +357,7 @@ export default function ServicosPage() {
               title="Serviços"
               subtitle="Gerencie seus serviços, valores e duração de forma simples e eficiente"
               actions={
-               <button type="button" className="btn-primary" onClick={() => setIsNewServiceOpen(true)}>
+               <button type="button" className="btn-primary" onClick={newServiceModal.open}>
                 + Novo Serviço
                </button>
               }
@@ -617,9 +616,9 @@ export default function ServicosPage() {
         </aside>
       </div>
 
-      {isNewServiceOpen ? (
+      {newServiceModal.isOpen ? (
         <NovoServico
-          onClose={() => setIsNewServiceOpen(false)}
+          onClose={newServiceModal.close}
           onSave={handleCreateService}
           showCatalogExtras
           description="Cadastre nome, descricao, preco, duracao, risco, icone e status do servico."

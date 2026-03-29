@@ -50,9 +50,34 @@
 
 .clientes-toolbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1.6fr) 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   padding: 18px 16px 14px;
+  align-items: center;
+}
+
+.clientes-toolbar .filters-bar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.6fr) minmax(180px, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.clientes-toolbar .filters-input,
+.clientes-toolbar .filters-select {
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-primary-strong);
+  background: var(--surface-card-strong);
+  color: var(--text-ui);
+  font-size: 0.98rem;
+}
+
+.clientes-toolbar .filters-input::placeholder {
+  color: #64748b;
 }
 
 .clientes-search,
@@ -342,7 +367,11 @@
 
 @media (max-width: 1300px) {
   .clientes-toolbar {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .clientes-toolbar .filters-bar {
+    grid-template-columns: 1fr;
   }
 
   .clientes-summary-pill {

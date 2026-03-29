@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import FormModalShell from "./FormModalShell";
-import { DEFAULT_HOURS, API_STATUS_OPTIONS } from "../../utils/agendaUtils";
+import { DEFAULT_HOURS, API_STATUS_OPTIONS } from "../../utils/StatusUtils";
 
 function getTodayIsoDate() {
   return new Date().toISOString().split("T")[0];

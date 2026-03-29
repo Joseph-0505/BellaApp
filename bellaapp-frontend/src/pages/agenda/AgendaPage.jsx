@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import AgendaHeader from "../../components/agenda/AgendaHeader";
 import AgendaWeekTable from "../../components/agenda/AgendaWeekTable";
-import AgendaFilters from "../../components/agenda/AgendaFilters";
+import SearchStatusFilters from "../../components/SearchStatusFilters";
 import AgendaSidebar from "../../components/agenda/AgendaSidebar";
 import AppointmentModal from "../../components/modals/AppointmentModal";
 import NovoAgendamento from "../../components/modals/NovoAgendamento";
 import NovoCliente from "../../components/modals/NovoCliente";
 import ReagendamentoModal from "../../components/modals/ReagendamentoModal";
+import { API_STATUS_OPTIONS } from "../../utils/StatusUtils";
 
-import { clearSession } from "../../services/api";
 import { getAgendaData as loadAgendaWeekData } from "../../services/agendaService";
 import { createClient } from "../../services/clientService";
+import useDisclosure from "../../hooks/useDisclosure";
+import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
 import useAgendaWeekNavigation from "../../hooks/useAgendaWeekNavigation";
 import useAgendaData from "../../hooks/useAgendaData";
 import useAgendaMetrics from "../../hooks/useAgendaMetrics";
@@ -21,14 +22,14 @@ import "../../styles/agenda/agenda.css";
 import "../../styles/dashboard/agenda-table.css";
 
 export default function AgendaPage() {
-  const navigate = useNavigate();
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("todos");
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
-  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
-  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
-  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
   const [newAppointmentInitialValues, setNewAppointmentInitialValues] = useState({});
+  const rescheduleModal = useDisclosure();
+  const newAppointmentModal = useDisclosure();
+  const newClientModal = useDisclosure();
+  const redirectToLogin = useUnauthorizedRedirect();
 
   const {
     currentDate,
@@ -54,10 +55,9 @@ export default function AgendaPage() {
 
   useEffect(() => {
     if (errorStatus === 401) {
-      clearSession();
-      navigate("/login", { replace: true });
+      redirectToLogin();
     }
-  }, [errorStatus, navigate]);
+  }, [errorStatus, redirectToLogin]);
 
   const {
     hasFilters,
@@ -81,23 +81,22 @@ export default function AgendaPage() {
 
   function openModal(appointment) {
     setSelectedAppointmentId(appointment.id);
-    setIsRescheduleOpen(false);
+    rescheduleModal.close();
   }
 
   function closeModal() {
     setSelectedAppointmentId(null);
-    setIsRescheduleOpen(false);
+    rescheduleModal.close();
   }
 
   function openRescheduleModal() {
-    setIsRescheduleOpen(true);
+    rescheduleModal.open();
   }
 
   function returnToAppointmentModal() {
-    setIsRescheduleOpen(false);
+    rescheduleModal.close();
   }
 
-  // Reuse the existing modal and only prefill the slot when the user starts from an empty cell.
   function openNewAppointment(slot = null) {
     setNewAppointmentInitialValues(
       slot
@@ -107,11 +106,11 @@ export default function AgendaPage() {
           }
         : {}
     );
-    setIsNewAppointmentOpen(true);
+    newAppointmentModal.open();
   }
 
   function closeNewAppointment() {
-    setIsNewAppointmentOpen(false);
+    newAppointmentModal.close();
     setNewAppointmentInitialValues({});
   }
 
@@ -119,7 +118,7 @@ export default function AgendaPage() {
     try {
       await createAppointment(appointment);
     } catch (requestError) {
-      alert(requestError.message || "Não foi possivel criar o agendamento.");
+      alert(requestError.message || "Não foi possível criar o agendamento.");
       return false;
     }
 
@@ -130,7 +129,7 @@ export default function AgendaPage() {
     try {
       await updateAppointment(id, changes);
     } catch (requestError) {
-      alert(requestError.message || "Não foi possivel atualizar o agendamento.");
+      alert(requestError.message || "Não foi possível atualizar o agendamento.");
       return false;
     }
 
@@ -142,18 +141,24 @@ export default function AgendaPage() {
       await createClient(client);
       refreshAgendaData();
     } catch (requestError) {
-      alert(requestError.message || "Não foi possivel criar o cliente.");
+      alert(requestError.message || "Não foi possível criar o cliente.");
       return false;
     }
 
     return true;
   }
 
+  const filterFeedback = hasFilters
+    ? visibleAppointments.length > 0
+      ? `Mostrando ${visibleAppointments.length} de ${weekAppointments.length} agendamentos desta semana. Os demais horários ficam ocultos pelo filtro.`
+      : "Nenhum agendamento encontrado para os filtros atuais."
+    : "";
+
   return (
     <section className="dashboard-page">
       <AgendaHeader
         currentDate={currentDate}
-        onNewClient={() => setIsNewClientOpen(true)}
+        onNewClient={newClientModal.open}
         onNewAppointment={() => openNewAppointment()}
         onNextWeek={nextWeek}
         onPrevWeek={prevWeek}
@@ -166,23 +171,22 @@ export default function AgendaPage() {
 
         {!loading && !error ? (
           <>
-            <AgendaFilters
-              term={term}
-              setTerm={setTerm}
-              status={status}
-              setStatus={setStatus}
+            <SearchStatusFilters
+              searchValue={term}
+              onSearchChange={setTerm}
+              searchPlaceholder="Buscar cliente, serviço ou profissional"
+              statusValue={status}
+              onStatusChange={setStatus}
+              statusOptions={API_STATUS_OPTIONS}
             />
 
-            {hasFilters ? (
-              <p className="agenda-feedback">
-                Mostrando {visibleAppointments.length} de {weekAppointments.length} agendamentos
-                desta semana. Os demais continuam ocupando seus horários na grade.
-              </p>
-            ) : null}
+
+            {hasFilters ? <p className="agenda-feedback">{filterFeedback}</p> : null}
 
             <div className="agenda-layout-grid">
               <AgendaWeekTable
-                appointments={weekAppointments}
+                appointments={hasFilters ? visibleAppointments : weekAppointments}
+                allAppointments={weekAppointments}
                 days={weekDays}
                 filtersActive={hasFilters}
                 hours={hours}
@@ -196,7 +200,7 @@ export default function AgendaPage() {
                 resumoAgenda={resumoAgenda}
               />
 
-              {!isRescheduleOpen ? (
+              {!rescheduleModal.isOpen ? (
                 <AppointmentModal
                   appointment={selectedAppointment}
                   onClose={closeModal}
@@ -205,7 +209,7 @@ export default function AgendaPage() {
                 />
               ) : null}
 
-              {isRescheduleOpen ? (
+              {rescheduleModal.isOpen ? (
                 <ReagendamentoModal
                   appointment={selectedAppointment}
                   appointments={normalizedAppointments}
@@ -221,7 +225,7 @@ export default function AgendaPage() {
         ) : null}
       </article>
 
-      {isNewAppointmentOpen ? (
+      {newAppointmentModal.isOpen ? (
         <NovoAgendamento
           clients={clients}
           defaultDate={weekDays[0]?.key}
@@ -234,10 +238,10 @@ export default function AgendaPage() {
         />
       ) : null}
 
-      {isNewClientOpen ? (
+      {newClientModal.isOpen ? (
         <NovoCliente
           description="Cadastre um cliente sem sair da agenda para agilizar novos agendamentos."
-          onClose={() => setIsNewClientOpen(false)}
+          onClose={newClientModal.close}
           onSave={handleNewClient}
         />
       ) : null}

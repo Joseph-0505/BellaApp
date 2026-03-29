@@ -1,5 +1,13 @@
 import { useMemo } from "react";
 
+function normalizeFilterValue(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 export default function useAgendaMetrics({
   appointments,
   term,
@@ -17,13 +25,18 @@ export default function useAgendaMetrics({
   }, [appointments, weekKeys]);
 
   const visibleAppointments = useMemo(() => {
-    const normalizedTerm = (term || "").toLowerCase().trim();
+    const normalizedTerm = normalizeFilterValue(term);
 
     return weekAppointments.filter((appointment) => {
+      const searchableValues = [
+        appointment.cliente,
+        appointment.servico,
+        appointment.profissional,
+        appointment.status,
+      ];
       const matchTerm =
         !normalizedTerm ||
-        appointment.cliente.toLowerCase().includes(normalizedTerm) ||
-        appointment.servico.toLowerCase().includes(normalizedTerm);
+        searchableValues.some((value) => normalizeFilterValue(value).includes(normalizedTerm));
 
       const matchStatus = status === "todos" || appointment.status === status;
       return matchTerm && matchStatus;

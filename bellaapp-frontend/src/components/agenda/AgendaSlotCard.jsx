@@ -1,13 +1,13 @@
-import { statusColor, statusLabel } from "../../utils/agendaUtils";
+import { statusColor, statusLabel } from "../../utils/StatusUtils";
 import formatCurrency from "../../utils/formatters";
 
-export default function AgendaSlotCard({ appointment, isDimmed = false, onClick }) {
+export default function AgendaSlotCard({ appointment, onClick }) {
   const status = appointment.status || "cancelado";
 
   return (
     <button
       type="button"
-      className={`agenda-slot-card${isDimmed ? " is-dimmed" : ""}`}
+      className="agenda-slot-card"
       aria-label={`Abrir agendamento de ${appointment.cliente}`}
       onClick={onClick}
       data-status={status}

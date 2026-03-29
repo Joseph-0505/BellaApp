@@ -1,8 +1,8 @@
 import { useDeferredValue, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import NovoProfissional from "../../components/modals/NovoProfissional";
-import { clearSession } from "../../services/api";
+import useDisclosure from "../../hooks/useDisclosure";
+import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
 import {
   createProfessional,
   deleteProfessional,
@@ -55,7 +55,6 @@ function statusLabel(status) {
 }
 
 export default function ProfissionaisPage() {
-  const navigate = useNavigate();
   const [professionals, setProfessionals] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
@@ -69,9 +68,10 @@ export default function ProfissionaisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-  const [isNewProfessionalOpen, setIsNewProfessionalOpen] = useState(false);
+  const newProfessionalModal = useDisclosure();
   const [editingProfessional, setEditingProfessional] = useState(null);
   const deferredSearch = useDeferredValue(search);
+  const redirectToLogin = useUnauthorizedRedirect();
 
   useEffect(() => {
     let active = true;
@@ -109,8 +109,7 @@ export default function ProfissionaisPage() {
         setError(requestError.message || "Falha ao carregar profissionais.");
 
         if (requestError.status === 401) {
-          clearSession();
-          navigate("/login", { replace: true });
+          redirectToLogin();
         }
       } finally {
         if (active) {
@@ -124,7 +123,7 @@ export default function ProfissionaisPage() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, navigate, page, reloadKey, status]);
+  }, [deferredSearch, page, redirectToLogin, reloadKey, status]);
 
   const totalPages = Math.max(meta.totalPages || 0, 1);
   const currentPage = Math.min(meta.page || page, totalPages);
@@ -185,7 +184,7 @@ export default function ProfissionaisPage() {
         title="Profissionais"
         subtitle="Centralize especialidades, contatos e disponibilidade do seu time em um unico painel."
         actions={
-          <button type="button" className="btn-primary" onClick={() => setIsNewProfessionalOpen(true)}>
+          <button type="button" className="btn-primary" onClick={newProfessionalModal.open}>
             + Novo Profissional
           </button>
         }
@@ -333,9 +332,9 @@ export default function ProfissionaisPage() {
         </footer>
       </section>
 
-      {isNewProfessionalOpen ? (
+      {newProfessionalModal.isOpen ? (
         <NovoProfissional
-          onClose={() => setIsNewProfessionalOpen(false)}
+          onClose={newProfessionalModal.close}
           onSave={handleCreateProfessional}
         />
       ) : null}

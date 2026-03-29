@@ -6,6 +6,7 @@ export default function AgendaWeekTable({
   days,
   hours,
   appointments,
+  allAppointments = appointments,
   visibleAppointmentIds = new Set(),
   filtersActive = false,
   onCreate,
@@ -22,6 +23,17 @@ export default function AgendaWeekTable({
     );
   }, [appointments]);
 
+  const allAppointmentsBySlot = useMemo(() => {
+    return new Map(
+      allAppointments.map((appointment) => {
+        const dayKey = appointment.day?.split("T")[0] || appointment.day;
+        const hourKey = String(appointment.hour || "").padStart(5, "0");
+
+        return [`${dayKey}-${hourKey}`, appointment];
+      })
+    );
+  }, [allAppointments]);
+
   return (
     <div className="agenda-table-wrap">
       <table className="agenda-table agenda-week-table">
@@ -30,7 +42,7 @@ export default function AgendaWeekTable({
             <th className="agenda-hour-header">Hora</th>
             {days.map((day) => (
               <th className="agenda-day-header-cell" key={day.key}>
-                {/* Split weekday and day number to improve scanability across the week. */}
+              
                 <div className="agenda-day-header">
                   <span className="agenda-day-weekday">{day.weekdayShort}</span>
                   <strong className="agenda-day-number">{day.dayNumber}</strong>
@@ -48,24 +60,27 @@ export default function AgendaWeekTable({
               {days.map((day) => {
                 const slotKey = `${day.key}-${hour}`;
                 const appointment = appointmentsBySlot.get(slotKey);
-                const isDimmed =
+                const hasHiddenAppointment =
                   filtersActive &&
-                  appointment &&
-                  !visibleAppointmentIds.has(appointment.id);
+                  allAppointmentsBySlot.has(slotKey) &&
+                  (!appointment || !visibleAppointmentIds.has(appointment.id));
 
                 return (
                   <td
-                    className={`agenda-slot-cell${appointment ? " has-appointment" : " is-empty"}`}
+                    className={`agenda-slot-cell${appointment ? " has-appointment" : hasHiddenAppointment ? " is-filtered" : " is-empty"}`}
                     key={day.key + hour}
                   >
                     {appointment ? (
                       <AgendaSlotCard
                         appointment={appointment}
-                        isDimmed={isDimmed}
                         onClick={() => onSelect(appointment)}
                       />
+                    ) : hasHiddenAppointment ? (
+                      <div className="agenda-slot-filtered" aria-hidden="true">
+                        Oculto pelo filtro
+                      </div>
                     ) : (
-                      // Empty slots now point to the existing creation flow, prefilled with day and hour.
+                      
                       <EmptySlot
                         dayLabel={`${day.weekdayShort} ${day.dayNumber}`}
                         hour={hour}
