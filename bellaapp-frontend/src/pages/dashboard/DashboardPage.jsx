@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AgendaTable from "../../components/dashboard/AgendaTable";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KpiCard from "../../components/dashboard/KpiCard";
-import RevenueCard from "../../components/dashboard/RevenueCard";
+{/*import RevenueCard from "../../components/dashboard/RevenueCard";*/}
 import TopServicesList from "../../components/dashboard/TopServicesList";
 import useDisclosure from "../../hooks/useDisclosure";
 import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
@@ -271,11 +271,11 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <RevenueCard
+      {/* <RevenueCard
         atualizadoEm={resumo.atualizadoEm}
         previsto={resumo.faturamentoPrevisto || 0}
         recebido={resumo.faturamentoRecebido || 0}
-      />
+      /> */}
 
       <section className="dash-main-grid">
         <AgendaTable appointments={agendaHoje} onAction={handleAgendaAction} />

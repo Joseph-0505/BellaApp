@@ -49,7 +49,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
 
         <NavLink to="/servicos" className="sidebar-link" aria-label="Servicos">
           <Briefcase size={18} />
-          {!collapsed && "Servicos"}
+          {!collapsed && "Serviços"}
         </NavLink>
 
         <NavLink to="/profissionais" className="sidebar-link" aria-label="Profissionais">

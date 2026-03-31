@@ -9,6 +9,7 @@ export const API_STATUS_OPTIONS = [
 ];
 
 export function riskLabel(risk) {
+  if (risk === "Todos") return "Todos";
   if (risk === "alto") return "Risco alto";
   if (risk === "medio") return "Risco medio";
   if (risk === "baixo")  return "Risco baixo";
@@ -31,8 +32,6 @@ export const CLIENT_STATUS_OPTIONS = [
   { value: "todos", label: "Todos status" },
   { value: "ativo", label: "Ativos" },
   { value: "inativo", label: "Inativos" },
-  { value: "novo", label: "Novos" },
-  { value: "risco", label: "Risco alto" },
 ];
 
 export function statusLabel(status) {

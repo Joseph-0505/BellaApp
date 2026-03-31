@@ -22,3 +22,11 @@ export function formatPhone(value) {
     suffix ? `(${ddd}) ${prefix}-${suffix}` : `(${ddd}) ${prefix}`
   );
 }
+
+function formatDuration(minutes) {
+  if (minutes % 60 === 0) {
+    return `${minutes / 60}h`;
+  }
+
+  return `${minutes}min`;
+}

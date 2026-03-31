@@ -4,148 +4,14 @@ import Header from "../../components/layout/Header";
 import useDisclosure from "../../hooks/useDisclosure";
 import useUnauthorizedRedirect from "../../hooks/useUnauthorizedRedirect";
 import { createService, listServices, updateService } from "../../services/serviceService";
+import formatCurrency from "../../utils/formatters";
+import {Search, Clock, Edit, Users, Flame, Calendar, Archive, ChevronRight, ChevronLeft} from "lucide-react";
+import {CLIENT_STATUS_OPTIONS, riskLabel} from "../../utils/StatusUtils"
+import formatDuration from "../../utils/formatters";
 import "../../styles/servicos/servicos.css";
 
-const STATUS_OPTIONS = [
-  { value: "ativos", label: "Status: Ativos" },
-  { value: "inativos", label: "Status: Inativos" },
-  { value: "todos", label: "Status: Todos" },
-];
-
-const RISK_OPTIONS = [
-  { value: "todos", label: "Risco: Todos" },
-  { value: "baixo", label: "Risco: Baixo" },
-  { value: "medio", label: "Risco: Medio" },
-  { value: "alto", label: "Risco: Alto" },
-];
 
 const PAGE_SIZE_OPTIONS = [5, 10, 15];
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M10.5 4a6.5 6.5 0 1 0 4.03 11.6l4.43 4.42 1.06-1.06-4.42-4.43A6.5 6.5 0 0 0 10.5 4Zm0 1.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M11.25 5h1.5v6.25H19v1.5h-6.25V19h-1.5v-6.25H5v-1.5h6.25V5Z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function BulbIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 4.25a6.25 6.25 0 0 0-3.83 11.19c.5.4.83.98.95 1.61l.08.45h5.6l.08-.45c.12-.63.45-1.2.95-1.61A6.25 6.25 0 0 0 12 4.25Zm-2.9 14.5h5.8V20A1.75 1.75 0 0 1 13.15 21h-2.3A1.75 1.75 0 0 1 9.1 20v-1.25Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 4.75A7.25 7.25 0 1 0 19.25 12 7.26 7.26 0 0 0 12 4.75Zm0 1.5A5.75 5.75 0 1 1 6.25 12 5.76 5.76 0 0 1 12 6.25Zm-.75 2.5h1.5V12l2.2 1.32-.77 1.28-2.93-1.76V8.75Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function EditIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="m17.19 3.75 3.06 3.06-9.94 9.94-3.94.88.88-3.94 9.94-9.94Zm-10.8 10.8-.4 1.78 1.78-.4 8.92-8.92-1.38-1.38-8.92 8.92Zm10.8-10.8-.73.73 1.38 1.38.73-.73-1.38-1.38ZM5 19h14v1.5H5V19Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function MoreIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 6.75a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm0 7.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm0-3.75a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function FireIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M13.67 3.75c.35 2.13-.4 3.3-1.2 4.54-.79 1.22-1.63 2.53-1.3 4.71.18 1.17.84 2.24 1.84 3.02-.02-1.02.22-2.15.85-3.43.54-1.08 1.31-2.01 2.06-2.92.7-.84 1.36-1.63 1.78-2.44 2.05 2.16 2.84 5.25 2.05 8.06A7.25 7.25 0 1 1 7.2 8.73c.36-.78.84-1.49 1.42-2.12.52 1.73 1.75 2.57 2.4 2.87-.38-2.08.58-3.81 2.65-5.73Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7.25 3h1.5v2h6.5V3h1.5v2H19A1.75 1.75 0 0 1 20.75 6.75V19A1.75 1.75 0 0 1 19 20.75H5A1.75 1.75 0 0 1 3.25 19V6.75A1.75 1.75 0 0 1 5 5h2.25V3Zm12 6.25h-14v9.75c0 .14.11.25.25.25h13.5a.25.25 0 0 0 .25-.25V9.25Zm-14-1.5h14v-1c0-.14-.11-.25-.25-.25H5a.25.25 0 0 0-.25.25v1Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function TeamIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-6.25 7v-.75c0-2.54 3.42-4.5 7.25-4.5s7.25 1.96 7.25 4.5V19h-14.5Zm-2-7.5a2.75 2.75 0 1 0 0-5.5 2.75 2.75 0 0 0 0 5.5Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function ArchiveIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M4.75 5h14.5A1.75 1.75 0 0 1 21 6.75v2.5A1.75 1.75 0 0 1 19.25 11H18.5v6.25A1.75 1.75 0 0 1 16.75 19H7.25A1.75 1.75 0 0 1 5.5 17.25V11h-.75A1.75 1.75 0 0 1 3 9.25v-2.5A1.75 1.75 0 0 1 4.75 5Zm.25 4.5h14V6.75a.25.25 0 0 0-.25-.25H4.75a.25.25 0 0 0-.25.25V9.5Zm2 1.5v6.25c0 .14.11.25.25.25h9.5a.25.25 0 0 0 .25-.25V11h-10Zm2.75 2h4.5v1.5h-4.5V13Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function ChevronIcon({ direction = "down" }) {
-  const rotation =
-    direction === "left"
-      ? "rotate(90 12 12)"
-      : direction === "right"
-        ? "rotate(-90 12 12)"
-        : "rotate(0 12 12)";
-
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="m7.41 9.34 4.59 4.58 4.59-4.58 1.06 1.06L12 16.04 6.35 10.4l1.06-1.06Z"
-        fill="currentColor"
-        transform={rotation}
-      />
-    </svg>
-  );
-}
 
 function ServiceGlyph({ kind }) {
   const glyphs = {
@@ -194,21 +60,6 @@ function ServiceGlyph({ kind }) {
       </svg>
     </span>
   );
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
-
-function formatDuration(minutes) {
-  if (minutes % 60 === 0) {
-    return `${minutes / 60}h`;
-  }
-
-  return `${minutes}min`;
 }
 
 function statusLabel(status) {
@@ -367,7 +218,7 @@ export default function ServicosPage() {
         <section className="services-main-panel">
           <div className="services-toolbar">
             <label className="services-search">
-              <SearchIcon />
+              <Search size={18} />
               <input
                 type="text"
                 value={search}
@@ -375,7 +226,7 @@ export default function ServicosPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Buscar servico..."
+                placeholder="Buscar serviço..."
               />
             </label>
 
@@ -387,9 +238,9 @@ export default function ServicosPage() {
                   setPage(1);
                 }}
               >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                {CLIENT_STATUS_OPTIONS.map((item) => ["Todos", "Ativos", "Inativos"].includes(item.value) && (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
                 ))}
               </select>
@@ -403,21 +254,13 @@ export default function ServicosPage() {
                   setPage(1);
                 }}
               >
-                {RISK_OPTIONS.map((option) => (
+                {riskLabel.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
             </label>
-          </div>
-
-          <div className="services-tip">
-            <BulbIcon />
-            <p>
-              <strong>Dica:</strong> nome, descricao, preco, duracao, risco, icone e volume de uso ja podem ser
-              consumidos da API. Profissionais vinculados ao servico ainda dependem de suporte adicional no backend.
-            </p>
           </div>
 
           {error ? <p className="agenda-feedback agenda-feedback-error">{error}</p> : null}
@@ -441,7 +284,7 @@ export default function ServicosPage() {
 
                     <div className="service-main-copy">
                       <strong>{service.name}</strong>
-                      <span>{service.description || "Sem descricao cadastrada."}</span>
+                      <span>{service.description || "Sem descrição cadastrada."}</span>
                     </div>
                   </div>
 
@@ -450,7 +293,7 @@ export default function ServicosPage() {
                   </div>
 
                   <div className="service-col service-col-duration">
-                    <ClockIcon />
+                    <Clock size={18} />
                     <span>{formatDuration(service.durationMinutes)}</span>
                   </div>
 
@@ -474,7 +317,7 @@ export default function ServicosPage() {
                       aria-label={`Editar ${service.name}`}
                       onClick={() => setEditingService(service)}
                     >
-                      <EditIcon />
+                      <Edit size={18} />
                     </button>
 
                     <button
@@ -482,7 +325,7 @@ export default function ServicosPage() {
                       className="service-action-button"
                       aria-label={`Mais acoes para ${service.name}`}
                     >
-                      <MoreIcon />
+                     
                     </button>
                   </div>
                 </article>
@@ -498,7 +341,7 @@ export default function ServicosPage() {
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={currentPage === 1}
               >
-                <ChevronIcon direction="left" />
+                <ChevronLeft size={18} direction="left" />
                 Anterior
               </button>
 
@@ -511,7 +354,7 @@ export default function ServicosPage() {
                 disabled={currentPage === totalPages}
               >
                 Proxima
-                <ChevronIcon direction="right" />
+                <ChevronRight size={18} direction="right" />
               </button>
             </div>
 
@@ -570,12 +413,12 @@ export default function ServicosPage() {
 
           <article className="services-sidecard services-sidecard-highlight">
             <div className="services-sidecard-title">
-              <FireIcon />
-              <h2>Servico mais vendido</h2>
+              <Flame size={18} />
+              <h2>Serviço mais vendido</h2>
             </div>
 
             {!visibleServices.length ? (
-              <p>Nenhum servico disponivel.</p>
+              <p>Nenhum serviço disponivel.</p>
             ) : topService?.soldCount > 0 ? (
               <>
                 <strong className="services-top-service-name">{topService.name}</strong>
@@ -583,7 +426,7 @@ export default function ServicosPage() {
                   {formatCurrency(topService.price)} · {formatDuration(topService.durationMinutes)}
                 </p>
                 <button type="button" className="services-secondary-button">
-                  <CalendarIcon />
+                  <Calendar size={18} />
                   Agendar
                 </button>
               </>
@@ -594,22 +437,22 @@ export default function ServicosPage() {
 
           <article className="services-sidecard">
             <div className="services-sidecard-title">
-              <MoreIcon />
-              <h2>Acoes rapidas</h2>
+             
+              <h2>Ações rápidas</h2>
             </div>
 
             <button type="button" className="services-quick-action">
-              <CalendarIcon />
-              Agendar com servico
+              <Calendar size={18} />
+              Agendar com serviço
             </button>
 
             <button type="button" className="services-quick-action">
-              <TeamIcon />
+              <Users size={18} />
               Gerenciar profissionais
             </button>
 
             <button type="button" className="services-quick-action">
-              <ArchiveIcon />
+              <Archive size={18} />
               Ver arquivados
             </button>
           </article>
