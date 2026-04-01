@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from "./api";
+import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 
 const SERVICES_BASE_PATH = "/api/v1/services";
 const RISK_LABELS = {
@@ -86,4 +86,8 @@ export async function createService(input) {
 export async function updateService(id, input) {
   const response = await apiPut(`${SERVICES_BASE_PATH}/${id}`, toServicePayload(input));
   return response?.data ? toServiceViewModel(response.data) : null;
+}
+
+export async function deleteService(id) {
+  await apiDelete(`${SERVICES_BASE_PATH}/${id}`);
 }

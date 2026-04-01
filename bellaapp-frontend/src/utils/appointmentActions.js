@@ -5,6 +5,7 @@ export function getActionsByStatus(status) {
 }
 
 export function actionClass(action) {
+  if (action === "Ativar") return "is-success";
   if (action === "Confirmar") return "is-success";
   if (action === "Concluir") return "is-success";
   if (action === "Remarcar") return "is-warning";

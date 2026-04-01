@@ -24,9 +24,13 @@ export function formatPhone(value) {
 }
 
 function formatDuration(minutes) {
-  if (minutes % 60 === 0) {
-    return `${minutes / 60}h`;
+  const totalMinutes = Number(minutes || 0);
+
+  if (totalMinutes > 0 && totalMinutes % 60 === 0) {
+    return `${totalMinutes / 60}h`;
   }
 
-  return `${minutes}min`;
+  return `${totalMinutes}min`;
 }
+
+export { formatDuration };

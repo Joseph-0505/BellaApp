@@ -9,11 +9,20 @@ export const API_STATUS_OPTIONS = [
 ];
 
 export function riskLabel(risk) {
-  if (risk === "Todos") return "Todos";
+  if (risk === "todos" || risk === "Todos") return "Todos";
   if (risk === "alto") return "Risco alto";
   if (risk === "medio") return "Risco medio";
-  if (risk === "baixo")  return "Risco baixo";
+  if (risk === "baixo") return "Risco baixo";
+
+  return "Nao informado";
 }
+
+export const SERVICE_RISK_OPTIONS = [
+  { value: "todos", label: "Todos os riscos" },
+  { value: "baixo", label: "Baixo" },
+  { value: "medio", label: "Medio" },
+  { value: "alto", label: "Alto" },
+];
 
 export function riskColor(risk) {
   if (risk === "alto") return "#9d1d3f";
@@ -47,5 +56,4 @@ export function statusLabel(status) {
 
   return "Agendado";
 }
-
 

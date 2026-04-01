@@ -148,6 +148,18 @@
   flex-direction: column;
 }
 
+.services-empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 20px 28px;
+  color: #607082;
+}
+
+.services-empty-state strong {
+  color: #253245;
+}
+
 .service-row {
   padding: 18px 20px;
   background: rgba(255, 255, 255, 0.7);
