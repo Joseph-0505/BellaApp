@@ -1,0 +1,13 @@
+# Node
+**/node_modules/
+**/dist/
+**/coverage/
+
+# Ambiente
+**/.env
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
