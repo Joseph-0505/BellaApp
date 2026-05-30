@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `service` ADD COLUMN `iconKey` VARCHAR(191) NOT NULL DEFAULT 'face',
+    ADD COLUMN `riskLevel` ENUM('LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'LOW';
