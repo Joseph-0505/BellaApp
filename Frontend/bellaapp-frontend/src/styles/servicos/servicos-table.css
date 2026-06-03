@@ -1,0 +1,35 @@
+.services-table {
+  --services-table-columns: 2.3fr 0.95fr 1fr 1fr 0.9fr 0.7fr;
+}
+
+.services-table-head {
+  display: grid;
+  grid-template-columns: var(--services-table-columns);
+  gap: 18px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-primary-subtle);
+  color: #5c6678;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.services-table-head span:last-child {
+  text-align: right;
+}
+
+.services-table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1280px) {
+  .services-table-head {
+    display: none;
+  }
+
+  .services-table-body {
+    padding: 14px;
+    gap: 14px;
+  }
+}

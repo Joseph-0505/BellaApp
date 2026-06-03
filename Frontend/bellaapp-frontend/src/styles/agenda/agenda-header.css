@@ -1,0 +1,29 @@
+.agenda-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agenda-nav h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.agenda-nav button {
+  background: #f3f4f6;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-today {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}

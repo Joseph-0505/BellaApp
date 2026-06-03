@@ -1,0 +1,23 @@
+.filters-bar {
+  gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 18px 16px 14px;
+}
+
+.filters-input {
+  flex: 1 1 260px;
+  min-width: 260px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.filters-select {
+  flex: 0 0 auto;
+  min-width: 180px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}

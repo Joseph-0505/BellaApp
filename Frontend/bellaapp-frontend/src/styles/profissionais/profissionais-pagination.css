@@ -1,0 +1,101 @@
+.profissionais-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 20px;
+  border-top: 1px solid var(--border-primary-subtle);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(245, 198, 214, 0.14) 100%);
+}
+
+.profissionais-footer-copy {
+  color: #415066;
+  font-size: 0.95rem;
+}
+
+.profissionais-footer-controls,
+.profissionais-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profissionais-page-button,
+.profissionais-page-size {
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--border-primary-strong);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-ui);
+}
+
+.profissionais-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 700;
+  transition: var(--transition);
+}
+
+.profissionais-page-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.profissionais-page-button-muted {
+  color: #728093;
+}
+
+.profissionais-page-button:hover:not(:disabled) {
+  background: var(--surface-hover-soft-alt);
+}
+
+.profissionais-page-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.profissionais-page-index {
+  min-width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary-strong);
+  background: var(--surface-card);
+  color: var(--text-ui);
+  font-weight: 800;
+}
+
+.profissionais-page-size {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.profissionais-page-size select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-ui);
+  font-size: 0.95rem;
+  font: inherit;
+}
+
+@media (max-width: 860px) {
+  .profissionais-footer,
+  .profissionais-footer-controls,
+  .profissionais-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profissionais-page-button,
+  .profissionais-page-size {
+    width: 100%;
+  }
+}

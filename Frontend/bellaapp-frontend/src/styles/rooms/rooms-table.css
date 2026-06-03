@@ -1,0 +1,31 @@
+.rooms-table-head {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.1fr 0.55fr;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-primary-subtle);
+  color: #5c6678;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.rooms-table-head span:last-child {
+  text-align: right;
+}
+
+.rooms-table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1080px) {
+  .rooms-table-head {
+    display: none;
+  }
+
+  .rooms-table-body {
+    padding: 14px;
+    gap: 14px;
+  }
+}

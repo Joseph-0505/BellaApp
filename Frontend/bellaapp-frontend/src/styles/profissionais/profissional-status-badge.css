@@ -1,0 +1,32 @@
+.profissional-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.profissional-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.profissional-status-badge-ativo {
+  background: #e0f2ea;
+  border-color: rgba(61, 123, 93, 0.18);
+  color: #347458;
+}
+
+.profissional-status-badge-inativo {
+  background: #f8e4e8;
+  border-color: rgba(157, 29, 63, 0.16);
+  color: #a0475d;
+}

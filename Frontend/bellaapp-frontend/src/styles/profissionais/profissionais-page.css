@@ -1,0 +1,37 @@
+.profissionais-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.profissionais-board {
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 26px;
+  background: linear-gradient(
+    180deg,
+    var(--surface-card-strong) 0%,
+    rgba(255, 250, 252, 0.98) 100%
+  );
+  box-shadow: var(--shadow-card-soft);
+}
+
+.profissionais-feedback {
+  padding: 0 20px 12px;
+  color: var(--text-support);
+  font-size: 0.95rem;
+}
+
+.profissionais-feedback-error {
+  color: var(--danger);
+}
+
+.profissionais-feedback-warning {
+  color: #9a6700;
+}
+
+@media (max-width: 860px) {
+  .profissionais-page {
+    padding-inline: 0;
+  }
+}

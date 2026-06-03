@@ -1,0 +1,353 @@
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.onboarding-checklist {
+  padding: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(217, 126, 164, 0.16), transparent 32%),
+    linear-gradient(180deg, #fffdfd 0%, #fff7fa 100%);
+}
+
+.dashboard-checklist-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.dashboard-checklist-header h2 {
+  margin-bottom: 6px;
+}
+
+.dashboard-checklist-header p {
+  margin: 0;
+  color: var(--text-light);
+  max-width: 620px;
+}
+
+.dashboard-checklist-kicker {
+  display: inline-flex;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9b4368;
+}
+
+.dashboard-checklist-progress {
+  min-width: 132px;
+  padding: 12px 14px;
+  border: 1px solid rgba(217, 126, 164, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  text-align: right;
+}
+
+.dashboard-checklist-progress strong {
+  display: block;
+  font-size: 1.35rem;
+  color: var(--text-heading);
+}
+
+.dashboard-checklist-progress span {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+
+.dashboard-checklist-bar {
+  width: 100%;
+  height: 10px;
+  margin: 16px 0 18px;
+  border-radius: 999px;
+  background: rgba(217, 126, 164, 0.12);
+  overflow: hidden;
+}
+
+.dashboard-checklist-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d97ea4 0%, #f4bed1 100%);
+  transition: width 0.2s ease;
+}
+
+.dashboard-checklist-loading {
+  margin: 0;
+  color: var(--text-light);
+}
+
+.dashboard-checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-checklist-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid rgba(217, 126, 164, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.dashboard-checklist-item.is-completed {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-checklist-item-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97ea4;
+  margin-top: 2px;
+}
+
+.dashboard-checklist-item.is-completed .dashboard-checklist-item-state {
+  color: #5aa181;
+}
+
+.dashboard-checklist-item-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.dashboard-checklist-item-copy {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.dashboard-checklist-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #fff1f6;
+  color: #b85f84;
+  flex-shrink: 0;
+}
+
+.dashboard-checklist-item-copy strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-heading);
+}
+
+.dashboard-checklist-item-copy p {
+  margin: 0;
+  color: var(--text-light);
+}
+
+.dashboard-checklist-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #efbfd1;
+  border-radius: 999px;
+  background: #fff;
+  color: #9b4368;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.dashboard-checklist-action:hover {
+  background: #fff3f8;
+  transform: translateY(-1px);
+}
+
+.dashboard-checklist-action.is-disabled,
+.dashboard-checklist-action:disabled {
+  border-color: var(--border);
+  color: var(--text-light);
+  background: #f8f5f6;
+  cursor: default;
+  transform: none;
+}
+
+.muted {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffeef4;
+  color: #9b4368;
+  border: 1px solid #f5c6d6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e85a8f;
+  animation: pulse 1.4s infinite;
+}
+
+.updated-at {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.dash-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+
+.side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboard-header .page-header-bottom {
+  justify-content: flex-start;
+  margin-right: 0;
+}
+
+.dashboard-date-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 252, 253, 0.96);
+}
+
+.dashboard-date-toolbar-label {
+  color: var(--text-light);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.dashboard-date-field-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-date-field-inline span {
+  color: var(--text-light);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-date-input {
+  min-width: 160px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.dashboard-date-input:focus {
+  outline: none;
+  border-color: var(--border-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.dashboard-page > * {
+  min-width: 0;
+}
+
+.dash-main-grid > * {
+  min-width: 0;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dash-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .dashboard-checklist-header,
+  .dashboard-checklist-item-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-checklist-progress {
+    width: 100%;
+    text-align: left;
+  }
+
+  .dashboard-checklist-action {
+    justify-content: center;
+  }
+
+  .dashboard-date-toolbar {
+    width: 100%;
+  }
+
+  .dashboard-date-toolbar-label {
+    width: 100%;
+  }
+
+  .dashboard-date-field-inline,
+  .dashboard-date-input {
+    width: 100%;
+  }
+
+  .dashboard-date-field-inline {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

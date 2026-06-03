@@ -1,0 +1,139 @@
+.cliente-preview {
+  padding: 22px 24px 24px;
+}
+
+.cliente-preview-hero {
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--border-primary-subtle);
+  background: var(--gradient-surface-elevated);
+}
+
+.cliente-preview-avatar {
+  width: 68px;
+  height: 68px;
+  flex-basis: 68px;
+  border-radius: 22px;
+  font-size: 1.15rem;
+}
+
+.cliente-preview-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cliente-preview-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cliente-preview-heading h3 {
+  color: #1f2f41;
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.cliente-preview-contact-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cliente-preview-contact-list span,
+.cliente-preview-card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cliente-preview-contact-list span {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #516072;
+  font-size: 0.92rem;
+}
+
+.cliente-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.cliente-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-primary-subtle);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cliente-preview-card-label {
+  color: #5c6b7c;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cliente-preview-card strong {
+  color: #253245;
+  font-size: 1.05rem;
+}
+
+.cliente-preview-card p {
+  color: #6b7788;
+}
+
+.cliente-preview-footer,
+.cliente-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cliente-preview-footer {
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .cliente-preview-footer,
+  .cliente-preview-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cliente-preview-footer .form-modal-button,
+  .cliente-preview-actions .form-modal-button {
+    width: 100%;
+  }
+
+  .cliente-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .cliente-preview {
+    padding: 20px 20px 24px;
+  }
+
+  .cliente-preview-hero,
+  .cliente-preview-heading,
+  .cliente-preview-contact-list {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

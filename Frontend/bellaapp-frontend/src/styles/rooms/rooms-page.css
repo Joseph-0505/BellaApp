@@ -1,0 +1,33 @@
+.rooms-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.rooms-board {
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 26px;
+  background: linear-gradient(
+    180deg,
+    var(--surface-card-strong) 0%,
+    rgba(255, 250, 252, 0.98) 100%
+  );
+  box-shadow: var(--shadow-card-soft);
+}
+
+.rooms-feedback {
+  padding: 0 20px 12px;
+  color: var(--text-support);
+  font-size: 0.95rem;
+}
+
+.rooms-feedback-error {
+  color: var(--danger);
+}
+
+@media (max-width: 860px) {
+  .rooms-page {
+    padding-inline: 0;
+  }
+}

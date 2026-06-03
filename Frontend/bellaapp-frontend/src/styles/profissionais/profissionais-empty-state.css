@@ -1,0 +1,34 @@
+.profissionais-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.profissionais-empty-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(245, 213, 223, 0.9) 0%, rgba(239, 228, 234, 0.95) 100%);
+  color: #8b5a72;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.profissionais-empty-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.profissionais-empty strong {
+  color: var(--text-heading);
+  font-size: 1.08rem;
+}
+
+.profissionais-empty span {
+  max-width: 520px;
+  color: var(--text-support);
+}

@@ -1,0 +1,31 @@
+.profissionais-table-head {
+  display: grid;
+  grid-template-columns: 2.2fr 1.2fr 1.15fr 0.9fr 0.55fr;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-primary-subtle);
+  color: #5c6678;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.profissionais-table-head span:last-child {
+  text-align: right;
+}
+
+.profissionais-table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1180px) {
+  .profissionais-table-head {
+    display: none;
+  }
+
+  .profissionais-table-body {
+    padding: 14px;
+    gap: 14px;
+  }
+}

@@ -1,0 +1,238 @@
+.form-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(28, 23, 31, 0.42);
+  backdrop-filter: blur(5px);
+  z-index: 10000;
+}
+
+.form-modal-card {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100dvh - 48px);
+  border-radius: 28px;
+  border: 1px solid var(--border-primary);
+  background: var(--gradient-panel);
+  box-shadow: var(--shadow-panel);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 114, 154, 0.75) rgba(255, 255, 255, 0.35);
+  overscroll-behavior: contain;
+}
+
+.form-modal-card::-webkit-scrollbar {
+  width: 10px;
+}
+
+.form-modal-card::-webkit-scrollbar-track {
+  margin: 12px 0;
+  background: rgba(255, 255, 255, 0.32);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.form-modal-card::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(216, 114, 154, 0.9) 0%,
+    rgba(182, 86, 130, 0.9) 100%
+  );
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background-clip: padding-box;
+}
+
+.form-modal-card::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(216, 114, 154, 1) 0%,
+    rgba(182, 86, 130, 1) 100%
+  );
+}
+
+.form-modal-card.form-modal-card-compact {
+  width: min(100%, 700px);
+}
+
+.form-modal-card.form-modal-card-wide {
+  width: min(100%, 980px);
+}
+
+.form-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid var(--border-primary-hairline);
+  background: var(--gradient-panel);
+  backdrop-filter: blur(8px);
+}
+
+.form-modal-header h2 {
+  margin-bottom: 6px;
+  font-size: clamp(1.6rem, 2vw, 2rem);
+  color: var(--text-heading);
+  letter-spacing: -0.04em;
+}
+
+.form-modal-header p {
+  color: var(--text-muted-alt);
+}
+
+.form-modal-close {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--border-primary-control);
+  background: var(--surface-control);
+  color: #46566c;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.form-modal-close:hover {
+  background: var(--surface-hover-soft-strong);
+}
+
+.form-modal-form {
+  padding: 22px 24px 24px;
+}
+
+.form-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-modal-field-full {
+  grid-column: 1 / -1;
+}
+
+.form-modal-field label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-ui);
+}
+
+.form-modal-field input,
+.form-modal-field select,
+.form-modal-field textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  border: 1px solid var(--border-primary-field);
+  background: var(--surface-panel);
+  color: var(--text-ui);
+  font-size: 0.98rem;
+  transition: var(--transition);
+}
+
+.form-modal-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-modal-field input:focus,
+.form-modal-field select:focus,
+.form-modal-field textarea:focus {
+  border-color: rgba(216, 114, 154, 0.72);
+  box-shadow: var(--focus-ring);
+}
+
+.form-modal-helper,
+.form-modal-preview {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--gradient-panel-soft);
+  color: var(--text-support);
+}
+
+.form-modal-helper strong,
+.form-modal-preview strong {
+  color: var(--text-heading);
+}
+
+.form-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.form-modal-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.form-modal-button-secondary {
+  border: 1px solid var(--border-primary-ui);
+  background: var(--surface-soft);
+  color: var(--text-body);
+}
+
+.form-modal-button-secondary:hover {
+  background: var(--surface-hover-soft);
+}
+
+.form-modal-button-primary {
+  background: var(--gradient-primary);
+  color: var(--white);
+  box-shadow: 0 12px 24px rgba(217, 126, 164, 0.28);
+}
+
+.form-modal-button-primary:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+  .form-modal-overlay {
+    padding: 16px;
+  }
+
+  .form-modal-card {
+    max-height: calc(100dvh - 32px);
+  }
+
+  .form-modal-card::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .form-modal-card::-webkit-scrollbar-track {
+    margin: 10px 0;
+  }
+
+  .form-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-modal-header,
+  .form-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-modal-close,
+  .form-modal-button {
+    width: 100%;
+  }
+}
