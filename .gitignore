@@ -14,3 +14,7 @@
 
 #nginx
 nginx/certs/
+
+# Playwright
+test-results/
+playwright-report/
