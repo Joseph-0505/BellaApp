@@ -9,8 +9,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
 
-    ports:
-      - "3307:3306"
+    expose:
+      - "3306"
 
     volumes:
       - mysql_data:/var/lib/mysql
@@ -52,16 +52,18 @@ services:
 
     networks:
       - bellaapp-network
-  
+
   nginx:
     image: nginx:alpine
     container_name: bellaapp-nginx
 
     ports:
       - "80:80"
+      - "443:443"
 
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/certs:/etc/nginx/certs
 
     depends_on:
       - frontend
@@ -76,4 +78,3 @@ volumes:
 networks:
   bellaapp-network:
     driver: bridge
-
