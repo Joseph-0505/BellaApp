@@ -1,0 +1,19 @@
+#!/bin/sh
+commit_msg=$(cat "$1")
+
+# Permite mensagens de merge do GitFlow
+if echo "$commit_msg" | grep -qE "^Merge branch '"; then
+  exit 0
+fi
+
+pattern='^(feat|fix|chore|docs|style|refactor|test|build|ci|perf|revert)(\([a-z0-9/_-]+\))?: .+'
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo ""
+  echo "Mensagem de commit invalida!"
+  echo "Use o formato: tipo(escopo): descricao"
+  echo "Tipos validos: feat, fix, chore, docs, style, refactor, test, build, ci, perf, revert"
+  echo "Exemplo: feat(auth): adiciona login"
+  echo ""
+  exit 1
+fi
