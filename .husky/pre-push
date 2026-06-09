@@ -1,0 +1,11 @@
+#!/bin/sh
+echo "Executando testes e2e antes do push..."
+cd Frontend/bellaapp-frontend && npm run test:e2e
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+  echo "Testes e2e falharam. Push cancelado."
+  exit 1
+fi
+
+echo "Testes e2e passaram com sucesso!"

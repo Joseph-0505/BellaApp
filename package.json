@@ -1,0 +1,12 @@
+{
+  "name": "bellaapp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "test:e2e": "cd Frontend/bellaapp-frontend && npm run test:e2e"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0"
+  }
+}
