@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `businessprofile` ADD COLUMN `hasTeam` BOOLEAN NOT NULL DEFAULT false,
+ALTER TABLE `BusinessProfile` ADD COLUMN `hasTeam` BOOLEAN NOT NULL DEFAULT false,
     ADD COLUMN `onboardingCompletedAt` DATETIME(3) NULL,
     ADD COLUMN `usesRooms` BOOLEAN NOT NULL DEFAULT false;
 
