@@ -10,13 +10,13 @@ test.describe('CRUD Clientes', () => {
 
   test('listar - página carrega corretamente', async ({ page }) => {
     await expect(page.locator('.clientes-page')).toBeVisible()
-    await expect(page.locator('button.btn-soft')).toContainText('Novo Cliente')
+    await expect(page.getByRole('button', { name: '+ Novo Cliente' })).toBeVisible()
   })
 
   test('criar cliente - sucesso', async ({ page }) => {
     const nome = `Cliente E2E ${Date.now()}`
 
-    await page.click('button.btn-soft')
+    await page.getByRole('button', { name: '+ Novo Cliente' }).click()
     await page.fill('#novo-cliente-nome', nome)
     await page.fill('#novo-cliente-telefone', '(11) 99999-9999')
     await page.click('.form-modal-button-primary')
@@ -25,7 +25,7 @@ test.describe('CRUD Clientes', () => {
   })
 
   test('criar cliente - falha ao omitir campos obrigatórios', async ({ page }) => {
-    await page.click('button.btn-soft')
+    await page.getByRole('button', { name: '+ Novo Cliente' }).click()
     await page.click('.form-modal-button-primary')
     // Modal permanece aberto pois os campos required não foram preenchidos
     await expect(page.locator('#novo-cliente-nome')).toBeVisible()
@@ -36,7 +36,7 @@ test.describe('CRUD Clientes', () => {
     const nomeEditado = `${nome} Editado`
 
     // Criar
-    await page.click('button.btn-soft')
+    await page.getByRole('button', { name: '+ Novo Cliente' }).click()
     await page.fill('#novo-cliente-nome', nome)
     await page.fill('#novo-cliente-telefone', '(11) 88888-8888')
     await page.click('.form-modal-button-primary')
