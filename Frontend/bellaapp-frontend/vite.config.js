@@ -10,6 +10,11 @@ export default defineConfig({
   plugins: [react()],
 
   server: {
+    // Ignora artefatos de teste no watcher: regenerados pelos E2E, eles fazem
+    // o FSWatcher do Vite quebrar (UNKNOWN scandir) se o dev server estiver rodando.
+    watch: {
+      ignored: ['**/playwright-report/**', '**/test-results/**'],
+    },
     proxy: {
       '/api': {
         target: apiProxyTarget,
