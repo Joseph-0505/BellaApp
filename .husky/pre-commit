@@ -1,0 +1,11 @@
+#!/bin/sh
+echo "Verificando tipos (typecheck) antes do commit..."
+cd Frontend/bellaapp-frontend && npm run typecheck
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+  echo "Typecheck falhou. Commit cancelado."
+  exit 1
+fi
+
+echo "Typecheck passou com sucesso!"
