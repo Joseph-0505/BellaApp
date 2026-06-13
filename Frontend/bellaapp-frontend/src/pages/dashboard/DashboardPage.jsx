@@ -42,7 +42,7 @@ function shiftIsoDate(date, days) {
 function AlertList({ alertas }) {
   return (
     <article className="panel">
-      <h2>Alertas rÃ¡pidos</h2>
+      <h2>Alertas rápidos</h2>
       <ul className="alert-list">
         {alertas.length === 0 ? <li>Nenhum alerta no momento.</li> : null}
         {alertas.map((alerta) => (
