@@ -7,6 +7,7 @@ const usingDocker = baseURL.includes('bellaapp.local')
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   retries: 0,
   workers: 1,

@@ -1,6 +1,7 @@
-// Em dev usamos base relativa ("") para passar pelo proxy do Vite (ver vite.config.js),
-// evitando CORS. Em build/produção usa VITE_API_URL (ou localhost:3000 como fallback).
-const DEFAULT_API_BASE_URL = import.meta.env.DEV ? "" : "http://localhost:3000";
+// Base relativa ("") em dev E em produção: as requisições saem na mesma origem e são
+// roteadas pelo proxy (Vite em dev, Nginx /api/ em produção), evitando CORS e mixed-content.
+// VITE_API_URL permite sobrescrever para apontar a um backend externo, se necessário.
+const DEFAULT_API_BASE_URL = "";
 const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 const SESSION_STORAGE_KEY = "bellaapp.session";
 const SESSION_CHANGE_EVENT = "bellaapp:session-change";
