@@ -1,4 +1,8 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+// Base relativa ("") em dev E em produção: as requisições saem na mesma origem e são
+// roteadas pelo proxy (Vite em dev, Nginx /api/ em produção), evitando CORS e mixed-content.
+// VITE_API_URL permite sobrescrever para apontar a um backend externo, se necessário.
+const DEFAULT_API_BASE_URL = "";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 const SESSION_STORAGE_KEY = "bellaapp.session";
 const SESSION_CHANGE_EVENT = "bellaapp:session-change";
 const AUTH_BASE_PATH = "/api/v1/auth";

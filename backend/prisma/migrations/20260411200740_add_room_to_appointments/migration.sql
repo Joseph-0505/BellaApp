@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `appointment` ADD COLUMN `roomId` VARCHAR(191) NULL;
+ALTER TABLE `Appointment` ADD COLUMN `roomId` VARCHAR(191) NULL;
 
 -- CreateIndex
 CREATE INDEX `Appointment_roomId_idx` ON `Appointment`(`roomId`);
