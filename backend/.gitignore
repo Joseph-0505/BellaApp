@@ -5,3 +5,5 @@ dist
 # Environment variables
 .env
 .env.*
+# mas versiona o exemplo (sem segredos), para documentar as variaveis necessarias
+!.env.exemple
