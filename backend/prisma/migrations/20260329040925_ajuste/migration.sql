@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `appointment` ADD COLUMN `professionalId` VARCHAR(191) NULL;
+ALTER TABLE `Appointment` ADD COLUMN `professionalId` VARCHAR(191) NULL;
 
 -- CreateTable
 CREATE TABLE `Professional` (

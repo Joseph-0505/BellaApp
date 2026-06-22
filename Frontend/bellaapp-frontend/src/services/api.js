@@ -1,4 +1,7 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+// Em dev usamos base relativa ("") para passar pelo proxy do Vite (ver vite.config.js),
+// evitando CORS. Em build/produção usa VITE_API_URL (ou localhost:3000 como fallback).
+const DEFAULT_API_BASE_URL = import.meta.env.DEV ? "" : "http://localhost:3000";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 const SESSION_STORAGE_KEY = "bellaapp.session";
 const SESSION_CHANGE_EVENT = "bellaapp:session-change";
 const AUTH_BASE_PATH = "/api/v1/auth";

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { generateCpf } from './helpers/cpf'
 
 const TEST_EMAIL = process.env.TEST_USER_EMAIL || 'teste@bellaapp.com'
 const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || 'Teste@1234'
@@ -28,7 +29,7 @@ test.describe('Cadastro', () => {
     await page.goto('/login')
     await page.click('button:has-text("Criar conta")')
     await page.fill('#auth-name', 'Usuário E2E')
-    await page.fill('#auth-cpf', '529.982.247-25')
+    await page.fill('#auth-cpf', generateCpf())
     await page.fill('#auth-email', uniqueEmail)
     await page.fill('#auth-password', 'Teste@1234')
     await page.fill('#auth-confirm-password', 'Teste@1234')
@@ -42,7 +43,7 @@ test.describe('Cadastro', () => {
     await page.goto('/login')
     await page.click('button:has-text("Criar conta")')
     await page.fill('#auth-name', 'Usuário E2E')
-    await page.fill('#auth-cpf', '529.982.247-25')
+    await page.fill('#auth-cpf', generateCpf())
     await page.fill('#auth-email', 'qualquer@bellaapp.com')
     await page.fill('#auth-password', 'Teste@1234')
     await page.fill('#auth-confirm-password', 'SenhaDiferente@9999')
