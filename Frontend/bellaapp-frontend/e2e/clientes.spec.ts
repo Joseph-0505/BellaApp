@@ -27,20 +27,25 @@ test.describe('CRUD Clientes', () => {
   test('criar cliente - falha ao omitir campos obrigatórios', async ({ page }) => {
     await page.getByRole('button', { name: '+ Novo Cliente' }).click()
     await page.click('.form-modal-button-primary')
-    // Modal permanece aberto pois os campos required não foram preenchidos
+
     await expect(page.locator('#novo-cliente-nome')).toBeVisible()
   })
 
-  test('fluxo completo - criar, editar e excluir', async ({ page }) => {
+  test('fluxo completo - criar, listar, editar e excluir', async ({ page }) => {
     const nome = `CRUD E2E ${Date.now()}`
     const nomeEditado = `${nome} Editado`
 
-    // Criar
+    // Cadastrar
     await page.getByRole('button', { name: '+ Novo Cliente' }).click()
     await page.fill('#novo-cliente-nome', nome)
     await page.fill('#novo-cliente-telefone', '(11) 88888-8888')
     await page.click('.form-modal-button-primary')
     await expect(page.locator('.clientes-page')).toContainText(nome)
+
+    // Listar: recarrega a página e confirma que o cliente persistiu na listagem vinda do servidor
+    await page.reload()
+    await page.waitForSelector('.clientes-page')
+    await expect(page.locator('article.cliente-row', { hasText: nome })).toBeVisible()
 
     // Editar
     const row = page.locator('article.cliente-row', { hasText: nome })
@@ -56,5 +61,10 @@ test.describe('CRUD Clientes', () => {
     await editedRow.locator('button.menu-trigger').click()
     await page.click('button.menu-item:has-text("Excluir")')
     await expect(page.locator('.clientes-page')).not.toContainText(nomeEditado)
+
+    // Listar novamente: confirma que a exclusão persistiu no servidor
+    await page.reload()
+    await page.waitForSelector('.clientes-page')
+    await expect(page.locator('article.cliente-row', { hasText: nomeEditado })).toHaveCount(0)
   })
 })
