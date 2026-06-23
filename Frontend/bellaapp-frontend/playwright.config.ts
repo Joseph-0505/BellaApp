@@ -1,7 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// Padrao: stack Docker (nginx em https://bellaapp.local). Para rodar contra o dev
-// server local do Vite, defina PLAYWRIGHT_BASE_URL=http://localhost:5173.
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'https://bellaapp.local'
 const usingDocker = baseURL.includes('bellaapp.local')
 

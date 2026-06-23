@@ -16,7 +16,7 @@ services:
       - mysql_data:/var/lib/mysql
 
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent" ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -38,8 +38,6 @@ services:
     env_file:
       - ./backend/.env
 
-    # Aplica as migrations pendentes antes de iniciar o servidor, garantindo que um
-    # "docker compose up" em banco limpo já suba com o schema criado.
     command: sh -c "npx prisma migrate deploy && node dist/app/server.js"
 
     expose:

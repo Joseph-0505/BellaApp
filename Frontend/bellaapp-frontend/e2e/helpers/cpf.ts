@@ -1,6 +1,4 @@
-// Gera um CPF valido (com digitos verificadores corretos) e aleatorio.
-// Usado para que o teste de cadastro seja idempotente: cada execucao usa
-// um CPF diferente, evitando colisao (409 CPF_ALREADY_EXISTS) em re-runs.
+
 export function generateCpf(): string {
   const base = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10))
 
