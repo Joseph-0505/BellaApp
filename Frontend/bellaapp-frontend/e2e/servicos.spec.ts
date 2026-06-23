@@ -28,20 +28,24 @@ test.describe('CRUD Serviços', () => {
     await page.click('button.btn-primary')
     await page.fill('#novo-servico-preco', '150')
     await page.click('.form-modal-button-primary')
-    // Modal permanece aberto pois o nome é obrigatório
     await expect(page.locator('#novo-servico-nome')).toBeVisible()
   })
 
-  test('fluxo completo - criar, editar e excluir', async ({ page }) => {
+  test('fluxo completo - criar, listar, editar e excluir', async ({ page }) => {
     const nome = `CRUD Serv E2E ${Date.now()}`
     const nomeEditado = `${nome} Editado`
 
-    // Criar
+    // Cadastrar
     await page.click('button.btn-primary')
     await page.fill('#novo-servico-nome', nome)
     await page.fill('#novo-servico-preco', '200')
     await page.click('.form-modal-button-primary')
     await expect(page.locator('.services-page')).toContainText(nome)
+
+    // Listar: recarrega a página e confirma que o serviço persistiu na listagem vinda do servidor
+    await page.reload()
+    await page.waitForSelector('.services-page')
+    await expect(page.locator('article.service-row', { hasText: nome })).toBeVisible()
 
     // Editar
     const row = page.locator('article.service-row', { hasText: nome })
@@ -57,5 +61,10 @@ test.describe('CRUD Serviços', () => {
     await editedRow.locator('button.menu-trigger').click()
     await page.click('button.menu-item:has-text("Excluir")')
     await expect(page.locator('.services-page')).not.toContainText(nomeEditado)
+
+    // Listar novamente: confirma que a exclusão persistiu no servidor
+    await page.reload()
+    await page.waitForSelector('.services-page')
+    await expect(page.locator('article.service-row', { hasText: nomeEditado })).toHaveCount(0)
   })
 })

@@ -19,7 +19,6 @@ const booleanLikeSchema = z.preprocess((value) => {
   return value;
 }, z.boolean().optional());
 
-// Centraliza e valida as variaveis de ambiente logo na inicializacao da aplicacao.
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -71,7 +70,6 @@ const envSchema = z
     }
   });
 
-// Interrompe o bootstrap se a configuracao do ambiente estiver invalida.
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {

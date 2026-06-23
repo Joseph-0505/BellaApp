@@ -16,8 +16,6 @@ import { cashRoutes } from "../modules/cash/cash.routes";
 import { billingRoutes } from "../modules/billing/billing.routes";
 import { prisma } from "../lib/prisma";
 
-// Converte a configuração de CORS do ambiente para o formato esperado pelo Fastify.
-// "*" libera qualquer origem; caso contrário, transforma a lista separada por vírgula em um array.
 function resolveCorsOrigin(): true | string[] {
   if (env.CORS_ORIGIN === "*") {
     return true;
@@ -28,7 +26,6 @@ function resolveCorsOrigin(): true | string[] {
     .filter(Boolean);
 }
 
-// Monta a aplicação HTTP registrando plugins, tratamento global de erros e rotas da API.
 export function buildApp(): FastifyInstance {
   const app = Fastify({
     logger: env.NODE_ENV !== "test",
@@ -56,7 +53,6 @@ export function buildApp(): FastifyInstance {
   app.register(billingsRoutes, { prefix: "/api/v1/cobrancas" });
   app.register(cashRoutes, { prefix: "/api/v1/caixa" });
 
-  // Garante que a conexão com o banco seja encerrada quando o servidor fechar.
   app.addHook("onClose", async () => {
     await prisma.$disconnect();
   });

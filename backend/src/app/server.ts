@@ -10,11 +10,8 @@ const listenOptions = {
 };
 const shutdownSignals: ShutdownSignal[] = ["SIGINT", "SIGTERM"];
 
-// Evita disparar o encerramento mais de uma vez se chegarem sinais repetidos.
 let isShuttingDown = false;
 
-// Sobe o servidor HTTP com as configurações definidas no ambiente.
-// Se algo falhar aqui, o processo é encerrado para não deixar a aplicação em estado inconsistente.
 async function startServer(): Promise<void> {
   try {
     await app.listen(listenOptions);
@@ -24,7 +21,6 @@ async function startServer(): Promise<void> {
   }
 }
 
-// Fecha o servidor de forma controlada quando o processo recebe um sinal do sistema.
 async function shutdownServer(signal: ShutdownSignal): Promise<void> {
   if (isShuttingDown) {
     app.log.warn({ signal }, "Shutdown already in progress");
@@ -42,7 +38,6 @@ async function shutdownServer(signal: ShutdownSignal): Promise<void> {
   }
 }
 
-// Registra os sinais do sistema operacional que devem iniciar o shutdown gracioso.
 function registerShutdownHandlers(): void {
   for (const signal of shutdownSignals) {
     process.once(signal, () => {
