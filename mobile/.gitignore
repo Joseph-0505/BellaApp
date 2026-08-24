@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Expo environment/types generated
+expo-env.d.ts
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Native generated folders
+/android/
+/ios/
+
+# Metro
+.metro-health-check*
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Certificates / keys
+*.pem
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.jks
+
+# Temporary files
+*.tmp
+*.temp
