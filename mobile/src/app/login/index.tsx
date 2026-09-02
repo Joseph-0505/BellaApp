@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,23 +14,42 @@ import {
 
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
+import { ScreenLoader } from "../../components/ScreenLoader";
+import { useAuth } from "../../hooks/useAuth";
 import { styles } from "../../styles/login.styles";
+import { formatRequestError } from "../../utils/request-errors";
+import { getAuthenticatedEntryRoute } from "../../utils/routes";
 
 export default function LoginScreen() {
+  const { email: registeredEmail } = useLocalSearchParams<{ email?: string }>();
+  const {
+    bootstrapping,
+    isAuthenticated,
+    onboarding,
+    onboardingLoading,
+    signIn,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
-  const [successMessage, setSuccessMessage] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleLogin() {
+  useEffect(() => {
+    if (typeof registeredEmail === "string") {
+      setEmail(registeredEmail);
+    }
+  }, [registeredEmail]);
+
+  async function handleLogin() {
     const nextErrors = { email: "", password: "" };
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
       nextErrors.email = "Informe seu e-mail.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      nextErrors.email = "Informe um e-mail válido.";
+      nextErrors.email = "Informe um e-mail valido.";
     }
 
     if (!password) {
@@ -41,19 +61,45 @@ export default function LoginScreen() {
     setErrors(nextErrors);
 
     if (nextErrors.email || nextErrors.password) {
-      setSuccessMessage("");
       return;
     }
 
-    setSuccessMessage("Dados válidos. Login pronto para ser conectado ao backend.");
+    setSubmitting(true);
+    setRequestError("");
+
+    try {
+      const nextOnboarding = await signIn({
+        email: normalizedEmail,
+        password,
+      });
+
+      router.replace(getAuthenticatedEntryRoute(nextOnboarding?.completed));
+    } catch (requestError) {
+      setRequestError(
+        formatRequestError(requestError, "Nao foi possivel fazer login."),
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleForgotPassword() {
-    console.log("Esqueci minha senha");
+    Alert.alert(
+      "BellaApp",
+      "O fluxo de recuperacao de senha ainda nao foi conectado no mobile.",
+    );
   }
 
   function handleCreateAccount() {
-    router.push("/cadastro"); 
+    router.push("/cadastro");
+  }
+
+  if (bootstrapping || onboardingLoading) {
+    return <ScreenLoader message="Carregando sua sessao..." />;
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href={getAuthenticatedEntryRoute(onboarding?.completed)} />;
   }
 
   return (
@@ -75,7 +121,7 @@ export default function LoginScreen() {
           <Text style={styles.title}>Bem-vinda ao BellaApp</Text>
 
           <Text style={styles.subtitle}>
-            Gerencie seus clientes e agendamentos em um só lugar
+            Gerencie seus clientes e agendamentos em um so lugar
           </Text>
         </View>
 
@@ -87,7 +133,7 @@ export default function LoginScreen() {
             onChangeText={(value) => {
               setEmail(value);
               setErrors((current) => ({ ...current, email: "" }));
-              setSuccessMessage("");
+              setRequestError("");
             }}
             error={errors.email}
             keyboardType="email-address"
@@ -103,17 +149,19 @@ export default function LoginScreen() {
             onChangeText={(value) => {
               setPassword(value);
               setErrors((current) => ({ ...current, password: "" }));
-              setSuccessMessage("");
+              setRequestError("");
             }}
             error={errors.password}
             secureTextEntry={!showPassword}
             icon="lock-closed-outline"
             rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
-            onPressRightIcon={() => setShowPassword(!showPassword)}
+            onPressRightIcon={() => setShowPassword((current) => !current)}
           />
-          {successMessage ? (
-            <Text style={styles.successMessage}>{successMessage}</Text>
+
+          {requestError ? (
+            <Text style={styles.errorMessage}>{requestError}</Text>
           ) : null}
+
           <TouchableOpacity
             style={styles.forgotContainer}
             onPress={handleForgotPassword}
@@ -121,11 +169,11 @@ export default function LoginScreen() {
             <Text style={styles.forgot}>Esqueci minha senha</Text>
           </TouchableOpacity>
 
-          <Button title="Entrar" onPress={handleLogin} />
+          <Button title="Entrar" onPress={handleLogin} loading={submitting} />
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Ainda não possui conta?</Text>
+          <Text style={styles.footerText}>Ainda nao possui conta?</Text>
 
           <TouchableOpacity onPress={handleCreateAccount}>
             <Text style={styles.createAccount}>Criar conta</Text>

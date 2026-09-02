@@ -48,8 +48,8 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
 
-  successMessage: {
-    color: colors.success,
+  errorMessage: {
+    color: colors.error,
     fontSize: 13,
     marginBottom: 16,
   },

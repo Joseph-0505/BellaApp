@@ -1,50 +1,91 @@
-# Welcome to your Expo app 👋
+# BellaApp Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile do BellaApp para a rotina de clinicas de estetica. O projeto usa React Native, Expo e Expo Router e consome a API Fastify do diretorio `../backend`.
 
-## Get started
+## Funcionalidades atuais
 
-1. Install dependencies
+- Criacao de conta com validacao de nome, e-mail, CPF e senha.
+- Login com JWT, refresh de sessao e logout.
+- Onboarding inicial para configurar o nome da clinica.
+- Tela inicial com resumo da agenda e proximos atendimentos.
+- Consulta e atualizacao do perfil autenticado.
 
-   ```bash
-   npm install
-   ```
+O app ainda nao possui CRUD operacional de clientes, servicos ou agendamentos. Esses fluxos sao a proxima etapa funcional do mobile.
 
-2. Start the app
+## Arquitetura
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/app          rotas e telas do Expo Router
+src/components   componentes reutilizaveis de interface
+src/context      estado de autenticacao e onboarding
+src/services     cliente HTTP e comunicacao com a API
+src/types        contratos TypeScript
+src/utils        formatacao, rotas e tratamento de erros
+src/styles       estilos por tela
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+As rotas atuais sao `/`, `/login`, `/cadastro`, `/onboarding` e `/home`. Rotas protegidas usam o `AuthContext`; apos login, o usuario segue para o onboarding ou para a tela inicial conforme o status retornado pela API.
 
-## Learn more
+## Requisitos funcionais atendidos
 
-To learn more about developing your project with Expo, look at the following resources:
+- RF01: criar conta com dados pessoais e senha forte.
+- RF02: autenticar e encerrar sessao.
+- RF03: concluir configuracao inicial da clinica.
+- RF04: visualizar dados resumidos da agenda.
+- RF05: visualizar e atualizar o perfil autenticado.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Requisitos nao funcionais
 
-## Join the community
+- RNF01: o app deve funcionar em Android e iOS via Expo.
+- RNF02: a comunicacao deve ocorrer por API HTTP configuravel.
+- RNF03: entradas de cadastro devem ser validadas antes do envio.
+- RNF04: erros da API devem ser apresentados em linguagem compreensivel.
+- RNF05: o codigo deve manter separacao entre telas, componentes, estado e acesso a dados.
 
-Join our community of developers creating universal apps.
+## Regras de negocio
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- CPF deve possuir 11 digitos e digitos verificadores validos.
+- Senha deve ter ao menos 8 caracteres, letra maiuscula, minuscula, numero e simbolo.
+- E-mail e CPF nao podem duplicar um cadastro existente; a API aplica essa regra de forma definitiva.
+- Apos criar a conta, o app retorna ao login e preenche o e-mail informado. A sessao so e criada apos a pessoa informar as credenciais na tela de login.
+- O onboarding e obrigatorio antes da area autenticada principal.
+
+## Integracao com a API
+
+Por padrao, o app identifica o host do Expo Go e usa a porta `3000`. No emulador Android sem Expo Go, o fallback e `http://10.0.2.2:3000`.
+
+Para definir outra API, configure antes de iniciar o Expo:
+
+```powershell
+$env:EXPO_PUBLIC_API_URL = "http://SEU_IP:3000"
+npm start
+```
+
+Com o emulador, inicie tambem o backend e o MySQL. O banco precisa estar com as migrations aplicadas:
+
+```powershell
+cd ..\backend
+npx prisma migrate deploy
+npm run dev
+```
+
+## Execucao local
+
+```powershell
+cd mobile
+npm install
+npm run android
+```
+
+Caso a porta 8081 ja esteja ocupada, aceite a porta alternativa oferecida pelo Expo. Para verificar qualidade estatica:
+
+```powershell
+npm run lint
+npx tsc --noEmit
+```
+
+## Seguranca e limites atuais
+
+- A API usa JWT e valida as credenciais no backend; senhas nao sao armazenadas pelo app.
+- A sessao mobile permanece apenas em memoria nesta versao. Persistencia segura com `expo-secure-store` ainda deve ser implementada.
+- Recuperacao de senha, upload de imagens e CRUD mobile de clientes, servicos e agenda ainda nao foram conectados.

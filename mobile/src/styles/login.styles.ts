@@ -59,8 +59,8 @@ export const styles = StyleSheet.create({
     marginBottom: 28,
   },
 
-  successMessage: {
-    color: colors.success,
+  errorMessage: {
+    color: colors.error,
     fontSize: 13,
     marginBottom: 16,
   },
