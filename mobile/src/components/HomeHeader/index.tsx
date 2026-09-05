@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
-import { router, usePathname } from "expo-router";
+import { router, usePathname, type Href } from "expo-router";
 import { Alert, Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,7 +9,7 @@ import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import { styles } from "./styles";
 
-type AppRoute = "/agenda" | "/home" | "/login" | "/cadastro" | "/onboarding";
+type AppRoute = "/agenda" | "/clientes" | "/servicos" | "/home" | "/login" | "/cadastro" | "/onboarding";
 
 type NavigationItem = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -20,6 +20,8 @@ type NavigationItem = {
 const navigationItems: NavigationItem[] = [
   { icon: "home-outline", label: "Inicio", route: "/home" },
   { icon: "calendar-outline", label: "Agenda", route: "/agenda" },
+  { icon: "people-outline", label: "Clientes", route: "/clientes" },
+  { icon: "briefcase-outline", label: "Serviços", route: "/servicos" },
   { icon: "log-in-outline", label: "Entrar", route: "/login" },
   { icon: "person-add-outline", label: "Criar conta", route: "/cadastro" },
   { icon: "sparkles-outline", label: "Configuracao inicial", route: "/onboarding" },
@@ -33,7 +35,7 @@ export function HomeHeader() {
 
   function navigate(route: AppRoute) {
     setMenuVisible(false);
-    router.replace(route);
+    router.replace(route as Href);
   }
 
   function handleNotifications() {

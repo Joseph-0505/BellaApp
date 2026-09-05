@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, router } from "expo-router";
+import { Redirect, router, type Href } from "expo-router";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { AppointmentCard } from "../../components/AppointmentCard";
@@ -122,7 +122,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.quickAction, styles.quickActionAlt]}
-          onPress={() => showMessage("Fluxo de novo cliente em breve.")}
+          onPress={() => router.push("/clientes" as Href)}
         >
           <Ionicons
             name="person-add-outline"
