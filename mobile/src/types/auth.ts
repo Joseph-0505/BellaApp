@@ -35,6 +35,7 @@ export interface UserProfile {
   name: string;
   email: string;
   cpf: string;
+  avatarUrl: Nullable<string>;
   businessProfile: Nullable<BusinessProfile>;
   clinic: Nullable<ClinicProfile>;
   membership: Nullable<MembershipProfile>;

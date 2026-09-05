@@ -13,29 +13,35 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { CreateClientPayload } from "../../services/clients";
+import { colors } from "../../global/colors";
+import type { CreateProfessionalPayload } from "../../services/professionals";
+import { formatRequestError } from "../../utils/request-errors";
 import { formatPhone, normalizePhone } from "../../utils/phone";
 import { Button } from "../Button";
 import { Input } from "../Input";
-import { colors } from "../../global/colors";
-import { formatRequestError } from "../../utils/request-errors";
 import { styles } from "./styles";
 
-interface NewClientModalProps {
+interface NewProfessionalModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (payload: CreateClientPayload) => Promise<void>;
+  onSubmit: (payload: CreateProfessionalPayload) => Promise<void>;
 }
 
 const initialErrors = {
   name: "",
+  specialty: "",
   phone: "",
   email: "",
 };
 
-export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalProps) {
+export function NewProfessionalModal({
+  visible,
+  onClose,
+  onSubmit,
+}: NewProfessionalModalProps) {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
+  const [specialty, setSpecialty] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState(initialErrors);
@@ -48,6 +54,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
     }
 
     setName("");
+    setSpecialty("");
     setPhone("");
     setEmail("");
     setErrors(initialErrors);
@@ -68,12 +75,17 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
 
   async function handleSubmit() {
     const normalizedName = name.trim();
+    const normalizedSpecialty = specialty.trim();
     const normalizedPhone = normalizePhone(phone);
     const normalizedEmail = email.trim().toLowerCase();
     const nextErrors = { ...initialErrors };
 
     if (!normalizedName) {
-      nextErrors.name = "Informe o nome do cliente.";
+      nextErrors.name = "Informe o nome do profissional.";
+    }
+
+    if (!normalizedSpecialty) {
+      nextErrors.specialty = "Informe a especialidade.";
     }
 
     if (normalizedPhone.length < 10) {
@@ -96,12 +108,14 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
     try {
       await onSubmit({
         name: normalizedName,
+        specialty: normalizedSpecialty,
         phone: normalizedPhone,
+        status: "ativo",
         ...(normalizedEmail ? { email: normalizedEmail } : {}),
       });
       onClose();
     } catch (error) {
-      setRequestError(formatRequestError(error, "Não foi possível cadastrar o cliente."));
+      setRequestError(formatRequestError(error, "Não foi possível cadastrar o profissional."));
     } finally {
       setSubmitting(false);
     }
@@ -126,8 +140,8 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
 
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>Cadastro rápido</Text>
-              <Text style={styles.title}>Novo cliente</Text>
+              <Text style={styles.eyebrow}>Equipe</Text>
+              <Text style={styles.title}>Novo profissional</Text>
             </View>
             <TouchableOpacity
               accessibilityLabel="Fechar"
@@ -146,7 +160,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.description}>
-              Preencha os dados essenciais. Você poderá completar o perfil depois.
+              Cadastre os dados essenciais do profissional. O perfil será criado como ativo.
             </Text>
 
             <Input
@@ -155,12 +169,26 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
               error={errors.name}
               icon="person-outline"
               label="Nome completo"
-              placeholder="Nome do cliente"
+              placeholder="Nome do profissional"
               returnKeyType="next"
               value={name}
               onChangeText={(value) => {
                 setName(value);
                 clearError("name");
+              }}
+            />
+
+            <Input
+              autoCapitalize="sentences"
+              error={errors.specialty}
+              icon="briefcase-outline"
+              label="Especialidade"
+              placeholder="Ex: Esteticista"
+              returnKeyType="next"
+              value={specialty}
+              onChangeText={(value) => {
+                setSpecialty(value);
+                clearError("specialty");
               }}
             />
 
@@ -184,7 +212,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
               icon="mail-outline"
               keyboardType="email-address"
               label="E-mail (opcional)"
-              placeholder="cliente@email.com"
+              placeholder="profissional@email.com"
               returnKeyType="done"
               value={email}
               onChangeText={(value) => {
@@ -199,7 +227,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
             <Button
               disabled={submitting}
               loading={submitting}
-              title="Cadastrar cliente"
+              title="Cadastrar profissional"
               onPress={() => void handleSubmit()}
             />
           </ScrollView>

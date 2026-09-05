@@ -236,8 +236,9 @@ async function request(path: string, options: RequestOptions = {}) {
   } = options;
   const session = auth ? getSession() : null;
   const token = auth ? session?.token || "" : "";
+  const isMultipartBody = typeof FormData !== "undefined" && body instanceof FormData;
   const resolvedHeaders = {
-    ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    ...(body !== undefined && !isMultipartBody ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...headers,
   };
@@ -248,7 +249,9 @@ async function request(path: string, options: RequestOptions = {}) {
     response = await fetch(buildUrl(path, query), {
       method,
       headers: resolvedHeaders,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined
+        ? { body: isMultipartBody ? body : JSON.stringify(body) }
+        : {}),
       ...rest,
     });
   } catch (networkError) {
@@ -369,6 +372,17 @@ export function apiPut(
   return request(path, { ...options, body, method: "PUT" });
 }
 
-export function apiDelete(path: string, options: Omit<RequestOptions, "method"> = {}) {
-  return request(path, { ...options, method: "DELETE" });
+export function apiDelete(
+  path: string,
+  body?: unknown,
+  options: Omit<RequestOptions, "body" | "method"> = {},
+) {
+  return request(path, { ...options, body, method: "DELETE" });
+}
+
+export function resolveApiAssetUrl(path?: string | null) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+
+  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }

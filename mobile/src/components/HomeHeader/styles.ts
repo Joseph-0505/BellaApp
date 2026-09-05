@@ -73,9 +73,10 @@ export const styles = StyleSheet.create({
     width: 38,
   },
   menuList: {
-    flex: 1,
     gap: 8,
+    paddingBottom: 4,
   },
+  menuScroll: { flex: 1 },
   menuItem: {
     alignItems: "center",
     borderRadius: 14,

@@ -2,14 +2,14 @@ import React, { useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname, type Href } from "expo-router";
-import { Alert, Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import { styles } from "./styles";
 
-type AppRoute = "/agenda" | "/clientes" | "/servicos" | "/home" | "/login" | "/cadastro" | "/onboarding";
+type AppRoute = "/agenda" | "/clientes" | "/perfil" | "/profissionais" | "/servicos" | "/home" | "/onboarding";
 
 type NavigationItem = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -22,13 +22,12 @@ const navigationItems: NavigationItem[] = [
   { icon: "calendar-outline", label: "Agenda", route: "/agenda" },
   { icon: "people-outline", label: "Clientes", route: "/clientes" },
   { icon: "briefcase-outline", label: "Serviços", route: "/servicos" },
-  { icon: "log-in-outline", label: "Entrar", route: "/login" },
-  { icon: "person-add-outline", label: "Criar conta", route: "/cadastro" },
-  { icon: "sparkles-outline", label: "Configuracao inicial", route: "/onboarding" },
+  { icon: "people-circle-outline", label: "Profissionais", route: "/profissionais" },
+  { icon: "person-circle-outline", label: "Meu perfil", route: "/perfil" },
 ];
 
 export function HomeHeader() {
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, onboarding, signOut } = useAuth();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -102,7 +101,34 @@ export function HomeHeader() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.menuList}>
+            <ScrollView
+              contentContainerStyle={styles.menuList}
+              showsVerticalScrollIndicator={false}
+              style={styles.menuScroll}
+            >
+              {!onboarding?.completed ? (
+                <TouchableOpacity
+                  style={[
+                    styles.menuItem,
+                    pathname === "/onboarding" ? styles.menuItemActive : null,
+                  ]}
+                  onPress={() => navigate("/onboarding")}
+                >
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={22}
+                    color={pathname === "/onboarding" ? colors.primaryDark : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.menuItemText,
+                      pathname === "/onboarding" ? styles.menuItemTextActive : null,
+                    ]}
+                  >
+                    Configuração inicial
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
               {navigationItems.map((item) => {
                 const isActive = pathname === item.route;
 
@@ -123,7 +149,7 @@ export function HomeHeader() {
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
 
             {isAuthenticated ? (
               <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>

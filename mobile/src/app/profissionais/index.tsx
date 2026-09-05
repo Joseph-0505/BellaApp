@@ -13,49 +13,40 @@ import {
 } from "react-native";
 
 import { Input } from "../../components/Input";
-import { NewServiceModal } from "../../components/NewServiceModal";
+import { NewProfessionalModal } from "../../components/NewProfessionalModal";
+import { ProfessionalCard } from "../../components/ProfessionalCard";
 import { ScreenLoader } from "../../components/ScreenLoader";
-import { ServiceCard } from "../../components/ServiceCard";
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import {
-  createService,
-  listServices,
-  type CreateServicePayload,
-} from "../../services/services";
-import { styles } from "../../styles/servicos.styles";
-import type { ServiceProfile } from "../../types/service";
+  createProfessional,
+  listProfessionals,
+  type CreateProfessionalPayload,
+} from "../../services/professionals";
+import { styles } from "../../styles/profissionais.styles";
+import type { ProfessionalProfile, ProfessionalStatus } from "../../types/professional";
 import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
 
-type ServiceFilter = "todos" | "ativos" | "inativos" | "alto";
+type ProfessionalFilter = "todos" | ProfessionalStatus;
 
-const filters: { label: string; value: ServiceFilter }[] = [
+const filters: { label: string; value: ProfessionalFilter }[] = [
   { label: "Todos", value: "todos" },
-  { label: "Ativos", value: "ativos" },
-  { label: "Inativos", value: "inativos" },
-  { label: "Alto risco", value: "alto" },
+  { label: "Ativos", value: "ativo" },
+  { label: "Inativos", value: "inativo" },
 ];
 
-function getApiFilters(filter: ServiceFilter) {
-  if (filter === "ativos") return { active: true };
-  if (filter === "inativos") return { active: false };
-  if (filter === "alto") return { risk: "alto" as const };
-  return {};
-}
-
-export default function ServicosScreen() {
+export default function ProfissionaisScreen() {
   const { bootstrapping, isAuthenticated, onboarding, onboardingLoading, user } = useAuth();
-  const canManageServices = user?.membership?.role === "ADMIN";
-  const [services, setServices] = useState<ServiceProfile[]>([]);
+  const [professionals, setProfessionals] = useState<ProfessionalProfile[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState<ServiceFilter>("todos");
+  const [selectedFilter, setSelectedFilter] = useState<ProfessionalFilter>("todos");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [requestError, setRequestError] = useState("");
-  const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
+  const [newProfessionalModalVisible, setNewProfessionalModalVisible] = useState(false);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -63,8 +54,8 @@ export default function ServicosScreen() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const loadServices = useCallback(
-    async (query: string, filter: ServiceFilter, refresh = false) => {
+  const loadProfessionals = useCallback(
+    async (query: string, filter: ProfessionalFilter, refresh = false) => {
       const requestId = ++requestIdRef.current;
 
       if (refresh) {
@@ -76,23 +67,23 @@ export default function ServicosScreen() {
       setRequestError("");
 
       try {
-        const response = await listServices({
+        const response = await listProfessionals({
           search: query,
-          ...getApiFilters(filter),
+          status: filter === "todos" ? undefined : filter,
         });
 
         if (requestId !== requestIdRef.current) {
           return;
         }
 
-        setServices(Array.isArray(response.data) ? response.data : []);
+        setProfessionals(Array.isArray(response.data) ? response.data : []);
         setTotal(response.meta?.total ?? response.data?.length ?? 0);
       } catch (error) {
         if (requestId !== requestIdRef.current) {
           return;
         }
 
-        setRequestError(formatRequestError(error, "Não foi possível carregar os serviços."));
+        setRequestError(formatRequestError(error, "Não foi possível carregar os profissionais."));
       } finally {
         if (requestId === requestIdRef.current) {
           setLoading(false);
@@ -105,12 +96,12 @@ export default function ServicosScreen() {
 
   useEffect(() => {
     if (isAuthenticated && onboarding?.completed) {
-      void loadServices(debouncedSearch, selectedFilter);
+      void loadProfessionals(debouncedSearch, selectedFilter);
     }
-  }, [debouncedSearch, isAuthenticated, loadServices, onboarding?.completed, selectedFilter]);
+  }, [debouncedSearch, isAuthenticated, loadProfessionals, onboarding?.completed, selectedFilter]);
 
   if (bootstrapping || onboardingLoading) {
-    return <ScreenLoader message="Carregando serviços..." />;
+    return <ScreenLoader message="Carregando profissionais..." />;
   }
 
   if (!isAuthenticated) {
@@ -121,59 +112,63 @@ export default function ServicosScreen() {
     return <Redirect href={getAuthenticatedEntryRoute(false)} />;
   }
 
-  function openService(service: ServiceProfile) {
-    Alert.alert(
-      service.name,
-      `${service.description || "Sem descrição."}\n${service.durationMinutes} minutos`,
-    );
+  function openProfessional(professional: ProfessionalProfile) {
+    const contact = [professional.specialty, professional.phone, professional.email]
+      .filter(Boolean)
+      .join("\n");
+    Alert.alert(professional.name, contact);
   }
 
-  async function handleCreateService(payload: CreateServicePayload) {
-    await createService(payload);
+  async function handleCreateProfessional(payload: CreateProfessionalPayload) {
+    await createProfessional(payload);
     setSearch("");
     setDebouncedSearch("");
     setSelectedFilter("todos");
-    void loadServices("", "todos");
+    void loadProfessionals("", "todos");
   }
 
-  const countLabel = total === 1 ? "1 serviço encontrado" : `${total} serviços encontrados`;
+  const canManageProfessionals = Boolean(user?.permissions.manageProfessionals);
+  const countLabel =
+    total === 1 ? "1 profissional encontrado" : `${total} profissionais encontrados`;
 
   return (
     <View style={styles.screen}>
       <FlatList
         contentContainerStyle={styles.content}
-        data={loading ? [] : services}
-        keyExtractor={(service) => service.id}
+        data={loading ? [] : professionals}
+        keyExtractor={(professional) => professional.id}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             colors={[colors.primary]}
             refreshing={refreshing}
             tintColor={colors.primary}
-            onRefresh={() => void loadServices(debouncedSearch, selectedFilter, true)}
+            onRefresh={() => void loadProfessionals(debouncedSearch, selectedFilter, true)}
           />
         }
-        renderItem={({ item }) => <ServiceCard service={item} onPress={openService} />}
+        renderItem={({ item }) => (
+          <ProfessionalCard professional={item} onPress={openProfessional} />
+        )}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
             <View style={styles.pageHeader}>
               <View>
-                <Text style={styles.eyebrow}>Catálogo</Text>
-                <Text style={styles.title}>Serviços</Text>
+                <Text style={styles.eyebrow}>Equipe</Text>
+                <Text style={styles.title}>Profissionais</Text>
               </View>
               <View style={styles.headerIcon}>
-                <Ionicons name="sparkles-outline" size={22} color={colors.primaryDark} />
+                <Ionicons name="people-circle-outline" size={24} color={colors.primaryDark} />
               </View>
             </View>
 
             <View style={styles.searchArea}>
               <Input
-                accessibilityLabel="Buscar serviços"
+                accessibilityLabel="Buscar profissionais"
                 autoCapitalize="none"
                 autoCorrect={false}
                 icon="search-outline"
-                placeholder="Buscar por nome ou descrição"
+                placeholder="Buscar por nome ou especialidade"
                 returnKeyType="search"
                 rightIcon={search ? "close-circle" : undefined}
                 value={search}
@@ -216,7 +211,7 @@ export default function ServicosScreen() {
           loading ? (
             <View style={styles.stateCard}>
               <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={styles.loadingText}>Buscando serviços...</Text>
+              <Text style={styles.loadingText}>Buscando profissionais...</Text>
             </View>
           ) : requestError ? (
             <View style={styles.stateCard}>
@@ -227,7 +222,7 @@ export default function ServicosScreen() {
               <Text style={styles.stateText}>{requestError}</Text>
               <TouchableOpacity
                 style={styles.retryButton}
-                onPress={() => void loadServices(debouncedSearch, selectedFilter)}
+                onPress={() => void loadProfessionals(debouncedSearch, selectedFilter)}
               >
                 <Text style={styles.retryText}>Tentar novamente</Text>
               </TouchableOpacity>
@@ -236,39 +231,41 @@ export default function ServicosScreen() {
             <View style={styles.stateCard}>
               <View style={styles.stateIcon}>
                 <Ionicons
-                  name={search || selectedFilter !== "todos" ? "search-outline" : "sparkles-outline"}
+                  name={search || selectedFilter !== "todos" ? "search-outline" : "people-outline"}
                   size={26}
                   color={colors.primaryDark}
                 />
               </View>
               <Text style={styles.stateTitle}>
-                {search || selectedFilter !== "todos" ? "Nenhum serviço encontrado" : "Seu catálogo está vazio"}
+                {search || selectedFilter !== "todos"
+                  ? "Nenhum profissional encontrado"
+                  : "Sua equipe está vazia"}
               </Text>
               <Text style={styles.stateText}>
                 {search || selectedFilter !== "todos"
                   ? "Tente ajustar a busca ou escolher outro filtro."
-                  : "Cadastre o primeiro serviço para começar a organizar seu catálogo."}
+                  : "Cadastre o primeiro profissional para começar a organizar sua equipe."}
               </Text>
             </View>
           )
         }
       />
 
-      {canManageServices ? (
+      {canManageProfessionals ? (
         <TouchableOpacity
-        accessibilityLabel="Cadastrar novo serviço"
-        activeOpacity={0.82}
-        style={styles.floatingButton}
-        onPress={() => setNewServiceModalVisible(true)}
-      >
-        <Ionicons name="add" size={29} color={colors.white} />
+          accessibilityLabel="Cadastrar novo profissional"
+          activeOpacity={0.82}
+          style={styles.floatingButton}
+          onPress={() => setNewProfessionalModalVisible(true)}
+        >
+          <Ionicons name="person-add-outline" size={25} color={colors.white} />
         </TouchableOpacity>
       ) : null}
 
-      <NewServiceModal
-        visible={newServiceModalVisible}
-        onClose={() => setNewServiceModalVisible(false)}
-        onSubmit={handleCreateService}
+      <NewProfessionalModal
+        visible={newProfessionalModalVisible}
+        onClose={() => setNewProfessionalModalVisible(false)}
+        onSubmit={handleCreateProfessional}
       />
     </View>
   );

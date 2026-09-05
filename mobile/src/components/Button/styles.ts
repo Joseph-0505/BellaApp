@@ -24,4 +24,8 @@ export const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
+
+  danger: {
+    backgroundColor: colors.error,
+  },
 });

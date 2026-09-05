@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 import { colors } from "../../global/colors";
 import type { ClientProfile, ClientStatus } from "../../types/client";
+import { formatPhone } from "../../utils/phone";
 import { styles } from "./styles";
 
 const statusLabels: Record<ClientStatus, string> = {
@@ -68,7 +69,7 @@ export function ClientCard({ client, onPress }: ClientCardProps) {
           <View style={styles.phoneRow}>
             <Ionicons name="call-outline" size={13} color={colors.textSecondary} />
             <Text numberOfLines={1} style={styles.phone}>
-              {client.phone}
+              {formatPhone(client.phone)}
             </Text>
           </View>
         </View>
