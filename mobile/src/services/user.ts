@@ -1,5 +1,13 @@
 import type { Nullable, UserProfile } from "../types/auth";
-import { apiGet, apiPut, updateSessionUser, unwrapData } from "./api";
+import {
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPut,
+  clearSession,
+  updateSessionUser,
+  unwrapData,
+} from "./api";
 
 const USERS_BASE_PATH = "/api/v1/users";
 
@@ -38,6 +46,7 @@ interface ApiUser {
   name?: string | null;
   email?: string | null;
   cpf?: string | null;
+  avatarUrl?: string | null;
   businessProfile?: Nullable<ApiBusinessProfile>;
   clinic?: Nullable<ApiClinic>;
   membership?: Nullable<ApiMembership>;
@@ -45,12 +54,24 @@ interface ApiUser {
   permissions?: Nullable<ApiPermissions>;
 }
 
-interface UpdateCurrentUserPayload {
+export interface UpdateCurrentUserPayload {
   name: string;
   cpf: string;
   password: string;
   businessName?: string;
   cnpj?: string;
+}
+
+export interface ProfilePhotoPayload {
+  file?: Blob;
+  fileName: string;
+  mimeType: string;
+  uri: string;
+}
+
+export interface DeleteCurrentUserPayload {
+  confirmation: "EXCLUIR";
+  password: string;
 }
 
 function toUserViewModel(user: Nullable<ApiUser>): Nullable<UserProfile> {
@@ -63,6 +84,7 @@ function toUserViewModel(user: Nullable<ApiUser>): Nullable<UserProfile> {
     name: user.name || "",
     email: user.email || "",
     cpf: user.cpf || "",
+    avatarUrl: user.avatarUrl || null,
     businessProfile: user.businessProfile
       ? {
           businessName: user.businessProfile.businessName || "",
@@ -120,4 +142,39 @@ export async function updateCurrentUserProfile(
   }
 
   return user;
+}
+
+export async function uploadCurrentUserPhoto(
+  payload: ProfilePhotoPayload,
+): Promise<Nullable<UserProfile>> {
+  const formData = new FormData();
+
+  if (payload.file) {
+    formData.append("photo", payload.file, payload.fileName);
+  } else {
+    formData.append("photo", {
+      name: payload.fileName,
+      type: payload.mimeType,
+      uri: payload.uri,
+    } as unknown as Blob);
+  }
+
+  const response = await apiPost(`${USERS_BASE_PATH}/me/avatar`, formData);
+  const user = toUserViewModel(unwrapData<ApiUser>(response));
+
+  if (user) updateSessionUser(user);
+  return user;
+}
+
+export async function removeCurrentUserPhoto(): Promise<Nullable<UserProfile>> {
+  const response = await apiDelete(`${USERS_BASE_PATH}/me/avatar`);
+  const user = toUserViewModel(unwrapData<ApiUser>(response));
+
+  if (user) updateSessionUser(user);
+  return user;
+}
+
+export async function deleteCurrentUserAccount(payload: DeleteCurrentUserPayload) {
+  await apiDelete(`${USERS_BASE_PATH}/me`, payload);
+  clearSession();
 }

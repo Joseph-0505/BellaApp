@@ -19,26 +19,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { register } from "../../services/auth";
 
 import { styles } from "../../styles/cadastro.styles";
+import { formatCpf, isValidCpf, normalizeCpf } from "../../utils/documents";
 import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
-
-function isValidCpf(value: string) {
-  if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) {
-    return false;
-  }
-
-  const calculateDigit = (length: number) => {
-    const sum = value
-      .slice(0, length)
-      .split("")
-      .reduce((total, digit, index) => total + Number(digit) * (length + 1 - index), 0);
-    const remainder = (sum * 10) % 11;
-
-    return remainder === 10 ? 0 : remainder;
-  };
-
-  return calculateDigit(9) === Number(value[9]) && calculateDigit(10) === Number(value[10]);
-}
 
 export default function CadastroScreen() {
   const {
@@ -94,7 +77,7 @@ export default function CadastroScreen() {
       confirmPassword: "",
     };
     const normalizedEmail = email.trim();
-    const normalizedCpf = cpf.replace(/\D/g, "");
+    const normalizedCpf = normalizeCpf(cpf);
 
     if (!name.trim()) {
       nextErrors.name = "Informe seu nome completo.";
@@ -149,21 +132,6 @@ export default function CadastroScreen() {
       pathname: "/login",
       params: { email: normalizedEmail },
     });
-  }
-
-  function formatCpf(value: string) {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-    if (digits.length <= 9) {
-      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-    }
-
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(
-      6,
-      9,
-    )}-${digits.slice(9)}`;
   }
 
   function clearFieldError(field: keyof typeof errors) {
