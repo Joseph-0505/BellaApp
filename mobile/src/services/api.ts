@@ -35,6 +35,14 @@ function resolveExpoHost() {
 function resolveDefaultApiBaseUrl() {
   const expoHost = resolveExpoHost();
 
+  if (
+    Platform.OS === "android"
+    && (!expoHost || ["127.0.0.1", "localhost", "::1"].includes(expoHost))
+  ) {
+    // No emulador Android, o loopback do Windows e exposto por 10.0.2.2.
+    return "http://10.0.2.2:3000";
+  }
+
   if (expoHost) {
     return `http://${expoHost}:3000`;
   }

@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   Text,
@@ -13,6 +12,7 @@ import {
 } from "react-native";
 
 import { ClientCard } from "../../components/ClientCard";
+import { ClientDetailsModal } from "../../components/ClientDetailsModal";
 import { Input } from "../../components/Input";
 import { NewClientModal } from "../../components/NewClientModal";
 import { ScreenLoader } from "../../components/ScreenLoader";
@@ -44,6 +44,7 @@ export default function ClientesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [newClientModalVisible, setNewClientModalVisible] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -112,8 +113,7 @@ export default function ClientesScreen() {
   }
 
   function openClient(client: ClientProfile) {
-    const contact = [client.phone, client.email].filter(Boolean).join("\n");
-    Alert.alert(client.name, contact || "Cliente sem dados de contato.");
+    setSelectedClient(client);
   }
 
   async function handleCreateClient(payload: CreateClientPayload) {
@@ -255,6 +255,11 @@ export default function ClientesScreen() {
         visible={newClientModalVisible}
         onClose={() => setNewClientModalVisible(false)}
         onSubmit={handleCreateClient}
+      />
+
+      <ClientDetailsModal
+        client={selectedClient}
+        onClose={() => setSelectedClient(null)}
       />
     </View>
   );

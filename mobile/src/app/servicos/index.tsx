@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   Text,
@@ -16,6 +15,7 @@ import { Input } from "../../components/Input";
 import { NewServiceModal } from "../../components/NewServiceModal";
 import { ScreenLoader } from "../../components/ScreenLoader";
 import { ServiceCard } from "../../components/ServiceCard";
+import { ServiceDetailsModal } from "../../components/ServiceDetailsModal";
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import {
@@ -56,6 +56,7 @@ export default function ServicosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
+  const [selectedService, setSelectedService] = useState<ServiceProfile | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -122,10 +123,7 @@ export default function ServicosScreen() {
   }
 
   function openService(service: ServiceProfile) {
-    Alert.alert(
-      service.name,
-      `${service.description || "Sem descrição."}\n${service.durationMinutes} minutos`,
-    );
+    setSelectedService(service);
   }
 
   async function handleCreateService(payload: CreateServicePayload) {
@@ -269,6 +267,11 @@ export default function ServicosScreen() {
         visible={newServiceModalVisible}
         onClose={() => setNewServiceModalVisible(false)}
         onSubmit={handleCreateService}
+      />
+
+      <ServiceDetailsModal
+        service={selectedService}
+        onClose={() => setSelectedService(null)}
       />
     </View>
   );

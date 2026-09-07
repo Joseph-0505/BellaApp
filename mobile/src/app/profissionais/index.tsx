@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   Text,
@@ -15,6 +14,7 @@ import {
 import { Input } from "../../components/Input";
 import { NewProfessionalModal } from "../../components/NewProfessionalModal";
 import { ProfessionalCard } from "../../components/ProfessionalCard";
+import { ProfessionalDetailsModal } from "../../components/ProfessionalDetailsModal";
 import { ScreenLoader } from "../../components/ScreenLoader";
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
@@ -47,6 +47,9 @@ export default function ProfissionaisScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [newProfessionalModalVisible, setNewProfessionalModalVisible] = useState(false);
+  const [selectedProfessional, setSelectedProfessional] = useState<ProfessionalProfile | null>(
+    null,
+  );
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -113,10 +116,7 @@ export default function ProfissionaisScreen() {
   }
 
   function openProfessional(professional: ProfessionalProfile) {
-    const contact = [professional.specialty, professional.phone, professional.email]
-      .filter(Boolean)
-      .join("\n");
-    Alert.alert(professional.name, contact);
+    setSelectedProfessional(professional);
   }
 
   async function handleCreateProfessional(payload: CreateProfessionalPayload) {
@@ -266,6 +266,11 @@ export default function ProfissionaisScreen() {
         visible={newProfessionalModalVisible}
         onClose={() => setNewProfessionalModalVisible(false)}
         onSubmit={handleCreateProfessional}
+      />
+
+      <ProfessionalDetailsModal
+        professional={selectedProfessional}
+        onClose={() => setSelectedProfessional(null)}
       />
     </View>
   );
