@@ -15,6 +15,7 @@ import { colors } from "../../global/colors";
 import type { ClientProfile, ClientStatus } from "../../types/client";
 import { formatCpf } from "../../utils/documents";
 import { formatPhone } from "../../utils/phone";
+import { RecordActions } from "../RecordActions";
 import { Button } from "../Button";
 import { styles } from "./styles";
 
@@ -34,6 +35,8 @@ const statusIcons: Record<ClientStatus, keyof typeof Ionicons.glyphMap> = {
 
 interface ClientDetailsModalProps {
   client: ClientProfile | null;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -87,7 +90,7 @@ function DetailRow({ icon, label, value }: DetailRowProps) {
   );
 }
 
-export function ClientDetailsModal({ client, onClose }: ClientDetailsModalProps) {
+export function ClientDetailsModal({ client, onClose, onEdit, onDelete }: ClientDetailsModalProps) {
   const insets = useSafeAreaInsets();
 
   if (!client) {
@@ -223,6 +226,7 @@ export function ClientDetailsModal({ client, onClose }: ClientDetailsModalProps)
               </View>
             ) : null}
 
+            <RecordActions key={client.id} name={client.name} onEdit={onEdit} onDelete={onDelete} />
             <Button title="Fechar" onPress={onClose} />
           </ScrollView>
         </View>

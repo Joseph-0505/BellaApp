@@ -12,13 +12,14 @@ import {
 } from "react-native";
 
 import { ClientCard } from "../../components/ClientCard";
+import { PageAction } from "../../context/PageActionContext";
 import { ClientDetailsModal } from "../../components/ClientDetailsModal";
 import { Input } from "../../components/Input";
 import { NewClientModal } from "../../components/NewClientModal";
 import { ScreenLoader } from "../../components/ScreenLoader";
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
-import { createClient, listClients, type CreateClientPayload } from "../../services/clients";
+import { createClient, updateClient, deleteClient, listClients, type CreateClientPayload } from "../../services/clients";
 import { styles } from "../../styles/clientes.styles";
 import type { ClientProfile, ClientStatus } from "../../types/client";
 import { formatRequestError } from "../../utils/request-errors";
@@ -45,6 +46,7 @@ export default function ClientesScreen() {
   const [requestError, setRequestError] = useState("");
   const [newClientModalVisible, setNewClientModalVisible] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
+  const [editingClient, setEditingClient] = useState<ClientProfile | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -117,7 +119,9 @@ export default function ClientesScreen() {
   }
 
   async function handleCreateClient(payload: CreateClientPayload) {
-    await createClient(payload);
+    if (editingClient) await updateClient(editingClient.id, payload);
+    else await createClient(payload);
+    setEditingClient(null);
     setSearch("");
     setDebouncedSearch("");
     setSelectedFilter("todos");
@@ -242,22 +246,21 @@ export default function ClientesScreen() {
         }
       />
 
-      <TouchableOpacity
-        accessibilityLabel="Cadastrar novo cliente"
-        activeOpacity={0.82}
-        style={styles.floatingButton}
-        onPress={() => setNewClientModalVisible(true)}
-      >
-        <Ionicons name="person-add-outline" size={24} color={colors.white} />
-      </TouchableOpacity>
+      <PageAction
+        label="Cadastrar novo cliente"
+        onPress={() => { setEditingClient(null); setNewClientModalVisible(true); }}
+      />
 
       <NewClientModal
+        client={editingClient}
         visible={newClientModalVisible}
         onClose={() => setNewClientModalVisible(false)}
         onSubmit={handleCreateClient}
       />
 
       <ClientDetailsModal
+        onEdit={() => { setEditingClient(selectedClient); setSelectedClient(null); setNewClientModalVisible(true); }}
+        onDelete={async () => { if (!selectedClient) return; await deleteClient(selectedClient.id); setSelectedClient(null); await loadClients(debouncedSearch); }}
         client={selectedClient}
         onClose={() => setSelectedClient(null)}
       />

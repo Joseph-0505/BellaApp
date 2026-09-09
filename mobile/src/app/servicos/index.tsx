@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
+import { PageAction } from "../../context/PageActionContext";
 import { Redirect } from "expo-router";
 import {
   ActivityIndicator,
@@ -20,6 +21,8 @@ import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import {
   createService,
+  updateService,
+  deleteService,
   listServices,
   type CreateServicePayload,
 } from "../../services/services";
@@ -57,6 +60,7 @@ export default function ServicosScreen() {
   const [requestError, setRequestError] = useState("");
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceProfile | null>(null);
+  const [editingService, setEditingService] = useState<ServiceProfile | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -127,7 +131,9 @@ export default function ServicosScreen() {
   }
 
   async function handleCreateService(payload: CreateServicePayload) {
-    await createService(payload);
+    if (editingService) await updateService(editingService.id, payload);
+    else await createService(payload);
+    setEditingService(null);
     setSearch("");
     setDebouncedSearch("");
     setSelectedFilter("todos");
@@ -253,23 +259,22 @@ export default function ServicosScreen() {
       />
 
       {canManageServices ? (
-        <TouchableOpacity
-        accessibilityLabel="Cadastrar novo serviço"
-        activeOpacity={0.82}
-        style={styles.floatingButton}
-        onPress={() => setNewServiceModalVisible(true)}
-      >
-        <Ionicons name="add" size={29} color={colors.white} />
-        </TouchableOpacity>
+        <PageAction
+        label="Cadastrar novo serviço"
+        onPress={() => { setEditingService(null); setNewServiceModalVisible(true); }}
+        />
       ) : null}
 
       <NewServiceModal
+        service={editingService}
         visible={newServiceModalVisible}
         onClose={() => setNewServiceModalVisible(false)}
         onSubmit={handleCreateService}
       />
 
       <ServiceDetailsModal
+        onEdit={canManageServices ? () => { setEditingService(selectedService); setSelectedService(null); setNewServiceModalVisible(true); } : undefined}
+        onDelete={canManageServices ? async () => { if (!selectedService) return; await deleteService(selectedService.id); setSelectedService(null); await loadServices(debouncedSearch, selectedFilter); } : undefined}
         service={selectedService}
         onClose={() => setSelectedService(null)}
       />

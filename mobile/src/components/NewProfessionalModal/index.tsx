@@ -21,7 +21,10 @@ import { Button } from "../Button";
 import { Input } from "../Input";
 import { styles } from "./styles";
 
+import type { ProfessionalProfile } from "../../types/professional";
+
 interface NewProfessionalModalProps {
+  professional?: ProfessionalProfile | null;
   visible: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateProfessionalPayload) => Promise<void>;
@@ -36,10 +39,12 @@ const initialErrors = {
 
 export function NewProfessionalModal({
   visible,
+  professional,
   onClose,
   onSubmit,
 }: NewProfessionalModalProps) {
   const insets = useSafeAreaInsets();
+  const [active, setActive] = useState(true);
   const [name, setName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [phone, setPhone] = useState("");
@@ -53,14 +58,15 @@ export function NewProfessionalModal({
       return;
     }
 
-    setName("");
-    setSpecialty("");
-    setPhone("");
-    setEmail("");
+    setActive(professional?.status !== "inativo");
+    setName(professional?.name || "");
+    setSpecialty(professional?.specialty || "");
+    setPhone(formatPhone(professional?.phone || ""));
+    setEmail(professional?.email || "");
     setErrors(initialErrors);
     setRequestError("");
     setSubmitting(false);
-  }, [visible]);
+  }, [visible, professional]);
 
   function clearError(field: keyof typeof initialErrors) {
     setErrors((current) => ({ ...current, [field]: "" }));
@@ -110,7 +116,7 @@ export function NewProfessionalModal({
         name: normalizedName,
         specialty: normalizedSpecialty,
         phone: normalizedPhone,
-        status: "ativo",
+        status: active ? "ativo" : "inativo",
         ...(normalizedEmail ? { email: normalizedEmail } : {}),
       });
       onClose();
@@ -141,7 +147,7 @@ export function NewProfessionalModal({
           <View style={styles.header}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Equipe</Text>
-              <Text style={styles.title}>Novo profissional</Text>
+              <Text style={styles.title}>{professional ? "Editar profissional" : "Novo profissional"}</Text>
             </View>
             <TouchableOpacity
               accessibilityLabel="Fechar"
@@ -222,12 +228,13 @@ export function NewProfessionalModal({
               onSubmitEditing={() => void handleSubmit()}
             />
 
+            <TouchableOpacity accessibilityRole="switch" accessibilityState={{ checked: active }} onPress={() => setActive(value => !value)}><Text style={styles.description}>{active ? "✓ Profissional ativo" : "Profissional inativo"} — toque para alterar</Text></TouchableOpacity>
             {requestError ? <Text style={styles.requestError}>{requestError}</Text> : null}
 
             <Button
               disabled={submitting}
               loading={submitting}
-              title="Cadastrar profissional"
+              title={professional ? "Salvar alterações" : "Cadastrar profissional"}
               onPress={() => void handleSubmit()}
             />
           </ScrollView>

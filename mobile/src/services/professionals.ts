@@ -3,7 +3,7 @@ import type {
   ProfessionalsListResponse,
   ProfessionalStatus,
 } from "../types/professional";
-import { apiGet, apiPost, unwrapData } from "./api";
+import { apiDelete, apiGet, apiPost, apiPut, unwrapData } from "./api";
 
 const PROFESSIONALS_BASE_PATH = "/api/v1/professionals";
 
@@ -51,4 +51,13 @@ export async function createProfessional(
   }
 
   return professional;
+}
+
+export async function updateProfessional(id: string, payload: CreateProfessionalPayload): Promise<ProfessionalProfile> {
+ const record = unwrapData<ProfessionalProfile>(await apiPut(`/api/v1/professionals/${id}`, payload));
+ if (!record) throw new Error("Resposta inválida ao salvar.");
+ return record;
+}
+export async function deleteProfessional(id: string) {
+ await apiDelete(`/api/v1/professionals/${id}`);
 }
