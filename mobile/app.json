@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "AppBella",
+    "slug": "AppBella",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/logo.png",
+    "scheme": "appbella",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./src/assets/logo.png",
+        "monochromeImage": "./src/assets/logo.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./src/assets/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita que o BellaApp acesse suas fotos para atualizar sua imagem de perfil."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
