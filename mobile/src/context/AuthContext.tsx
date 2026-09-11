@@ -5,7 +5,7 @@ import { loginAndStoreSession, logout, type LoginCredentials } from "../services
 import {
   clearSession,
   getSession,
-  isAuthenticated,
+  restoreSession,
   subscribeToSessionChanges,
   updateSessionUser,
 } from "../services/api";
@@ -61,8 +61,8 @@ export const AuthContext = createContext<AuthContextValue>(defaultValue);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Nullable<AuthSession>>(() => getSession());
   const [onboarding, setOnboarding] = useState<Nullable<OnboardingStatus>>(null);
-  const [bootstrapping, setBootstrapping] = useState(() => isAuthenticated());
-  const [onboardingLoading, setOnboardingLoading] = useState(() => isAuthenticated());
+  const [bootstrapping, setBootstrapping] = useState(true);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
 
   useEffect(() => subscribeToSessionChanges(setSession), []);
 
@@ -170,13 +170,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [fetchOnboardingStatus, refreshCurrentUser]);
 
   useEffect(() => {
-    if (!getSession()?.token) {
-      setBootstrapping(false);
-      setOnboardingLoading(false);
-      return;
-    }
-
-    void loadSessionData();
+    void restoreSession()
+      .catch(() => { console.warn("Não foi possível restaurar a sessão."); })
+      .then(() => loadSessionData());
   }, [loadSessionData]);
 
   const signIn = useCallback(

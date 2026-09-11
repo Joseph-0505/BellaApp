@@ -6,8 +6,8 @@ export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 30 },
   welcome: { marginBottom: 4 },
-  welcomeEyebrow: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
-  welcomeTitle: { color: colors.text, fontSize: 23, fontWeight: "700" },
+  welcomeSubtitle: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 4 },
+  welcomeTitle: { color: colors.text, fontSize: 23, lineHeight: 30, fontWeight: "700" },
   summary: {
     color: colors.textSecondary,
     fontSize: 14,

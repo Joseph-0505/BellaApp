@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, router, type Href } from "expo-router";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Redirect, router, useFocusEffect, type Href } from "expo-router";
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { AppointmentCard } from "../../components/AppointmentCard";
 import { MetricCard } from "../../components/MetricCard";
@@ -9,8 +9,18 @@ import { ScreenLoader } from "../../components/ScreenLoader";
 import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import { styles } from "../../styles/home.styles";
-import { appointments } from "../../utils/appointments";
+import { listAppointments, statusLabels, type Appointment } from "../../services/appointments";
+import { listClients } from "../../services/clients";
+import { listServices } from "../../services/services";
+import { listProfessionals } from "../../services/professionals";
+import type { ClientProfile } from "../../types/client";
+import type { ServiceProfile } from "../../types/service";
+import type { ProfessionalProfile } from "../../types/professional";
+import { AppointmentDetailsModal } from "../../components/AppointmentModals";
+import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
+
+import { listAllPages } from "../../services/pagination";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -38,6 +48,34 @@ export default function HomeScreen() {
   } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const [data, setData] = useState<{
+    appointments: Appointment[]; clients: ClientProfile[]; services: ServiceProfile[]; professionals: ProfessionalProfile[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const requestId = useRef(0);
+  const load = useCallback(async () => {
+    if (!isAuthenticated || !onboarding?.completed) return;
+    const id = ++requestId.current;
+    setLoading(true);
+    setError("");
+    try {
+      const [appointments, clients, services, professionals] = await Promise.all([
+        listAppointments(), listAllPages(listClients), listAllPages(listServices), listAllPages(listProfessionals),
+      ]);
+      if (requestId.current === id) setData({ appointments, clients, services, professionals });
+    } catch (e) {
+      if (requestId.current === id) setError(formatRequestError(e, "Não foi possível atualizar o início."));
+    } finally {
+      if (requestId.current === id) setLoading(false);
+    }
+  }, [isAuthenticated, onboarding?.completed]);
+  useFocusEffect(useCallback(() => {
+    void load();
+    return () => { requestId.current++; };
+  }, [load]));
+
   if (bootstrapping || onboardingLoading) {
     return <ScreenLoader message="Carregando painel..." />;
   }
@@ -51,12 +89,20 @@ export default function HomeScreen() {
   }
 
   const firstName = getFirstName(user?.name);
-  const clinicName =
-    user?.businessProfile?.businessName || onboarding.businessName || "BellaApp";
-  const insightText =
-    onboarding.servicesCount === 0
-      ? "Cadastre o primeiro servico para liberar a agenda real da clinica."
-      : "Sua clinica ja passou pelo setup minimo e esta pronta para operar.";
+  const today = new Date();
+  const dayAppointments = (data?.appointments || [])
+    .filter(a => new Date(a.scheduledAt).toDateString() === selectedDate.toDateString())
+    .sort((a, b) => Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt));
+  const todayAppointments = (data?.appointments || []).filter(a =>
+    new Date(a.scheduledAt).toDateString() === today.toDateString() && a.status !== "CANCELED");
+  const activeServices = data?.services.filter(s => s.active).length || 0;
+  const activeProfessionals = data?.professionals.filter(p => p.status === "ativo").length || 0;
+  const insightText = !data ? "Carregue os dados para acompanhar sua clínica."
+    : !data.clients.length ? "Cadastre seus clientes para começar a organizar os atendimentos."
+    : !activeServices ? "Cadastre ou ative um serviço para criar agendamentos."
+    : !activeProfessionals ? "Cadastre ou ative um profissional para receber agendamentos."
+    : todayAppointments.length ? `Você tem ${todayAppointments.length} agendamento(s) hoje, sendo ${todayAppointments.filter(a => a.status === "CONFIRMED").length} confirmado(s) e ${todayAppointments.filter(a => a.status === "COMPLETED").length} concluído(s).`
+    : "Sua agenda de hoje está livre. Use o botão + para criar um agendamento.";
 
   function shiftDate(days: number) {
     setSelectedDate((current) => {
@@ -66,48 +112,50 @@ export default function HomeScreen() {
     });
   }
 
-  function showMessage(message: string) {
-    Alert.alert("BellaApp", message);
-  }
 
   return (
+    <>
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={colors.primaryDark} colors={[colors.primaryDark]} />}
     >
       <View style={styles.welcome}>
-        <Text style={styles.welcomeEyebrow}>Bom dia, {firstName}</Text>
-        <Text style={styles.welcomeTitle}>{clinicName}</Text>
+        <Text style={styles.welcomeTitle}>Olá, {firstName}! 👋</Text>
+        <Text style={styles.welcomeSubtitle}>Bem-vindo de volta ao AppBella</Text>
       </View>
 
       <Text style={styles.summary}>
-        Sua configuracao inicial foi concluida. Confira abaixo o estado atual da
-        clinica e siga com os primeiros cadastros.
+        Acompanhe seus cadastros e atendimentos. Puxe para baixo para atualizar.
       </Text>
 
+      {error ? <TouchableOpacity accessibilityRole="button" onPress={() => void load()} style={styles.insight}>
+        <Text style={{ color: colors.error, flex: 1 }}>{error}{data ? " Exibindo a última atualização." : ""} Toque para tentar novamente.</Text>
+      </TouchableOpacity> : null}
+      {!data && loading ? <Text style={styles.empty}>Carregando informações...</Text> : null}
       <View style={styles.metrics}>
         <MetricCard
           icon="briefcase-outline"
-          label="Servicos"
-          value={formatCount(onboarding.servicesCount)}
+          label="Serviços ativos"
+          value={data ? formatCount(activeServices) : "—"}
         />
         <MetricCard
           icon="people-outline"
-          label="Profissionais"
-          value={formatCount(onboarding.professionalsCount)}
+          label="Profissionais ativos"
+          value={data ? formatCount(activeProfessionals) : "—"}
           tone="green"
         />
         <MetricCard
-          icon="business-outline"
-          label="Salas"
-          value={formatCount(onboarding.roomsCount)}
+          icon="people-outline"
+          label="Clientes cadastrados"
+          value={data ? formatCount(data.clients.length) : "—"}
           tone="neutral"
         />
         <MetricCard
           icon="checkmark-circle-outline"
-          label="Onboarding"
-          value="OK"
+          label="Agendamentos hoje"
+          value={data ? formatCount(todayAppointments.length) : "—"}
           tone="green"
         />
       </View>
@@ -115,7 +163,7 @@ export default function HomeScreen() {
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={styles.quickAction}
-          onPress={() => router.push("/agenda")}
+          onPress={() => router.push("/agenda?create=1" as Href)}
         >
           <Ionicons name="add" size={21} color={colors.white} />
           <Text style={styles.quickActionText}>Novo agendamento</Text>
@@ -130,7 +178,7 @@ export default function HomeScreen() {
             color={colors.primaryDark}
           />
           <Text style={[styles.quickActionText, styles.quickActionAltText]}>
-            Novo cliente
+            Ver clientes
           </Text>
         </TouchableOpacity>
       </View>
@@ -144,13 +192,13 @@ export default function HomeScreen() {
           />
         </View>
         <View style={styles.insightCopy}>
-          <Text style={styles.insightTitle}>Proximo melhor passo</Text>
+          <Text style={styles.insightTitle}>Sua rotina</Text>
           <Text style={styles.insightText}>{insightText}</Text>
         </View>
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Agenda demonstrativa</Text>
+        <Text style={styles.sectionTitle}>Agendamentos do dia</Text>
         <TouchableOpacity
           onPress={() => router.push("/agenda")}
         >
@@ -183,14 +231,21 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       <View style={styles.panel}>
-        {appointments.map((appointment) => (
+        {!data ? <Text style={styles.empty}>Aguardando os dados da agenda.</Text> : !dayAppointments.length ? <Text style={styles.empty}>Nenhum agendamento nesta data.</Text> : null}
+        {dayAppointments.map(appointment => (
           <AppointmentCard
-            key={`${appointment.time}-${appointment.client}`}
-            {...appointment}
-            onPress={() => showMessage(`Detalhes de ${appointment.client}.`)}
+            key={appointment.id}
+            client={data?.clients.find(c => c.id === appointment.clientId)?.name || "Cliente indisponível"}
+            service={data?.services.find(s => s.id === appointment.serviceId)?.name || "Serviço indisponível"}
+            professional={data?.professionals.find(p => p.id === appointment.professionalId)?.name || "Profissional indisponível"}
+            time={new Date(appointment.scheduledAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+            status={statusLabels[appointment.status]}
+            onPress={() => setSelectedAppointment(appointment)}
           />
         ))}
       </View>
     </ScrollView>
+    <AppointmentDetailsModal appointment={selectedAppointment} catalogs={data || { clients: [], services: [], professionals: [] }} onClose={() => setSelectedAppointment(null)} />
+    </>
   );
 }

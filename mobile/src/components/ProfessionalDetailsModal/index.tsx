@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../../global/colors";
@@ -10,6 +10,7 @@ import type {
   ProfessionalProfile,
 } from "../../types/professional";
 import { formatPhone } from "../../utils/phone";
+import { RecordActions } from "../RecordActions";
 import { Button } from "../Button";
 import { styles } from "./styles";
 
@@ -21,6 +22,8 @@ const accessLabels: Record<ProfessionalAccessStatus, string> = {
 };
 
 interface ProfessionalDetailsModalProps {
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
   onClose: () => void;
   professional: ProfessionalProfile | null;
 }
@@ -50,6 +53,8 @@ function DetailRow({ icon, label, value }: DetailRowProps) {
 export function ProfessionalDetailsModal({
   onClose,
   professional,
+  onEdit,
+  onDelete,
 }: ProfessionalDetailsModalProps) {
   const insets = useSafeAreaInsets();
 
@@ -93,6 +98,7 @@ export function ProfessionalDetailsModal({
             </TouchableOpacity>
           </View>
 
+          <ScrollView>
           <View style={styles.identitySection}>
             <View style={[styles.avatar, styles[`${professional.tone}Avatar`]]}>
               <Text style={[styles.avatarText, styles[`${professional.tone}AvatarText`]]}>
@@ -170,7 +176,9 @@ export function ProfessionalDetailsModal({
             />
           </View>
 
+          {onEdit && onDelete ? <RecordActions key={professional.id} name={professional.name} onEdit={onEdit} onDelete={onDelete} /> : null}
           <Button title="Fechar" onPress={onClose} />
+          </ScrollView>
         </View>
       </View>
     </Modal>

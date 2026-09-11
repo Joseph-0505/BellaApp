@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
+import { PageAction } from "../../context/PageActionContext";
 import * as ImagePicker from "expo-image-picker";
 import { Redirect, router } from "expo-router";
 import {
@@ -477,6 +478,7 @@ export default function PerfilScreen() {
         </View>
       </ScrollView>
 
+      <PageAction label="Editar meu perfil" onPress={() => setEditModalVisible(true)} />
       <EditProfileModal
         user={user}
         visible={editModalVisible}

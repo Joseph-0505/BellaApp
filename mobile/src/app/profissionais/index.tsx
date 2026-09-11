@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
+import { PageAction } from "../../context/PageActionContext";
 import { Redirect } from "expo-router";
 import {
   ActivityIndicator,
@@ -20,6 +21,8 @@ import { colors } from "../../global/colors";
 import { useAuth } from "../../hooks/useAuth";
 import {
   createProfessional,
+  updateProfessional,
+  deleteProfessional,
   listProfessionals,
   type CreateProfessionalPayload,
 } from "../../services/professionals";
@@ -50,6 +53,7 @@ export default function ProfissionaisScreen() {
   const [selectedProfessional, setSelectedProfessional] = useState<ProfessionalProfile | null>(
     null,
   );
+  const [editingProfessional, setEditingProfessional] = useState<ProfessionalProfile | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -120,7 +124,9 @@ export default function ProfissionaisScreen() {
   }
 
   async function handleCreateProfessional(payload: CreateProfessionalPayload) {
-    await createProfessional(payload);
+    if (editingProfessional) await updateProfessional(editingProfessional.id, payload);
+    else await createProfessional(payload);
+    setEditingProfessional(null);
     setSearch("");
     setDebouncedSearch("");
     setSelectedFilter("todos");
@@ -252,23 +258,22 @@ export default function ProfissionaisScreen() {
       />
 
       {canManageProfessionals ? (
-        <TouchableOpacity
-          accessibilityLabel="Cadastrar novo profissional"
-          activeOpacity={0.82}
-          style={styles.floatingButton}
-          onPress={() => setNewProfessionalModalVisible(true)}
-        >
-          <Ionicons name="person-add-outline" size={25} color={colors.white} />
-        </TouchableOpacity>
+        <PageAction
+          label="Cadastrar novo profissional"
+          onPress={() => { setEditingProfessional(null); setNewProfessionalModalVisible(true); }}
+        />
       ) : null}
 
       <NewProfessionalModal
+        professional={editingProfessional}
         visible={newProfessionalModalVisible}
         onClose={() => setNewProfessionalModalVisible(false)}
         onSubmit={handleCreateProfessional}
       />
 
       <ProfessionalDetailsModal
+        onEdit={canManageProfessionals ? () => { setEditingProfessional(selectedProfessional); setSelectedProfessional(null); setNewProfessionalModalVisible(true); } : undefined}
+        onDelete={canManageProfessionals ? async () => { if (!selectedProfessional) return; await deleteProfessional(selectedProfessional.id); setSelectedProfessional(null); await loadProfessionals(debouncedSearch, selectedFilter); } : undefined}
         professional={selectedProfessional}
         onClose={() => setSelectedProfessional(null)}
       />

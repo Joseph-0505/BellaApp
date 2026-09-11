@@ -20,7 +20,10 @@ import { Button } from "../Button";
 import { Input } from "../Input";
 import { styles } from "./styles";
 
+import type { ServiceProfile } from "../../types/service";
+
 interface NewServiceModalProps {
+  service?: ServiceProfile | null;
   visible: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateServicePayload) => Promise<void>;
@@ -50,8 +53,9 @@ function parsePrice(value: string) {
   return digits ? Number(digits) / 100 : 0;
 }
 
-export function NewServiceModal({ visible, onClose, onSubmit }: NewServiceModalProps) {
+export function NewServiceModal({ visible, onClose, onSubmit, service }: NewServiceModalProps) {
   const insets = useSafeAreaInsets();
+  const [active, setActive] = useState(true);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("60");
@@ -64,13 +68,14 @@ export function NewServiceModal({ visible, onClose, onSubmit }: NewServiceModalP
       return;
     }
 
-    setName("");
-    setPrice("");
-    setDuration("60");
+    setActive(service?.active ?? true);
+    setName(service?.name || "");
+    setPrice(service ? formatPrice(String(Math.round(service.price * 100))) : "");
+    setDuration(String(service?.durationMinutes || 60));
     setErrors(initialErrors);
     setRequestError("");
     setSubmitting(false);
-  }, [visible]);
+  }, [visible, service]);
 
   function clearError(field: keyof typeof initialErrors) {
     setErrors((current) => ({ ...current, [field]: "" }));
@@ -112,11 +117,13 @@ export function NewServiceModal({ visible, onClose, onSubmit }: NewServiceModalP
 
     try {
       await onSubmit({
-        active: true,
+        active,
+        description: service?.description || undefined,
+        icon: service?.icon,
         durationMinutes: normalizedDuration,
         name: normalizedName,
         price: normalizedPrice,
-        risk: "baixo",
+        risk: service?.risk || "baixo",
       });
       onClose();
     } catch (error) {
@@ -146,7 +153,7 @@ export function NewServiceModal({ visible, onClose, onSubmit }: NewServiceModalP
           <View style={styles.header}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Catálogo</Text>
-              <Text style={styles.title}>Novo serviço</Text>
+              <Text style={styles.title}>{service ? "Editar serviço" : "Novo serviço"}</Text>
             </View>
             <TouchableOpacity
               accessibilityLabel="Fechar"
@@ -212,12 +219,13 @@ export function NewServiceModal({ visible, onClose, onSubmit }: NewServiceModalP
               onSubmitEditing={() => void handleSubmit()}
             />
 
+            <TouchableOpacity accessibilityRole="switch" accessibilityState={{ checked: active }} onPress={() => setActive(value => !value)}><Text style={styles.description}>{active ? "✓ Serviço ativo" : "Serviço inativo"} — toque para alterar</Text></TouchableOpacity>
             {requestError ? <Text style={styles.requestError}>{requestError}</Text> : null}
 
             <Button
               disabled={submitting}
               loading={submitting}
-              title="Cadastrar serviço"
+              title={service ? "Salvar alterações" : "Cadastrar serviço"}
               onPress={() => void handleSubmit()}
             />
           </ScrollView>

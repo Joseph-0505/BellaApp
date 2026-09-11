@@ -21,7 +21,10 @@ import { colors } from "../../global/colors";
 import { formatRequestError } from "../../utils/request-errors";
 import { styles } from "./styles";
 
+import type { ClientProfile } from "../../types/client";
+
 interface NewClientModalProps {
+  client?: ClientProfile | null;
   visible: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateClientPayload) => Promise<void>;
@@ -33,7 +36,7 @@ const initialErrors = {
   email: "",
 };
 
-export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalProps) {
+export function NewClientModal({ visible, onClose, onSubmit, client }: NewClientModalProps) {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -47,13 +50,13 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
       return;
     }
 
-    setName("");
-    setPhone("");
-    setEmail("");
+    setName(client?.name || "");
+    setPhone(formatPhone(client?.phone || ""));
+    setEmail(client?.email || "");
     setErrors(initialErrors);
     setRequestError("");
     setSubmitting(false);
-  }, [visible]);
+  }, [visible, client]);
 
   function clearError(field: keyof typeof initialErrors) {
     setErrors((current) => ({ ...current, [field]: "" }));
@@ -97,7 +100,9 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
       await onSubmit({
         name: normalizedName,
         phone: normalizedPhone,
-        ...(normalizedEmail ? { email: normalizedEmail } : {}),
+        email: normalizedEmail,
+        cpf: client?.cpf || undefined,
+        notes: client?.notes || undefined,
       });
       onClose();
     } catch (error) {
@@ -127,7 +132,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
           <View style={styles.header}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Cadastro rápido</Text>
-              <Text style={styles.title}>Novo cliente</Text>
+              <Text style={styles.title}>{client ? "Editar cliente" : "Novo cliente"}</Text>
             </View>
             <TouchableOpacity
               accessibilityLabel="Fechar"
@@ -199,7 +204,7 @@ export function NewClientModal({ visible, onClose, onSubmit }: NewClientModalPro
             <Button
               disabled={submitting}
               loading={submitting}
-              title="Cadastrar cliente"
+              title={client ? "Salvar alterações" : "Cadastrar cliente"}
               onPress={() => void handleSubmit()}
             />
           </ScrollView>

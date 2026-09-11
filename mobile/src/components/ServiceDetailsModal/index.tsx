@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../../global/colors";
 import type { ServiceProfile } from "../../types/service";
+import { RecordActions } from "../RecordActions";
 import { Button } from "../Button";
 import { styles } from "./styles";
 
@@ -31,6 +32,8 @@ const serviceIcons: Record<string, IconName> = {
 };
 
 interface ServiceDetailsModalProps {
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
   onClose: () => void;
   service: ServiceProfile | null;
 }
@@ -72,7 +75,7 @@ function Metric({ icon, label, value }: MetricProps) {
   );
 }
 
-export function ServiceDetailsModal({ onClose, service }: ServiceDetailsModalProps) {
+export function ServiceDetailsModal({ onClose, service, onEdit, onDelete }: ServiceDetailsModalProps) {
   const insets = useSafeAreaInsets();
 
   if (!service) {
@@ -187,7 +190,8 @@ export function ServiceDetailsModal({ onClose, service }: ServiceDetailsModalPro
               </Text>
             </View>
 
-            <Button title="Fechar" onPress={onClose} />
+            {onEdit && onDelete ? <RecordActions key={service.id} name={service.name} onEdit={onEdit} onDelete={onDelete} /> : null}
+          <Button title="Fechar" onPress={onClose} />
           </ScrollView>
         </View>
       </View>
