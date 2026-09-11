@@ -1,5 +1,6 @@
 import type { AuthSession, Nullable, UserProfile } from "../types/auth";
 import { apiPost, clearSession, getSession, setSession, unwrapData } from "./api";
+import { persistRefreshToken } from "./session-storage";
 
 const AUTH_BASE_PATH = "/api/v1/auth";
 
@@ -47,6 +48,8 @@ export async function loginAndStoreSession(
 
 export async function logout(): Promise<void> {
   const session = getSession();
+  clearSession();
+  await persistRefreshToken(null);
 
   try {
     if (session?.refreshToken) {
@@ -60,7 +63,5 @@ export async function logout(): Promise<void> {
     }
   } catch {
     // No mobile, sair localmente e suficiente quando o backend estiver indisponivel.
-  } finally {
-    clearSession();
   }
 }

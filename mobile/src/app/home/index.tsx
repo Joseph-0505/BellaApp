@@ -20,14 +20,7 @@ import { AppointmentDetailsModal } from "../../components/AppointmentModals";
 import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
 
-async function listAll<T>(fetch: (params: { page: number; limit: number }) => Promise<{ data: T[]; meta: { total: number } }>) {
-  const items: T[] = [];
-  for (let page = 1; ; page++) {
-    const response = await fetch({ page, limit: 100 });
-    items.push(...response.data);
-    if (!response.data.length || items.length >= response.meta.total) return items;
-  }
-}
+import { listAllPages } from "../../services/pagination";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -69,7 +62,7 @@ export default function HomeScreen() {
     setError("");
     try {
       const [appointments, clients, services, professionals] = await Promise.all([
-        listAppointments(), listAll(listClients), listAll(listServices), listAll(listProfessionals),
+        listAppointments(), listAllPages(listClients), listAllPages(listServices), listAllPages(listProfessionals),
       ]);
       if (requestId.current === id) setData({ appointments, clients, services, professionals });
     } catch (e) {

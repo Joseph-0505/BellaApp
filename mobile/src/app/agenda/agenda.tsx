@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+import { listAllPages } from "../../services/pagination";
 import { PageAction } from "../../context/PageActionContext";
 import { AppointmentDetailsModal, NewAppointmentModal } from "../../components/AppointmentModals";
 import { listAppointments, createAppointment, updateAppointment, deleteAppointment, statusLabels, type Appointment, type NewAppointment } from "../../services/appointments";
@@ -62,15 +63,7 @@ export default function AgendaScreen(): React.JSX.Element {
     if (!isAuthenticated || !onboarding?.completed) return;
     setLoading(true); setError("");
     try {
-      async function all<T>(fetch: (args: { page: number; limit: number }) => Promise<{ data: T[]; meta: { total: number } }>) {
-        const items: T[] = [];
-        for (let page = 1; ; page++) {
-          const response = await fetch({ page, limit: 100 });
-          items.push(...response.data);
-          if (!response.data.length || items.length >= response.meta.total) return items;
-        }
-      }
-      const [a, c, s, p] = await Promise.all([listAppointments(), all(listClients), all(listServices), all(listProfessionals)]);
+      const [a, c, s, p] = await Promise.all([listAppointments(), listAllPages(listClients), listAllPages(listServices), listAllPages(listProfessionals)]);
       setAppointments(a); setClients(c); setServices(s); setProfessionals(p);
       setLoaded(true);
     } catch (e) { setError(formatRequestError(e, "Não foi possível carregar a agenda.")); }

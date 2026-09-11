@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 import type { AuthSession } from "../types/auth";
+import { persistRefreshToken, readRefreshToken } from "./session-storage";
 
 interface ExpoGoConfigLike {
   debuggerHost?: string;
@@ -79,6 +80,8 @@ export const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_BASE
 );
 
 let currentSession: AuthSession | null = null;
+let sessionRevision = 0;
+let restoreInFlight: Promise<void> | null = null;
 let refreshInFlightPromise: Promise<AuthSession | null> | null = null;
 
 const sessionListeners = new Set<SessionListener>();
@@ -103,6 +106,9 @@ function notifySessionChange(session: AuthSession | null) {
 
 function buildUrl(path: string, query?: QueryParams) {
   const url = new URL(path, `${API_BASE_URL}/`);
+  if (!__DEV__ && url.protocol !== "https:") {
+    throw new ApiError("Configure uma URL HTTPS para a API de produção.", { code: "INSECURE_API_URL" });
+  }
 
   if (!query) {
     return url.toString();
@@ -188,6 +194,7 @@ function extractErrorPayload(body: unknown) {
 
 async function refreshSession() {
   const session = getSession();
+  const revision = sessionRevision;
 
   if (!session?.refreshToken) {
     return null;
@@ -203,6 +210,7 @@ async function refreshSession() {
         body: JSON.stringify({ refreshToken: session.refreshToken }),
       });
       const responseBody = await parseResponseBody(response);
+      if (sessionRevision !== revision) return null;
 
       if (!response.ok) {
         clearSession();
@@ -288,7 +296,7 @@ async function request(path: string, options: RequestOptions = {}) {
       }
     }
 
-    if (auth && response.status === 401) {
+    if (auth && response.status === 401 && getSession() === session) {
       clearSession();
     }
 
@@ -320,8 +328,35 @@ export function getSession() {
 }
 
 export function setSession(session: AuthSession | null) {
+  sessionRevision++;
   currentSession = session;
+  void persistRefreshToken(session?.refreshToken || null).catch(() => {
+    console.warn("Não foi possível persistir a sessão no dispositivo.");
+  });
   notifySessionChange(session);
+}
+
+async function restoreStoredSession() {
+  const revision = sessionRevision;
+  const token = await readRefreshToken();
+  if (!token || currentSession || revision !== sessionRevision) return;
+  try {
+    const response = await apiPost(`${AUTH_BASE_PATH}/refresh`, { refreshToken: token }, { auth: false });
+    if (revision !== sessionRevision) return;
+    const session = unwrapData<AuthSession>(response);
+    if (session?.token && session.refreshToken) setSession(session);
+    else clearSession();
+  } catch (error) {
+    if (revision === sessionRevision && error instanceof ApiError && [400, 401, 403].includes(error.status)) clearSession();
+    throw error;
+  }
+}
+
+export function restoreSession() {
+  if (!restoreInFlight) {
+    restoreInFlight = restoreStoredSession().finally(() => { restoreInFlight = null; });
+  }
+  return restoreInFlight;
 }
 
 export function clearSession() {

@@ -8,6 +8,7 @@ import { RecordActions } from "../RecordActions";
 import { Input } from "../Input";
 import { styles } from "../NewServiceModal/styles";
 import { type Appointment, type NewAppointment, statusLabels } from "../../services/appointments";
+import { parseAppointmentDate } from "../../utils/appointment-date";
 import { formatRequestError } from "../../utils/request-errors";
 
 export type Choice = { id: string; name: string };
@@ -60,11 +61,9 @@ export function NewAppointmentModal({ visible, date, catalogs, onClose, onSubmit
   async function save() {
     if (saving) return;
     if (!clientId || !serviceId || !professionalId) { setError("Selecione cliente, serviço e profissional."); return; }
-    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(day);
-    if (!match || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) { setError("Informe data (DD/MM/AAAA) e horário (HH:MM) válidos."); return; }
-    const [, d, m, y] = match;
-    const scheduled = new Date(Number(y), Number(m) - 1, Number(d), Number(time.slice(0, 2)), Number(time.slice(3)));
-    if (scheduled.getDate() !== Number(d) || scheduled.getMonth() !== Number(m) - 1 || scheduled.getFullYear() !== Number(y)) { setError("Data inválida."); return; }
+    let scheduled: Date;
+    try { scheduled = parseAppointmentDate(day, time); }
+    catch (e) { setError(e instanceof Error ? e.message : "Data inválida."); return; }
     setSaving(true); setError("");
     try {
       await onSubmit({ clientId, serviceId, professionalId, roomId: appointment?.roomId || undefined, scheduledAt: scheduled.toISOString(), status: status as NewAppointment["status"], notes: notes.trim() || undefined });

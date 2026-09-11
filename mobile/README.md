@@ -1,91 +1,79 @@
 # BellaApp Mobile
 
-Aplicativo mobile do BellaApp para a rotina de clinicas de estetica. O projeto usa React Native, Expo e Expo Router e consome a API Fastify do diretorio `../backend`.
+Aplicativo para a rotina de clínicas de estética, desenvolvido com React Native, Expo e Expo Router. Consome a API Fastify de `../backend`, que persiste os dados no MySQL por meio do Prisma.
+
+## Documentação do produto
+
+- [Contexto, objetivos e evolução](EVOLUCAO.md).
+- [Requisitos funcionais, não funcionais e critérios de aceite](REQUISITOS.md).
+- [Verificações e roteiro de validação](VALIDACAO.md).
+
+Os documentos distinguem implementação no código de homologação em dispositivos e no banco.
 
 ## Funcionalidades atuais
 
-- Criacao de conta com validacao de nome, e-mail, CPF e senha.
-- Login com JWT, refresh de sessao e logout.
-- Onboarding inicial para configurar o nome da clinica.
-- Tela inicial com resumo da agenda e proximos atendimentos.
-- Consulta e atualizacao do perfil autenticado.
-
-O app ainda nao possui CRUD operacional de clientes, servicos ou agendamentos. Esses fluxos sao a proxima etapa funcional do mobile.
+- Cadastro de conta, login, renovação da sessão e logout.
+- Onboarding da clínica.
+- Início com totais reais de cadastros e agenda por data.
+- CRUD de clientes, serviços e profissionais, conforme permissões.
+- Criação, detalhes, edição e exclusão de agendamentos permitidos; cancelamento por status e filtro por profissional. Agendamentos concluídos ficam somente para consulta no mobile.
+- Consulta e edição de perfil, envio/remoção de foto e exclusão da própria conta.
+- Menu lateral, navegação inferior e ação central contextual.
+- Persistência do refresh token com Expo SecureStore no Android/iOS.
 
 ## Arquitetura
 
-```text
-src/app          rotas e telas do Expo Router
-src/components   componentes reutilizaveis de interface
-src/context      estado de autenticacao e onboarding
-src/services     cliente HTTP e comunicacao com a API
-src/types        contratos TypeScript
-src/utils        formatacao, rotas e tratamento de erros
-src/styles       estilos por tela
-```
+| Diretório | Responsabilidade |
+|---|---|
+| `src/app` | Rotas e telas |
+| `src/components` | Componentes, formulários e detalhes |
+| `src/context` | Autenticação, onboarding e ação central |
+| `src/hooks` | Hooks compartilhados |
+| `src/services` | Comunicação com API, paginação e armazenamento da sessão |
+| `src/types` | Contratos TypeScript |
+| `src/utils` | Formatação, validação, rotas e erros |
+| `src/styles`, `src/global` | Estilos e paleta visual |
+| `tests` | Testes automatizados de lógica |
 
-As rotas atuais sao `/`, `/login`, `/cadastro`, `/onboarding` e `/home`. Rotas protegidas usam o `AuthContext`; apos login, o usuario segue para o onboarding ou para a tela inicial conforme o status retornado pela API.
+Rotas: `/`, `/login`, `/cadastro`, `/onboarding`, `/home`, `/agenda`, `/clientes`, `/servicos`, `/profissionais` e `/perfil`.
 
-## Requisitos funcionais atendidos
+O aplicativo verifica autenticação e onboarding para direcionar a navegação. A autorização efetiva das operações pertence ao backend.
 
-- RF01: criar conta com dados pessoais e senha forte.
-- RF02: autenticar e encerrar sessao.
-- RF03: concluir configuracao inicial da clinica.
-- RF04: visualizar dados resumidos da agenda.
-- RF05: visualizar e atualizar o perfil autenticado.
+## Execução local
 
-## Requisitos nao funcionais
-
-- RNF01: o app deve funcionar em Android e iOS via Expo.
-- RNF02: a comunicacao deve ocorrer por API HTTP configuravel.
-- RNF03: entradas de cadastro devem ser validadas antes do envio.
-- RNF04: erros da API devem ser apresentados em linguagem compreensivel.
-- RNF05: o codigo deve manter separacao entre telas, componentes, estado e acesso a dados.
-
-## Regras de negocio
-
-- CPF deve possuir 11 digitos e digitos verificadores validos.
-- Senha deve ter ao menos 8 caracteres, letra maiuscula, minuscula, numero e simbolo.
-- E-mail e CPF nao podem duplicar um cadastro existente; a API aplica essa regra de forma definitiva.
-- Apos criar a conta, o app retorna ao login e preenche o e-mail informado. A sessao so e criada apos a pessoa informar as credenciais na tela de login.
-- O onboarding e obrigatorio antes da area autenticada principal.
-
-## Integracao com a API
-
-Por padrao, o app identifica o host do Expo Go e usa a porta `3000`. No emulador Android sem Expo Go, o fallback e `http://10.0.2.2:3000`.
-
-Para definir outra API, configure antes de iniciar o Expo:
+Na pasta `mobile`:
 
 ```powershell
+npm install
 $env:EXPO_PUBLIC_API_URL = "http://SEU_IP:3000"
 npm start
 ```
 
-Com o emulador, inicie tambem o backend e o MySQL. O banco precisa estar com as migrations aplicadas:
+O backend e o MySQL devem estar disponíveis e com as migrations aplicadas. Sem URL explícita, o aplicativo identifica o host do Expo; no emulador Android local, usa `http://10.0.2.2:3000` quando aplicável.
+
+Também estão disponíveis `npm run android`, `npm run ios` (com ambiente iOS compatível) e `npm run web`. Builds nativas precisam incluir Expo SecureStore; atualizar apenas JavaScript não adiciona módulos a uma build antiga.
+
+## Qualidade e testes
 
 ```powershell
-cd ..\backend
-npx prisma migrate deploy
-npm run dev
-```
-
-## Execucao local
-
-```powershell
-cd mobile
-npm install
-npm run android
-```
-
-Caso a porta 8081 ja esteja ocupada, aceite a porta alternativa oferecida pelo Expo. Para verificar qualidade estatica:
-
-```powershell
-npm run lint
+npm test
 npx tsc --noEmit
+npm run lint
 ```
 
-## Seguranca e limites atuais
+Na pasta `backend`, para testes unitários sem reset do banco:
 
-- A API usa JWT e valida as credenciais no backend; senhas nao sao armazenadas pelo app.
-- A sessao mobile permanece apenas em memoria nesta versao. Persistencia segura com `expo-secure-store` ainda deve ser implementada.
-- Recuperacao de senha, upload de imagens e CRUD mobile de clientes, servicos e agenda ainda nao foram conectados.
+```powershell
+node node_modules/jest/bin/jest.js --config=jest.unit.config.cjs --runInBand
+```
+
+Não confundir esses testes com homologação de interface, segurança completa ou CRUD real no banco. A configuração padrão de integração do backend recria o banco de testes; consulte o setup antes de executá-la.
+
+## Segurança e limites
+
+- Produção exige `EXPO_PUBLIC_API_URL` com HTTPS; HTTP local é permitido no desenvolvimento.
+- Senhas não são persistidas pelo aplicativo. No nativo, apenas o refresh token é guardado no SecureStore; perfil e access token ficam em memória.
+- No navegador, a sessão permanece em memória.
+- Permissões, conflitos de agenda e restrições de plano são verificados pela API.
+- Recuperação de senha, notificações push reais e sincronização offline não estão implementadas no mobile.
+- Testes Android/iOS, integração com banco e análise dos avisos de dependências continuam pendentes. Consulte [VALIDACAO.md](VALIDACAO.md).

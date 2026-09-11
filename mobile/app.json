@@ -43,7 +43,8 @@
         {
           "photosPermission": "Permita que o BellaApp acesse suas fotos para atualizar sua imagem de perfil."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

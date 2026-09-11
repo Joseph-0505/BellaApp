@@ -1,3 +1,4 @@
+import { listAllPages } from "./pagination";
 import { apiDelete, apiGet, apiPost, apiPut, unwrapData } from "./api";
 
 export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELED";
@@ -34,10 +35,6 @@ export async function createAppointment(payload: NewAppointment) {
 
 // Paginate so appointments outside the first page remain visible.
 export async function listAppointments() {
-  const items: Appointment[] = [];
-  for (let page = 1; ; page++) {
-    const response = await apiGet("/api/v1/appointments", { query: { page, limit: 100 } }) as { data: Appointment[]; meta: { total: number } };
-    items.push(...response.data);
-    if (!response.data.length || items.length >= response.meta.total) return items;
-  }
+  return listAllPages<Appointment>(async ({ page, limit }) =>
+    await apiGet("/api/v1/appointments", { query: { page, limit } }) as { data: Appointment[]; meta: { total: number } });
 }
