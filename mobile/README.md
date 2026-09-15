@@ -4,11 +4,17 @@ Aplicativo para a rotina de clínicas de estética, desenvolvido com React Nativ
 
 ## Documentação do produto
 
-- [Contexto, objetivos e evolução](EVOLUCAO.md).
-- [Requisitos funcionais, não funcionais e critérios de aceite](REQUISITOS.md).
-- [Verificações e roteiro de validação](VALIDACAO.md).
+A documentação acadêmica e técnica está organizada em [`docs/`](docs/README.md), incluindo:
 
-Os documentos distinguem implementação no código de homologação em dispositivos e no banco.
+- contexto e evolução do produto;
+- requisitos funcionais e não funcionais com auditoria do código;
+- diagrama entidade-relacionamento;
+- dois diagramas de casos de uso;
+- dois diagramas de atividades;
+- dois diagramas de sequência;
+- prompt pronto para gerar versões visuais em outra IA.
+
+Os arquivos históricos [EVOLUCAO.md](EVOLUCAO.md), [REQUISITOS.md](REQUISITOS.md) e [VALIDACAO.md](VALIDACAO.md) foram preservados. Os documentos distinguem implementação localizada no código de homologação em dispositivos e no banco.
 
 ## Funcionalidades atuais
 

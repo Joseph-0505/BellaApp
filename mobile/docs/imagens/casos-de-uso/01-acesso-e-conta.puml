@@ -1,0 +1,67 @@
+@startuml
+
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam ArrowColor #785663
+skinparam actorBorderColor #785663
+skinparam actorBackgroundColor #F8E8ED
+skinparam usecaseBackgroundColor #F8E8ED
+skinparam usecaseBorderColor #B75C75
+skinparam activityBackgroundColor #F8E8ED
+skinparam activityBorderColor #B75C75
+skinparam activityDiamondBackgroundColor #EDF4EF
+skinparam activityDiamondBorderColor #7B9E87
+skinparam participantBackgroundColor #F8E8ED
+skinparam participantBorderColor #B75C75
+skinparam sequenceLifeLineBorderColor #BCAAB1
+skinparam noteBackgroundColor #FFF9EE
+skinparam roundcorner 12
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Administrador" as Admin
+actor "Profissional" as Prof
+actor "Galeria do dispositivo" as Galeria
+
+rectangle "BellaApp Mobile" {
+  usecase "Criar conta" as UC1
+  usecase "Entrar" as UC2
+  usecase "Restaurar sessão" as UC3
+  usecase "Renovar sessão" as UC4
+  usecase "Sair" as UC5
+  usecase "Concluir onboarding" as UC6
+  usecase "Consultar perfil" as UC7
+  usecase "Editar perfil" as UC8
+  usecase "Gerenciar foto" as UC9
+  usecase "Excluir conta" as UC10
+  usecase "Validar dados" as UC11
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+
+Prof --> UC2
+Prof --> UC3
+Prof --> UC5
+Prof --> UC7
+Prof --> UC8
+Prof --> UC9
+Prof --> UC10
+
+UC1 .> UC11 : <<include>>
+UC2 .> UC11 : <<include>>
+UC8 .> UC11 : <<include>>
+UC10 .> UC11 : <<include>>
+UC3 .> UC4 : <<include>>
+Galeria --> UC9
+@enduml
