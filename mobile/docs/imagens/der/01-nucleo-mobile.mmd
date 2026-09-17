@@ -1,0 +1,123 @@
+erDiagram
+    USER {
+        string id PK
+        string name
+        string email UK
+        string passwordHash
+        string cpf UK
+        string avatarFileName
+        boolean admin
+        enum plan
+    }
+
+    CLINIC {
+        string id PK
+        enum plan
+        datetime trialEndsAt
+    }
+
+    CLINIC_USER {
+        string id PK
+        string clinicId FK
+        string userId FK
+        string professionalId FK, UK
+        enum role
+    }
+
+    BUSINESS_PROFILE {
+        string id PK
+        string userId FK, UK
+        string clinicId FK, UK
+        string businessName
+        string cnpj UK
+        boolean hasTeam
+        boolean usesRooms
+        datetime onboardingCompletedAt
+    }
+
+    CLIENT {
+        string id PK
+        string userId FK
+        string clinicId FK
+        string name
+        string email
+        string phone
+        string cpf
+        string notes
+    }
+
+    SERVICE {
+        string id PK
+        string userId FK
+        string clinicId FK
+        string name
+        decimal price
+        int durationMinutes
+        enum riskLevel
+        boolean active
+    }
+
+    PROFESSIONAL {
+        string id PK
+        string userId FK
+        string clinicId FK
+        string name
+        string specialty
+        string email
+        string phone
+        boolean status
+    }
+
+    ROOM {
+        string id PK
+        string userId FK
+        string clinicId FK
+        string name
+        string color
+        boolean active
+    }
+
+    APPOINTMENT {
+        string id PK
+        string userId FK
+        string clinicId FK
+        string clientId FK
+        string serviceId FK
+        string professionalId FK
+        string roomId FK
+        datetime scheduledAt
+        enum status
+        enum receivedBy
+        string notes
+    }
+
+    REFRESH_TOKEN {
+        string id PK
+        string userId FK
+        string token UK
+        datetime expiresAt
+    }
+
+    USER ||--o| BUSINESS_PROFILE : possui
+    CLINIC o|--o| BUSINESS_PROFILE : identifica
+    USER ||--o{ CLINIC_USER : participa
+    CLINIC ||--o{ CLINIC_USER : agrega
+    PROFESSIONAL o|--o| CLINIC_USER : vincula_acesso
+    USER ||--o{ REFRESH_TOKEN : autentica
+
+    USER ||--o{ CLIENT : criou
+    USER ||--o{ SERVICE : criou
+    USER ||--o{ PROFESSIONAL : criou
+    USER ||--o{ ROOM : criou
+    USER ||--o{ APPOINTMENT : criou
+
+    CLINIC ||--o{ CLIENT : possui
+    CLINIC ||--o{ SERVICE : oferece
+    CLINIC ||--o{ PROFESSIONAL : possui
+    CLINIC ||--o{ ROOM : possui
+    CLINIC ||--o{ APPOINTMENT : possui
+
+    CLIENT ||--o{ APPOINTMENT : recebe
+    SERVICE ||--o{ APPOINTMENT : define
+    PROFESSIONAL o|--o{ APPOINTMENT : executa
+    ROOM o|--o{ APPOINTMENT : aloca
