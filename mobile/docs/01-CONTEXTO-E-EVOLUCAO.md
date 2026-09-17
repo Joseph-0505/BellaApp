@@ -22,7 +22,7 @@ Permitir que a operação básica da clínica seja administrada pelo celular: cr
 
 ## Limites atuais
 
-Estão fora do mobile atual:
+Estão fora do mobile atual que futuramente serão integrados:
 
 - recuperação de senha;
 - notificações push reais — o sino exibe apenas uma mensagem local;
@@ -44,16 +44,16 @@ Estão fora do mobile atual:
 
 As datas abaixo correspondem a commits do Git, não a lançamentos em produção.
 
-| Data | Commit | Evolução registrada |
-|---|---|---|
-| 23/08/2026 | `befea72` | Telas iniciais de login e cadastro. |
-| 30/08/2026 | `b3d5e78` | Implementação da tela de cadastro de conta. |
-| 02/09/2026 | `e5d3f1d` | Criação das páginas de início e agenda. |
-| 05/09/2026 | `d566bfd` | Criação das páginas de clientes e serviços. |
-| 05/09/2026 | `13f8375` | Páginas de profissionais/perfil e trabalho com imagens. |
+| Data       | Commit    | Evolução registrada                                            |
+| ---------- | --------- | -------------------------------------------------------------- |
+| 23/08/2026 | `befea72` | Telas iniciais de login e cadastro.                            |
+| 30/08/2026 | `b3d5e78` | Implementação da tela de cadastro de conta.                    |
+| 02/09/2026 | `e5d3f1d` | Criação das páginas de início e agenda.                        |
+| 05/09/2026 | `d566bfd` | Criação das páginas de clientes e serviços.                    |
+| 05/09/2026 | `13f8375` | Páginas de profissionais/perfil e trabalho com imagens.        |
 | 07/09/2026 | `cd427b7` | Ajustes visuais em perfil, profissionais, clientes e serviços. |
-| 08/09/2026 | `1ab5837` | Ajustes gerais de design. |
-| 10/09/2026 | `6eacc2e` | Implementação de CRUDs e atualização da documentação. |
+| 08/09/2026 | `1ab5837` | Ajustes gerais de design.                                      |
+| 10/09/2026 | `6eacc2e` | Implementação de CRUDs e atualização da documentação.          |
 
 ## Estado encontrado em 14/09/2026
 
@@ -71,7 +71,5 @@ As datas abaixo correspondem a commits do Git, não a lançamentos em produção
 
 1. Homologar os fluxos em Android e iOS usando uma clínica de teste.
 2. Automatizar testes de interface e integração mobile–API.
-3. Corrigir ou documentar acessibilidade com TalkBack/VoiceOver e fonte ampliada.
-4. Definir se salas, cobranças, caixa, convites e conclusão de atendimento entrarão no escopo do mobile.
-5. Medir desempenho e paginação com volumes maiores de dados.
-
+3. Definir se salas, cobranças, caixa, convites e conclusão de atendimento entrarão no escopo do mobile.
+4. Medir desempenho e paginação com volumes maiores de dados.
