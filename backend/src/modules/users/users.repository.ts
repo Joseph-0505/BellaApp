@@ -93,6 +93,62 @@ class UsersRepository {
       },
     );
   }
+
+  updateAvatarFileName(userId: string, avatarFileName: string | null) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { avatarFileName },
+      include: userResponseInclude,
+    });
+  }
+
+  countOtherClinicMembers(clinicId: string, userId: string) {
+    return prisma.clinicUser.count({
+      where: {
+        clinicId,
+        userId: { not: userId },
+      },
+    });
+  }
+
+  findClinicAdmin(clinicId: string, excludedUserId: string) {
+    return prisma.clinicUser.findFirst({
+      where: {
+        clinicId,
+        role: "ADMIN",
+        userId: { not: excludedUserId },
+      },
+      select: { userId: true },
+    });
+  }
+
+  deleteUser(userId: string) {
+    return prisma.user.delete({ where: { id: userId } });
+  }
+
+  deleteSoleAdminAccount(userId: string, clinicId: string) {
+    return prisma.$transaction(async (transaction: Prisma.TransactionClient) => {
+      await transaction.clinic.delete({ where: { id: clinicId } });
+      await transaction.user.delete({ where: { id: userId } });
+    });
+  }
+
+  deleteProfessionalAccount(userId: string, successorUserId: string) {
+    return prisma.$transaction(async (transaction: Prisma.TransactionClient) => {
+      await Promise.all([
+        transaction.client.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.service.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.professional.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.room.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.appointment.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.billing.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.cashRegister.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+        transaction.cashMovement.updateMany({ where: { userId }, data: { userId: successorUserId } }),
+      ]);
+
+      await transaction.user.delete({ where: { id: userId } });
+    });
+  }
 }
 
 export const usersRepository = new UsersRepository();

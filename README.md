@@ -1,20 +1,22 @@
 # BellaApp
 
-Aplicação full-stack (React + Vite no frontend, Fastify + Prisma no backend, MySQL)
+Aplicação full-stack (React + Vite no frontend, Fastify + Prisma no backend,
+MySQL e Redis)
 orquestrada com Docker Compose e servida por Nginx como proxy reverso com HTTPS.
 
 ## Arquitetura
 
 | Serviço  | Imagem / Build              | Exposição                         |
 |----------|-----------------------------|-----------------------------------|
-| nginx    | `nginx:alpine`              | **Único exposto ao host**: 80, 443 |
+| nginx    | `nginx:alpine`              | host: 80, 443                       |
 | frontend | build de `Frontend/...`     | interno (`expose 4173`)           |
-| backend  | build de `backend/`         | interno (`expose 3000`)           |
+| backend  | build de `backend/`         | host: 3000 (para o app mobile)    |
+| redis    | `redis:7-alpine`             | interno (`expose 6379`)           |
 | mysql    | `mysql:lts`                 | interno (`expose 3306`)           |
 
-Apenas o Nginx é publicado para fora; os demais serviços só são alcançáveis dentro
-da rede `bellaapp-network`. O Nginx encerra o TLS, redireciona HTTP→HTTPS e faz proxy
-de `/` para o frontend e de `/api/` para o backend.
+O MySQL permanece isolado na rede `bellaapp-network`. O backend publica a porta 3000
+para que o app mobile consiga acessá-lo, enquanto o Nginx encerra o TLS, redireciona
+HTTP→HTTPS e faz proxy de `/` para o frontend e de `/api/` para o backend.
 
 ## Pré-requisitos
 
@@ -56,8 +58,9 @@ cp .env.exemple .env                 # MySQL (raiz) + usuário de teste E2E
 cp backend/.env.exemple backend/.env # backend (DATABASE_URL, JWT_SECRET, ...)
 ```
 
-⚠️ A senha em `backend/.env` (`DATABASE_URL`) **deve ser igual** à
-`MYSQL_ROOT_PASSWORD` do `.env` da raiz. Os arquivos `.env` reais **nunca** são
+O Compose usa `MYSQL_ROOT_PASSWORD` e `MYSQL_DATABASE` do `.env` da raiz para montar
+automaticamente a `DATABASE_URL` do backend. Assim, o banco sempre é o container
+`mysql`, sem dependência de MySQL/XAMPP local. Os arquivos `.env` reais **nunca** são
 commitados.
 
 ## Subindo a aplicação
@@ -69,11 +72,36 @@ docker compose up --build
 Isso, do zero:
 
 1. Sobe o MySQL e aguarda ficar saudável (`healthcheck`);
-2. Aplica as migrations do Prisma automaticamente (`prisma migrate deploy`);
-3. Sobe backend, frontend e Nginx.
+2. Sobe o Redis e aguarda o `PING` responder;
+3. Aplica as migrations do Prisma automaticamente (`prisma migrate deploy`);
+4. Sobe backend, frontend e Nginx conforme os healthchecks.
 
 Acesse: **https://bellaapp.local** (o HTTP em `http://bellaapp.local` redireciona
 automaticamente para HTTPS).
+
+## Cache, eventos e observabilidade
+
+O backend usa Redis em dois fluxos independentes:
+
+- cache-aside nas listagens de clientes, serviços, profissionais, salas e
+  agendamentos, sempre separado por clínica, escopo de acesso e filtros;
+- Pub/Sub no canal `bellaapp:domain-events` para eventos de agendamento,
+  pagamento e alterações nos cadastros.
+
+Os catálogos usam TTL de 60 segundos e a agenda usa 20 segundos por padrão.
+Mutações incrementam a versão do namespace correspondente, invalidando todas
+as combinações de filtros sem executar `KEYS`. Os TTLs podem ser alterados por
+`CACHE_DEFAULT_TTL_SECONDS` e `CACHE_APPOINTMENTS_TTL_SECONDS`.
+
+O endpoint `GET /api/v1/health` verifica MySQL e Redis e retorna HTTP 503 se uma
+dependência obrigatória estiver indisponível. Os logs incluem `X-Request-Id`,
+cache hit/miss/invalidation e publicação/recebimento/processamento de eventos.
+Use `LOG_LEVEL=debug` para visualizar hits e misses:
+
+```bash
+docker compose logs -f backend
+docker compose exec redis redis-cli PUBSUB NUMSUB bellaapp:domain-events
+```
 
 ## Testes end-to-end (Playwright)
 

@@ -40,6 +40,10 @@ jest.mock("../../modules/professionals/professionals.service", () => ({
   },
 }));
 
+jest.mock("../../shared/auth/require-active-plan", () => ({
+  requireActivePlan: jest.fn(async () => undefined),
+}));
+
 jest.mock("../../shared/auth/authenticate", () => {
   const { AppError } = require("../../shared/errors/app-error");
 

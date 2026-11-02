@@ -182,6 +182,8 @@ export default function DashboardPage() {
   useEffect(() => {
     closeReagendamentoModal();
     closePaymentModal();
+    // As funcoes apenas limpam estado; depender delas recriaria o efeito a cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   function handleSelectedDateChange(nextDate) {

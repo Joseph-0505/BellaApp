@@ -58,6 +58,8 @@ export default function useReschedule({
     setWeekBaseDate(baseDate);
     setWeekAppointments(appointments);
     setWeekHours(hours);
+  // appointments/hours sao sincronizados pelo efeito seguinte sem reiniciar a semana navegada.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appointment?.id, baseDate, initialMode]);
 
   useEffect(() => {

@@ -29,3 +29,5 @@ process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-secret-with-16-chars";
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? "1d";
 process.env.REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN ?? "7d";
 process.env.CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:5173";
+process.env.REDIS_ENABLED = "false";
+process.env.PUBSUB_ENABLED = "false";

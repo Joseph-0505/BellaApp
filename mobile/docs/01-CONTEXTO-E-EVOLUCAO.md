@@ -1,7 +1,5 @@
 # Contextualização do problema e evolução do produto
 
-Revisão: 14/09/2026.
-
 ## Contexto do problema
 
 Clínicas de estética precisam coordenar clientes, catálogo de serviços, profissionais e horários. Quando esses dados ficam em planilhas, agendas pessoais ou conversas dispersas, aumenta o risco de duplicidade, perda de histórico, dificuldade para localizar informações e conflito de horários.

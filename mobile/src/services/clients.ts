@@ -33,7 +33,9 @@ export async function listClients({
   return response as ClientsListResponse;
 }
 
-export async function createClient(payload: CreateClientPayload): Promise<ClientProfile> {
+export async function createClient(
+  payload: CreateClientPayload,
+): Promise<ClientProfile> {
   const response = await apiPost(CLIENTS_BASE_PATH, payload);
   const client = unwrapData<ClientProfile>(response);
 
@@ -44,8 +46,13 @@ export async function createClient(payload: CreateClientPayload): Promise<Client
   return client;
 }
 
-export async function updateClient(id: string, payload: CreateClientPayload): Promise<ClientProfile> {
-  const client = unwrapData<ClientProfile>(await apiPut(`${CLIENTS_BASE_PATH}/${id}`, payload));
+export async function updateClient(
+  id: string,
+  payload: CreateClientPayload,
+): Promise<ClientProfile> {
+  const client = unwrapData<ClientProfile>(
+    await apiPut(`${CLIENTS_BASE_PATH}/${id}`, payload),
+  );
   if (!client) throw new Error("Resposta inválida ao editar cliente.");
   return client;
 }
