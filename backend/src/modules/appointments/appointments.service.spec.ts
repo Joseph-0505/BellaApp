@@ -32,12 +32,27 @@ jest.mock("../billings/billings.service", () => ({
   billingsService: mockBillingsService,
 }));
 
-import { AppointmentStatus } from "@prisma/client";
+jest.mock("../../shared/auth/user-clinic-context", () => {
+  const actual = jest.requireActual("../../shared/auth/user-clinic-context");
+
+  return {
+    ...actual,
+    userClinicContextService: {
+      getOrThrow: jest.fn(),
+    },
+  };
+});
+
+import { AppointmentStatus, ClinicPlan, ClinicUserRole } from "@prisma/client";
+import { userClinicContextService } from "../../shared/auth/user-clinic-context";
 import { appointmentsRepository } from "./appointments.repository";
 import { appointmentsService } from "./appointments.service";
 
 const mockedAppointmentsRepository = appointmentsRepository as jest.Mocked<
   typeof appointmentsRepository
+>;
+const mockedUserClinicContextService = userClinicContextService as jest.Mocked<
+  typeof userClinicContextService
 >;
 
 describe("appointmentsService", () => {
@@ -47,6 +62,14 @@ describe("appointmentsService", () => {
       async (callback: (transaction: unknown) => unknown) =>
         callback(mockPrisma),
     );
+    mockedUserClinicContextService.getOrThrow.mockResolvedValue({
+      userId: "user-1",
+      clinicId: "user-1",
+      plan: ClinicPlan.TRIAL,
+      trialEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      role: ClinicUserRole.ADMIN,
+      professionalId: "professional-1",
+    });
     mockBillingsService.ensureForCompletedAppointment.mockResolvedValue({
       id: "billing-1",
       userId: "user-1",
@@ -75,6 +98,7 @@ describe("appointmentsService", () => {
       appointmentsService.create("user-1", {
         clientId: "client-1",
         serviceId: "service-1",
+        professionalId: "professional-1",
         scheduledAt: pastDate,
         status: "SCHEDULED",
       }),
@@ -147,7 +171,7 @@ describe("appointmentsService", () => {
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
     ).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       scheduledAt,
       professionalId: "professional-1",
     });
@@ -218,14 +242,17 @@ describe("appointmentsService", () => {
     const result = await appointmentsService.create("user-1", {
       clientId: "client-1",
       serviceId: "service-1",
+      professionalId: "professional-1",
       scheduledAt: scheduledAt.toISOString(),
       status: "SCHEDULED",
     });
 
     expect(mockedAppointmentsRepository.create).toHaveBeenCalledWith({
       userId: "user-1",
+      clinicId: "user-1",
       clientId: "client-1",
       serviceId: "service-1",
+      professionalId: "professional-1",
       scheduledAt,
       status: AppointmentStatus.SCHEDULED,
     });
@@ -295,7 +322,7 @@ describe("appointmentsService", () => {
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
     ).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       scheduledAt,
       professionalId: "professional-1",
       roomId: "room-1",
@@ -392,6 +419,7 @@ describe("appointmentsService", () => {
     const result = await appointmentsService.update("user-1", "appointment-1", {
       clientId: "client-1",
       serviceId: "service-1",
+      professionalId: "professional-1",
       scheduledAt: originalScheduledAt.toISOString(),
       status: "COMPLETED",
       notes: "Atendimento concluído",

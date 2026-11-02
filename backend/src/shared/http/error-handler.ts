@@ -94,6 +94,27 @@ export function registerErrorHandler(app: FastifyInstance): void {
       });
     }
 
+    const uploadError = error as Error & { code?: string };
+
+    if (uploadError.name === "MulterError") {
+      const fileTooLarge = uploadError.code === "LIMIT_FILE_SIZE";
+      const errorPayload = {
+        code: fileTooLarge ? "IMAGE_TOO_LARGE" : "INVALID_IMAGE_UPLOAD",
+        message: fileTooLarge
+          ? "A imagem deve ter no máximo 5 MB."
+          : "Não foi possível receber a imagem enviada.",
+      };
+
+      logHandledError({
+        appPayload: errorPayload,
+        request,
+        statusCode: fileTooLarge ? 413 : 400,
+        error,
+      });
+
+      return reply.status(fileTooLarge ? 413 : 400).send({ error: errorPayload });
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         const appError = mapUniqueConstraint(error);
@@ -135,6 +156,31 @@ export function registerErrorHandler(app: FastifyInstance): void {
       logHandledError({ appPayload: errorPayload, request, statusCode: 401, error });
 
       return reply.status(401).send({
+        error: errorPayload,
+      });
+    }
+
+    if (
+      typeof authError.statusCode === "number"
+      && authError.statusCode >= 400
+      && authError.statusCode < 500
+    ) {
+      const isEmptyJsonBody = authError.code === "FST_ERR_CTP_EMPTY_JSON_BODY";
+      const errorPayload = {
+        code: isEmptyJsonBody ? "INVALID_JSON_BODY" : "INVALID_REQUEST",
+        message: isEmptyJsonBody
+          ? "O corpo JSON da requisição não pode estar vazio."
+          : "Requisição inválida.",
+      };
+
+      logHandledError({
+        appPayload: errorPayload,
+        request,
+        statusCode: authError.statusCode,
+        error,
+      });
+
+      return reply.status(authError.statusCode).send({
         error: errorPayload,
       });
     }

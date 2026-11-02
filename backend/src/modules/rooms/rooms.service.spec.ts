@@ -10,10 +10,26 @@ jest.mock("./rooms.repository", () => ({
   },
 }));
 
+jest.mock("../../shared/auth/user-clinic-context", () => {
+  const actual = jest.requireActual("../../shared/auth/user-clinic-context");
+
+  return {
+    ...actual,
+    userClinicContextService: {
+      getOrThrow: jest.fn(),
+    },
+  };
+});
+
+import { ClinicPlan, ClinicUserRole } from "@prisma/client";
+import { userClinicContextService } from "../../shared/auth/user-clinic-context";
 import { roomsRepository } from "./rooms.repository";
 import { roomsService } from "./rooms.service";
 
 const mockedRoomsRepository = roomsRepository as jest.Mocked<typeof roomsRepository>;
+const mockedUserClinicContextService = userClinicContextService as jest.Mocked<
+  typeof userClinicContextService
+>;
 
 function makeRoom(overrides: Partial<{
   id: string;
@@ -39,6 +55,14 @@ function makeRoom(overrides: Partial<{
 describe("roomsService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedUserClinicContextService.getOrThrow.mockResolvedValue({
+      userId: "user-1",
+      clinicId: "user-1",
+      plan: ClinicPlan.TRIAL,
+      trialEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      role: ClinicUserRole.ADMIN,
+      professionalId: "professional-1",
+    });
   });
 
   it("deve listar salas com filtros, contagem mensal e paginação", async () => {
@@ -62,14 +86,14 @@ describe("roomsService", () => {
     });
 
     expect(mockedRoomsRepository.listByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       page: 2,
       limit: 1,
       search: "Sala",
       active: true,
     });
     expect(mockedRoomsRepository.countByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       search: "Sala",
       active: true,
     });
@@ -105,12 +129,12 @@ describe("roomsService", () => {
     });
 
     expect(mockedRoomsRepository.listByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       page: 1,
       limit: 10,
     });
     expect(mockedRoomsRepository.countByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
     });
     expect(mockedRoomsRepository.countMonthlyAppointmentsByRoomIds).toHaveBeenCalledWith("user-1", []);
     expect(result).toEqual({
@@ -136,6 +160,7 @@ describe("roomsService", () => {
 
     expect(mockedRoomsRepository.create).toHaveBeenCalledWith({
       userId: "user-1",
+      clinicId: "user-1",
       name: "Sala Nova",
       active: false,
     });

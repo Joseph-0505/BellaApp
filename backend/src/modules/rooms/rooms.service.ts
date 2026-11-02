@@ -1,7 +1,10 @@
 import { AppError } from "../../shared/errors/app-error";
 import { toRoomResponse } from "../../shared/mappers/room-response";
 import { buildPaginationMeta } from "../../shared/utils/pagination";
-import { userClinicContextService } from "../../shared/auth/user-clinic-context";
+import {
+  assertClinicAdmin,
+  userClinicContextService,
+} from "../../shared/auth/user-clinic-context";
 import {
   CreateRoomResponseDto,
   GetRoomResponseDto,
@@ -11,6 +14,10 @@ import {
   UpdateRoomResponseDto,
 } from "./rooms.dtos";
 import { roomsRepository } from "./rooms.repository";
+import {
+  buildCacheScope,
+  cacheService,
+} from "../../shared/cache/cache.service";
 
 async function getMonthlyAppointmentsCount(
   clinicId: string,
@@ -29,31 +36,40 @@ class RoomsService {
     query: RoomsQueryDto,
   ): Promise<ListRoomsResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
-
-    const [rooms, total] = await Promise.all([
-      roomsRepository.listByUser({
+    return cacheService.getOrSet(
+      {
         clinicId: context.clinicId,
-        page: query.page,
-        limit: query.limit,
-        ...(query.search ? { search: query.search } : {}),
-        ...(query.active !== undefined ? { active: query.active } : {}),
-      }),
-      roomsRepository.countByUser({
-        clinicId: context.clinicId,
-        ...(query.search ? { search: query.search } : {}),
-        ...(query.active !== undefined ? { active: query.active } : {}),
-      }),
-    ]);
+        namespace: "rooms",
+        query,
+        scope: buildCacheScope(context),
+      },
+      async () => {
+        const [rooms, total] = await Promise.all([
+          roomsRepository.listByUser({
+            clinicId: context.clinicId,
+            page: query.page,
+            limit: query.limit,
+            ...(query.search ? { search: query.search } : {}),
+            ...(query.active !== undefined ? { active: query.active } : {}),
+          }),
+          roomsRepository.countByUser({
+            clinicId: context.clinicId,
+            ...(query.search ? { search: query.search } : {}),
+            ...(query.active !== undefined ? { active: query.active } : {}),
+          }),
+        ]);
 
-    const counts = await roomsRepository.countMonthlyAppointmentsByRoomIds(
-      context.clinicId,
-      rooms.map((room) => room.id),
+        const counts = await roomsRepository.countMonthlyAppointmentsByRoomIds(
+          context.clinicId,
+          rooms.map((room) => room.id),
+        );
+
+        return {
+          data: rooms.map((room) => toRoomResponse(room, counts.get(room.id) ?? 0)),
+          meta: buildPaginationMeta(total, query.page, query.limit),
+        };
+      },
     );
-
-    return {
-      data: rooms.map((room) => toRoomResponse(room, counts.get(room.id) ?? 0)),
-      meta: buildPaginationMeta(total, query.page, query.limit),
-    };
   }
 
   async create(
@@ -61,6 +77,7 @@ class RoomsService {
     input: RoomRequestDto,
   ): Promise<CreateRoomResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     const room = await roomsRepository.create({
       userId,
       clinicId: context.clinicId,
@@ -68,6 +85,7 @@ class RoomsService {
       active: input.active,
       ...(input.color ? { color: input.color } : {}),
     });
+    await cacheService.invalidate(context.clinicId, "rooms");
 
     return toRoomResponse(room, 0);
   }
@@ -92,6 +110,7 @@ class RoomsService {
     input: RoomRequestDto,
   ): Promise<UpdateRoomResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     const currentRoom = await roomsRepository.findById(context.clinicId, id);
 
     if (!currentRoom) {
@@ -103,6 +122,7 @@ class RoomsService {
       active: input.active,
       ...(input.color ? { color: input.color } : {}),
     });
+    await cacheService.invalidate(context.clinicId, "rooms");
 
     return toRoomResponse(
       room,
@@ -112,6 +132,7 @@ class RoomsService {
 
   async remove(userId: string, id: string): Promise<void> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     const room = await roomsRepository.findById(context.clinicId, id);
 
     if (!room) {
@@ -119,6 +140,7 @@ class RoomsService {
     }
 
     await roomsRepository.delete(id);
+    await cacheService.invalidate(context.clinicId, "rooms");
   }
 }
 

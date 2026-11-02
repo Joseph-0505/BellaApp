@@ -32,3 +32,12 @@ export const updateCurrentUserBodySchema = z
   });
 
 export type UpdateCurrentUserBody = z.infer<typeof updateCurrentUserBodySchema>;
+
+export const deleteCurrentUserBodySchema = z
+  .object({
+    password: z.string().min(1, "Senha atual é obrigatória.").max(72),
+    confirmation: z.string().refine((value) => value === "EXCLUIR", {
+      message: "Digite EXCLUIR para confirmar.",
+    }),
+  })
+  .strict();

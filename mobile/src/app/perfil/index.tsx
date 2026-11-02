@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
 import { PageAction } from "../../context/PageActionContext";
-import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { Redirect, router } from "expo-router";
 import {
   ActivityIndicator,
@@ -35,6 +35,14 @@ import { formatCnpj, formatCpf } from "../../utils/documents";
 import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
 import { resolveApiAssetUrl } from "../../services/api";
+
+const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const PROFILE_IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
 
 const planLabels: Record<NonNullable<UserProfile["clinic"]>["plan"], string> = {
   INDIVIDUAL: "Individual",
@@ -131,67 +139,49 @@ export default function PerfilScreen() {
   }
 
   async function pickProfilePhoto() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        "Acesso às fotos",
-        "Permita o acesso à galeria para escolher sua foto de perfil.",
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      mediaTypes: ["images"],
-      preferredAssetRepresentationMode:
-        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-      quality: 0.82,
+    const result = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+      // Permite selecionar qualquer arquivo para demonstrar as validações.
+      type: "*/*",
     });
 
     if (result.canceled || !result.assets[0]) return;
 
     const asset = result.assets[0];
 
-    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+    if (asset.size && asset.size > PROFILE_IMAGE_MAX_BYTES) {
       Alert.alert("Imagem muito grande", "Escolha uma imagem com no máximo 5 MB.");
       return;
     }
 
-    const extension = (asset.fileName || asset.uri).split(".").pop()?.toLowerCase();
-    const inferredMimeType = extension === "png"
-      ? "image/png"
-      : extension === "webp"
-        ? "image/webp"
-        : extension === "jpg" || extension === "jpeg"
-          ? "image/jpeg"
-          : "";
-    const mimeType = asset.mimeType || inferredMimeType;
+    const extension = asset.name.split(".").pop()?.toLowerCase() || "";
+    const expectedMimeType = PROFILE_IMAGE_MIME_BY_EXTENSION[extension];
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+    if (!expectedMimeType) {
       Alert.alert("Formato não aceito", "Escolha uma imagem JPEG, PNG ou WebP.");
       return;
     }
 
-    const canonicalExtension = mimeType === "image/png"
-      ? "png"
-      : mimeType === "image/webp"
-        ? "webp"
-        : "jpg";
-    const originalNameHasValidExtension = ["jpg", "jpeg", "png", "webp"].includes(
-      extension || "",
-    );
+    const reportedMimeType = asset.mimeType?.toLowerCase();
+    const hasSpecificMimeType = reportedMimeType
+      && reportedMimeType !== "application/octet-stream";
+
+    if (hasSpecificMimeType && reportedMimeType !== expectedMimeType) {
+      Alert.alert(
+        "Arquivo incompatível",
+        "A extensão do arquivo não corresponde ao tipo de imagem informado.",
+      );
+      return;
+    }
 
     setPhotoLoading(true);
 
     try {
       await uploadCurrentUserPhoto({
         ...(asset.file ? { file: asset.file } : {}),
-        fileName: originalNameHasValidExtension
-          ? asset.fileName || `perfil.${canonicalExtension}`
-          : `perfil.${canonicalExtension}`,
-        mimeType,
+        fileName: asset.name,
+        mimeType: expectedMimeType,
         uri: asset.uri,
       });
     } catch (error) {

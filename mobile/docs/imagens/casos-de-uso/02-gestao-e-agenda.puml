@@ -1,0 +1,71 @@
+@startuml
+
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam ArrowColor #785663
+skinparam actorBorderColor #785663
+skinparam actorBackgroundColor #F8E8ED
+skinparam usecaseBackgroundColor #F8E8ED
+skinparam usecaseBorderColor #B75C75
+skinparam activityBackgroundColor #F8E8ED
+skinparam activityBorderColor #B75C75
+skinparam activityDiamondBackgroundColor #EDF4EF
+skinparam activityDiamondBorderColor #7B9E87
+skinparam participantBackgroundColor #F8E8ED
+skinparam participantBorderColor #B75C75
+skinparam sequenceLifeLineBorderColor #BCAAB1
+skinparam noteBackgroundColor #FFF9EE
+skinparam roundcorner 12
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Administrador" as Admin
+actor "Profissional" as Prof
+
+rectangle "BellaApp Mobile" {
+  usecase "Consultar painel" as UC1
+  usecase "Consultar clientes" as UC2
+  usecase "Manter clientes" as UC3
+  usecase "Consultar serviços" as UC4
+  usecase "Manter serviços" as UC5
+  usecase "Consultar profissionais" as UC6
+  usecase "Manter profissionais" as UC7
+  usecase "Consultar agenda" as UC8
+  usecase "Filtrar agenda por data" as UC9
+  usecase "Filtrar por profissional" as UC10
+  usecase "Criar agendamento" as UC11
+  usecase "Editar/cancelar agendamento" as UC12
+  usecase "Excluir agendamento" as UC13
+  usecase "Validar vínculo e conflito" as UC14
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+
+Prof --> UC1
+Prof --> UC2
+Prof --> UC3
+Prof --> UC4
+Prof --> UC6
+Prof --> UC8
+Prof --> UC11
+Prof --> UC12
+Prof --> UC13
+
+UC8 .> UC9 : <<include>>
+UC10 .> UC8 : <<extend>>
+UC11 .> UC14 : <<include>>
+UC12 .> UC14 : <<include>>
+@enduml

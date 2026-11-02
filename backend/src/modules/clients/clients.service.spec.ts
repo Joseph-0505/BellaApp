@@ -11,15 +11,38 @@ jest.mock("./clients.repository", () => ({
   },
 }));
 
-import { AppointmentStatus } from "@prisma/client";
+jest.mock("../../shared/auth/user-clinic-context", () => {
+  const actual = jest.requireActual("../../shared/auth/user-clinic-context");
+
+  return {
+    ...actual,
+    userClinicContextService: {
+      getOrThrow: jest.fn(),
+    },
+  };
+});
+
+import { AppointmentStatus, ClinicPlan, ClinicUserRole } from "@prisma/client";
+import { userClinicContextService } from "../../shared/auth/user-clinic-context";
 import { clientsRepository } from "./clients.repository";
 import { clientsService } from "./clients.service";
 
 const mockedClientsRepository = clientsRepository as jest.Mocked<typeof clientsRepository>;
+const mockedUserClinicContextService = userClinicContextService as jest.Mocked<
+  typeof userClinicContextService
+>;
 
 describe("clientsService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedUserClinicContextService.getOrThrow.mockResolvedValue({
+      userId: "user-1",
+      clinicId: "user-1",
+      plan: ClinicPlan.TRIAL,
+      trialEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      role: ClinicUserRole.ADMIN,
+      professionalId: "professional-1",
+    });
   });
 
   it("deve normalizar CPF e bloquear duplicidade por usuário no cadastro", async () => {

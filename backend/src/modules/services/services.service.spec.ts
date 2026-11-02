@@ -11,15 +11,38 @@ jest.mock("./services.repository", () => ({
   },
 }));
 
-import { ServiceRiskLevel } from "@prisma/client";
+jest.mock("../../shared/auth/user-clinic-context", () => {
+  const actual = jest.requireActual("../../shared/auth/user-clinic-context");
+
+  return {
+    ...actual,
+    userClinicContextService: {
+      getOrThrow: jest.fn(),
+    },
+  };
+});
+
+import { ClinicPlan, ClinicUserRole, ServiceRiskLevel } from "@prisma/client";
+import { userClinicContextService } from "../../shared/auth/user-clinic-context";
 import { servicesRepository } from "./services.repository";
 import { servicesService } from "./services.service";
 
 const mockedServicesRepository = servicesRepository as jest.Mocked<typeof servicesRepository>;
+const mockedUserClinicContextService = userClinicContextService as jest.Mocked<
+  typeof userClinicContextService
+>;
 
 describe("servicesService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedUserClinicContextService.getOrThrow.mockResolvedValue({
+      userId: "user-1",
+      clinicId: "user-1",
+      plan: ClinicPlan.TRIAL,
+      trialEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      role: ClinicUserRole.ADMIN,
+      professionalId: "professional-1",
+    });
   });
 
   it("deve listar serviços com filtros, paginação e contagem de vendas", async () => {
@@ -61,7 +84,7 @@ describe("servicesService", () => {
     });
 
     expect(mockedServicesRepository.listByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       page: 1,
       limit: 10,
       filters: {
@@ -75,7 +98,7 @@ describe("servicesService", () => {
       },
     });
     expect(mockedServicesRepository.countByUser).toHaveBeenCalledWith({
-      userId: "user-1",
+      clinicId: "user-1",
       filters: {
         search: "Laser",
         active: true,
@@ -137,6 +160,7 @@ describe("servicesService", () => {
 
     expect(mockedServicesRepository.create).toHaveBeenCalledWith({
       userId: "user-1",
+      clinicId: "user-1",
       name: "Laser Fracionado",
       price: 320,
       durationMinutes: 90,

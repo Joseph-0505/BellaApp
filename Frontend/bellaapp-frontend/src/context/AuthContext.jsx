@@ -3,6 +3,8 @@ import { clearSession, getSession, isAuthenticated, SESSION_CHANGE_EVENT, update
 import { getOnboardingStatus } from "../services/onboardingService";
 import { getCurrentUserProfile } from "../services/userService";
 
+// O contexto e o provider compartilham este modulo de forma intencional.
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext({
   bootstrapping: true,
   isAuthenticated: false,

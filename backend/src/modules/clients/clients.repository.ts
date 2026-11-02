@@ -123,7 +123,7 @@ class ClientsRepository {
     data: {
       name: string;
       phone: string;
-      email?: string;
+      email?: string | null;
       cpf?: string;
       notes?: string;
     },

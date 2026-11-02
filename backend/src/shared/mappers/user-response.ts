@@ -1,4 +1,5 @@
 import { ClinicUserRole, Prisma } from "@prisma/client";
+import { getProfileImageUrl } from "../uploads/profile-image";
 
 export const userResponseInclude = {
   businessProfile: true,
@@ -34,6 +35,7 @@ export type UserResponse = {
   name: string;
   email: string;
   cpf: string;
+  avatarUrl?: string | null;
   businessProfile: {
     businessName: string;
     cnpj: string | null;
@@ -71,6 +73,7 @@ export function toUserResponse(user: UserWithContext): UserResponse {
     name: user.name,
     email: user.email,
     cpf: user.cpf ?? "",
+    avatarUrl: getProfileImageUrl(user.avatarFileName),
     businessProfile: user.businessProfile
       ? {
           businessName: user.businessProfile.businessName,

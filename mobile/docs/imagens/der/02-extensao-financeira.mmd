@@ -1,0 +1,45 @@
+erDiagram
+    USER ||--o{ BILLING : criou
+    CLINIC ||--o{ BILLING : possui
+    APPOINTMENT o|--o| BILLING : origina
+
+    USER ||--o{ CASH_REGISTER : abriu
+    CLINIC ||--o{ CASH_REGISTER : possui
+    PROFESSIONAL o|--o{ CASH_REGISTER : delimita
+
+    USER ||--o{ CASH_MOVEMENT : criou
+    CLINIC ||--o{ CASH_MOVEMENT : possui
+    PROFESSIONAL o|--o{ CASH_MOVEMENT : recebe
+    BILLING o|--o{ CASH_MOVEMENT : liquida
+    CASH_REGISTER o|--o{ CASH_MOVEMENT : agrupa
+
+    BILLING {
+        string id PK
+        string appointmentId FK, UK
+        decimal amount
+        decimal paidAmount
+        decimal remainingAmount
+        enum status
+        enum receivedBy
+    }
+
+    CASH_REGISTER {
+        string id PK
+        string professionalId FK
+        date registerDate
+        enum status
+        decimal openingAmount
+        decimal totalBalanceSnapshot
+    }
+
+    CASH_MOVEMENT {
+        string id PK
+        string professionalId FK
+        string billingId FK
+        string cashRegisterId FK
+        enum type
+        enum status
+        enum paymentMethod
+        decimal amount
+        datetime occurredAt
+    }

@@ -5,7 +5,10 @@ import {
   mapRiskToLevel,
   normalizeServiceIcon,
 } from "../../shared/utils/service-catalog";
-import { userClinicContextService } from "../../shared/auth/user-clinic-context";
+import {
+  assertClinicAdmin,
+  userClinicContextService,
+} from "../../shared/auth/user-clinic-context";
 import {
   CreateServiceResponseDto,
   GetServiceResponseDto,
@@ -15,6 +18,11 @@ import {
   UpdateServiceResponseDto,
 } from "./services.dtos";
 import { servicesRepository, ServiceFilters } from "./services.repository";
+import {
+  buildCacheScope,
+  cacheService,
+} from "../../shared/cache/cache.service";
+import { domainEventBus } from "../../shared/events/domain-event-bus";
 
 type ServiceRecord = NonNullable<
   Awaited<ReturnType<typeof servicesRepository.findById>>
@@ -110,27 +118,37 @@ class ServicesService {
     query: ServicesQueryDto,
   ): Promise<ListServicesResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
-    const filters = this.buildFilters(query);
-    const [services, total] = await Promise.all([
-      servicesRepository.listByUser({
+    return cacheService.getOrSet(
+      {
         clinicId: context.clinicId,
-        page: query.page,
-        limit: query.limit,
-        filters,
-      }),
-      servicesRepository.countByUser({ clinicId: context.clinicId, filters }),
-    ]);
-    const soldCountMap = await this.getSoldCountMap(
-      context.clinicId,
-      services.map((service) => service.id),
-    );
+        namespace: "services",
+        query,
+        scope: buildCacheScope(context),
+      },
+      async () => {
+        const filters = this.buildFilters(query);
+        const [services, total] = await Promise.all([
+          servicesRepository.listByUser({
+            clinicId: context.clinicId,
+            page: query.page,
+            limit: query.limit,
+            filters,
+          }),
+          servicesRepository.countByUser({ clinicId: context.clinicId, filters }),
+        ]);
+        const soldCountMap = await this.getSoldCountMap(
+          context.clinicId,
+          services.map((service) => service.id),
+        );
 
-    return {
-      data: services.map((service) =>
-        toServiceResponse(service, soldCountMap.get(service.id) ?? 0),
-      ),
-      meta: buildPaginationMeta(total, query.page, query.limit),
-    };
+        return {
+          data: services.map((service) =>
+            toServiceResponse(service, soldCountMap.get(service.id) ?? 0),
+          ),
+          meta: buildPaginationMeta(total, query.page, query.limit),
+        };
+      },
+    );
   }
 
   async create(
@@ -138,9 +156,17 @@ class ServicesService {
     input: ServiceRequestDto,
   ): Promise<CreateServiceResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     const service = await servicesRepository.create(
       this.buildCreateData(userId, context.clinicId, input),
     );
+    await cacheService.invalidate(context.clinicId, "services");
+    await domainEventBus.publish({
+      type: "service.created",
+      clinicId: context.clinicId,
+      aggregateId: service.id,
+      actorId: userId,
+    });
 
     return toServiceResponse(service, 0);
   }
@@ -162,6 +188,7 @@ class ServicesService {
     input: ServiceRequestDto,
   ): Promise<UpdateServiceResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     const currentService = await this.getServiceOrThrow(context.clinicId, id);
     const updatedService = await servicesRepository.update(
       id,
@@ -172,14 +199,29 @@ class ServicesService {
       context.clinicId,
       id,
     );
+    await cacheService.invalidate(context.clinicId, "services");
+    await domainEventBus.publish({
+      type: "service.updated",
+      clinicId: context.clinicId,
+      aggregateId: updatedService.id,
+      actorId: userId,
+    });
 
     return toServiceResponse(updatedService, soldCount);
   }
 
   async remove(userId: string, id: string): Promise<void> {
     const context = await userClinicContextService.getOrThrow(userId);
+    assertClinicAdmin(context);
     await this.getServiceOrThrow(context.clinicId, id);
     await servicesRepository.delete(id);
+    await cacheService.invalidate(context.clinicId, "services");
+    await domainEventBus.publish({
+      type: "service.deleted",
+      clinicId: context.clinicId,
+      aggregateId: id,
+      actorId: userId,
+    });
   }
 }
 

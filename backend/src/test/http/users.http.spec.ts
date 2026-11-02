@@ -67,7 +67,16 @@ describe("users routes", () => {
       name: "Maria Silva",
       email: "maria@bella.com",
       cpf: "12345678909",
+      avatarUrl: null,
       businessProfile: null,
+      clinic: null,
+      membership: null,
+      professional: null,
+      permissions: {
+        manageProfessionals: false,
+        viewAllAgenda: false,
+        viewAllCash: false,
+      },
     });
 
     const response = await app.inject({
@@ -186,9 +195,20 @@ describe("users routes", () => {
       name: "Maria Atualizada",
       email: "maria@bella.com",
       cpf: "12345678909",
+      avatarUrl: null,
       businessProfile: {
         businessName: "Bella Clinic",
         cnpj: "11222333000181",
+        hasTeam: false,
+        usesRooms: false,
+      },
+      clinic: null,
+      membership: null,
+      professional: null,
+      permissions: {
+        manageProfessionals: false,
+        viewAllAgenda: false,
+        viewAllCash: false,
       },
     });
 
