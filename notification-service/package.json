@@ -1,0 +1,27 @@
+{
+  "name": "bellaapp-notification-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Microservico de notificacoes com fila Redis Streams da BellaApp",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "tsx --test src/domain-events.spec.ts src/notification.spec.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "fastify": "^5.6.1",
+    "nodemailer": "^10.3.1",
+    "redis": "^5.12.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/nodemailer": "^8.0.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
