@@ -19,6 +19,11 @@ import {
   UpdateProfessionalResponseDto,
 } from "./professionals.dtos";
 import { professionalsRepository } from "./professionals.repository";
+import {
+  buildCacheScope,
+  cacheService,
+} from "../../shared/cache/cache.service";
+import { domainEventBus } from "../../shared/events/domain-event-bus";
 
 const INVITED_PROFESSIONAL_DEFAULT_SPECIALTY = "A definir";
 const INVITED_PROFESSIONAL_DEFAULT_PHONE = "A definir";
@@ -65,27 +70,36 @@ class ProfessionalsService {
     query: ProfessionalsQueryDto,
   ): Promise<ListProfessionalsResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
-    const status = this.mapStatusToDatabase(query.status);
-
-    const [professionals, total] = await Promise.all([
-      professionalsRepository.listByUser({
+    return cacheService.getOrSet(
+      {
         clinicId: context.clinicId,
-        page: query.page,
-        limit: query.limit,
-        ...(query.search ? { search: query.search } : {}),
-        ...(status !== undefined ? { status } : {}),
-      }),
-      professionalsRepository.countByUser({
-        clinicId: context.clinicId,
-        ...(query.search ? { search: query.search } : {}),
-        ...(status !== undefined ? { status } : {}),
-      }),
-    ]);
+        namespace: "professionals",
+        query,
+        scope: buildCacheScope(context),
+      },
+      async () => {
+        const status = this.mapStatusToDatabase(query.status);
+        const [professionals, total] = await Promise.all([
+          professionalsRepository.listByUser({
+            clinicId: context.clinicId,
+            page: query.page,
+            limit: query.limit,
+            ...(query.search ? { search: query.search } : {}),
+            ...(status !== undefined ? { status } : {}),
+          }),
+          professionalsRepository.countByUser({
+            clinicId: context.clinicId,
+            ...(query.search ? { search: query.search } : {}),
+            ...(status !== undefined ? { status } : {}),
+          }),
+        ]);
 
-    return {
-      data: professionals.map(toProfessionalResponse),
-      meta: buildPaginationMeta(total, query.page, query.limit),
-    };
+        return {
+          data: professionals.map(toProfessionalResponse),
+          meta: buildPaginationMeta(total, query.page, query.limit),
+        };
+      },
+    );
   }
 
   async create(
@@ -107,6 +121,13 @@ class ProfessionalsService {
     };
 
     const professional = await professionalsRepository.create(professionalData);
+    await cacheService.invalidate(context.clinicId, "professionals");
+    await domainEventBus.publish({
+      type: "professional.created",
+      clinicId: context.clinicId,
+      aggregateId: professional.id,
+      actorId: userId,
+    });
 
     return toProfessionalResponse(professional);
   }
@@ -155,6 +176,13 @@ class ProfessionalsService {
       context.clinicId,
       professional.id,
     );
+    await cacheService.invalidate(context.clinicId, "professionals");
+    await domainEventBus.publish({
+      type: "professional.created",
+      clinicId: context.clinicId,
+      aggregateId: professional.id,
+      actorId: userId,
+    });
 
     return toProfessionalResponse(invitedProfessional ?? professional);
   }
@@ -218,6 +246,13 @@ class ProfessionalsService {
       context.clinicId,
       id,
     );
+    await cacheService.invalidate(context.clinicId, "professionals");
+    await domainEventBus.publish({
+      type: "professional.updated",
+      clinicId: context.clinicId,
+      aggregateId: id,
+      actorId: userId,
+    });
 
     return toProfessionalResponse(refreshedProfessional ?? professional);
   }
@@ -303,6 +338,13 @@ class ProfessionalsService {
             status: professionalData.status,
           })
         : await professionalsRepository.update(id, professionalData);
+    await cacheService.invalidate(context.clinicId, "professionals");
+    await domainEventBus.publish({
+      type: "professional.updated",
+      clinicId: context.clinicId,
+      aggregateId: updatedProfessional.id,
+      actorId: userId,
+    });
 
     return toProfessionalResponse(updatedProfessional);
   }
@@ -346,6 +388,13 @@ class ProfessionalsService {
     }
 
     await professionalsRepository.delete(id);
+    await cacheService.invalidate(context.clinicId, "professionals");
+    await domainEventBus.publish({
+      type: "professional.deleted",
+      clinicId: context.clinicId,
+      aggregateId: id,
+      actorId: userId,
+    });
   }
 }
 

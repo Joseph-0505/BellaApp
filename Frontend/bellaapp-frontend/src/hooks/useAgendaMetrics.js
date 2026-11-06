@@ -75,7 +75,7 @@ export default function useAgendaMetrics({
       taxaOcupacao,
       totalAtendimentos,
     };
-  }, [hours.length, weekAppointments, weekDays.length]);
+  }, [hours, weekAppointments, weekDays.length]);
 
   const livresAgora = useMemo(() => {
     const busyKeys = createOccupiedSlotKeySet(weekAppointments, hours);

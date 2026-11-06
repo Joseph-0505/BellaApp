@@ -10,6 +10,15 @@ import { toAppointmentResponse } from "../../shared/mappers/appointment-response
 import { toBillingResponse } from "../../shared/mappers/billing-response";
 import { buildPaginationMeta } from "../../shared/utils/pagination";
 import { billingsService } from "../billings/billings.service";
+import { env } from "../../config/env";
+import {
+  buildCacheScope,
+  cacheService,
+} from "../../shared/cache/cache.service";
+import {
+  domainEventBus,
+  DomainEventType,
+} from "../../shared/events/domain-event-bus";
 import {
   AppointmentRequestDto,
   AppointmentsQueryDto,
@@ -62,6 +71,30 @@ type AppointmentConflictInput = {
 };
 
 class AppointmentsService {
+  private async invalidateRelatedCaches(clinicId: string): Promise<void> {
+    await cacheService.invalidate(clinicId, [
+      "appointments",
+      "clients",
+      "rooms",
+      "services",
+    ]);
+  }
+
+  private async recordMutation(args: {
+    actorId: string;
+    appointmentId: string;
+    clinicId: string;
+    type: Extract<DomainEventType, `appointment.${string}`>;
+  }): Promise<void> {
+    await this.invalidateRelatedCaches(args.clinicId);
+    await domainEventBus.publish({
+      type: args.type,
+      clinicId: args.clinicId,
+      aggregateId: args.appointmentId,
+      actorId: args.actorId,
+    });
+  }
+
   private buildBillingSnapshot(
     appointment: AppointmentDetailedRecord,
     receivedBy: ReceivedBy,
@@ -442,15 +475,26 @@ class AppointmentsService {
         query.professionalId,
       ),
     });
-    const [appointments, total] = await Promise.all([
-      appointmentsRepository.listByUser(context.clinicId, filters),
-      appointmentsRepository.countByUser(context.clinicId, filters),
-    ]);
+    return cacheService.getOrSet(
+      {
+        clinicId: context.clinicId,
+        namespace: "appointments",
+        query: filters,
+        scope: buildCacheScope(context),
+        ttlSeconds: env.CACHE_APPOINTMENTS_TTL_SECONDS,
+      },
+      async () => {
+        const [appointments, total] = await Promise.all([
+          appointmentsRepository.listByUser(context.clinicId, filters),
+          appointmentsRepository.countByUser(context.clinicId, filters),
+        ]);
 
-    return {
-      data: appointments.map(toAppointmentResponse),
-      meta: buildPaginationMeta(total, query.page, query.limit),
-    };
+        return {
+          data: appointments.map(toAppointmentResponse),
+          meta: buildPaginationMeta(total, query.page, query.limit),
+        };
+      },
+    );
   }
 
   async create(
@@ -503,10 +547,22 @@ class AppointmentsService {
         });
       });
 
+      await this.recordMutation({
+        actorId: userId,
+        appointmentId: result.appointment.id,
+        clinicId: context.clinicId,
+        type: "appointment.created",
+      });
       return result.appointment;
     }
 
     const appointment = await appointmentsRepository.create(appointmentData);
+    await this.recordMutation({
+      actorId: userId,
+      appointmentId: appointment.id,
+      clinicId: context.clinicId,
+      type: "appointment.created",
+    });
     return toAppointmentResponse(appointment);
   }
 
@@ -600,6 +656,12 @@ class AppointmentsService {
         });
       });
 
+      await this.recordMutation({
+        actorId: userId,
+        appointmentId: result.appointment.id,
+        clinicId: context.clinicId,
+        type: "appointment.completed",
+      });
       return result.appointment;
     }
 
@@ -607,6 +669,12 @@ class AppointmentsService {
       id,
       this.buildUpdateData(normalizedInput, updateContext),
     );
+    await this.recordMutation({
+      actorId: userId,
+      appointmentId: updatedAppointment.id,
+      clinicId: context.clinicId,
+      type: "appointment.updated",
+    });
     return toAppointmentResponse(updatedAppointment);
   }
 
@@ -615,7 +683,7 @@ class AppointmentsService {
     id: string,
     input: CompleteAppointmentRequestDto,
   ): Promise<CompleteAppointmentResponseDto> {
-    return prisma.$transaction(async (transaction) => {
+    const transactionResult = await prisma.$transaction(async (transaction) => {
       const context = await userClinicContextService.getOrThrow(
         userId,
         transaction,
@@ -645,13 +713,21 @@ class AppointmentsService {
         );
       }
 
-      return this.syncCompletedAppointment({
+      const response = await this.syncCompletedAppointment({
         userId,
         id,
         receivedBy,
         transaction,
       });
+      return { clinicId: context.clinicId, response };
     });
+    await this.recordMutation({
+      actorId: userId,
+      appointmentId: transactionResult.response.appointment.id,
+      clinicId: transactionResult.clinicId,
+      type: "appointment.completed",
+    });
+    return transactionResult.response;
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -672,6 +748,12 @@ class AppointmentsService {
     }
 
     await appointmentsRepository.delete(id);
+    await this.recordMutation({
+      actorId: userId,
+      appointmentId: id,
+      clinicId: context.clinicId,
+      type: "appointment.deleted",
+    });
   }
 }
 

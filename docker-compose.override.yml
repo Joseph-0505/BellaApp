@@ -1,4 +1,8 @@
 services:
+  mysql:
+    ports:
+      - "127.0.0.1:3307:3306"
+
   backend:
     environment:
       DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE}

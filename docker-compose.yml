@@ -24,24 +24,67 @@ services:
     networks:
       - bellaapp-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: bellaapp-redis
+    restart: always
+
+    command:
+      - redis-server
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - volatile-lru
+
+    expose:
+      - "6379"
+
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+    networks:
+      - bellaapp-network
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
 
     container_name: bellaapp-backend
+    restart: unless-stopped
 
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     env_file:
       - ./backend/.env
 
+    environment:
+      REDIS_URL: redis://redis:6379
+      REDIS_ENABLED: "true"
+
     command: sh -c "npx prisma migrate deploy && node dist/app/server.js"
 
     expose:
       - "3000"
+
+    healthcheck:
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+    volumes:
+      - profile_uploads:/app/uploads
 
     networks:
       - bellaapp-network
@@ -52,12 +95,21 @@ services:
       dockerfile: Dockerfile
 
     container_name: bellaapp-frontend
+    restart: unless-stopped
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
     expose:
       - "4173"
+
+    healthcheck:
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:4173').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
     networks:
       - bellaapp-network
@@ -65,6 +117,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: bellaapp-nginx
+    restart: unless-stopped
 
     ports:
       - "80:80"
@@ -75,14 +128,17 @@ services:
       - ./nginx/certs:/etc/nginx/certs
 
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
 
     networks:
       - bellaapp-network
 
 volumes:
   mysql_data:
+  profile_uploads:
 
 networks:
   bellaapp-network:

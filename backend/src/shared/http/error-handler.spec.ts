@@ -70,6 +70,13 @@ describe("registerErrorHandler", () => {
       });
     });
 
+    app.get("/fastify-client-error", async () => {
+      throw Object.assign(new Error("Body cannot be empty"), {
+        code: "FST_ERR_CTP_EMPTY_JSON_BODY",
+        statusCode: 400,
+      });
+    });
+
     app.get("/generic", async () => {
       throw new Error("Boom");
     });
@@ -181,6 +188,21 @@ describe("registerErrorHandler", () => {
       error: {
         code: "INVALID_TOKEN",
         message: "Token inválido ou expirado.",
+      },
+    });
+  });
+
+  it("deve preservar erro 4xx do Fastify sem transformá-lo em 500", async () => {
+    const response = await app.inject({
+      method: "GET",
+      url: "/fastify-client-error",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body)).toEqual({
+      error: {
+        code: "INVALID_JSON_BODY",
+        message: "O corpo JSON da requisição não pode estar vazio.",
       },
     });
   });

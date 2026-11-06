@@ -70,7 +70,10 @@ function writeStoredSession(session) {
 }
 
 function buildUrl(path, query) {
-  const url = new URL(path, `${API_BASE_URL}/`);
+  // URL exige uma base absoluta. Quando VITE_API_URL nao foi definido, usamos
+  // a origem atual para manter as chamadas em /api na mesma origem do frontend.
+  const baseUrl = API_BASE_URL || (hasWindow() ? window.location.origin : "http://localhost");
+  const url = new URL(path, `${baseUrl}/`);
 
   if (!query) {
     return url.toString();

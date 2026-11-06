@@ -16,6 +16,8 @@ import {
 } from "../cash/cash.repository";
 import { billingsRepository, PrismaExecutor } from "./billings.repository";
 import { PayBillingRequestDto, PayBillingResponseDto } from "./billings.dtos";
+import { cacheService } from "../../shared/cache/cache.service";
+import { domainEventBus } from "../../shared/events/domain-event-bus";
 
 export type AppointmentBillingSnapshot = {
   appointmentId: string;
@@ -105,7 +107,7 @@ class BillingsService {
     id: string,
     input: PayBillingRequestDto,
   ): Promise<PayBillingResponseDto> {
-    return prisma.$transaction(async (transaction) => {
+    const transactionResult = await prisma.$transaction(async (transaction) => {
       const context = await userClinicContextService.getOrThrow(
         userId,
         transaction,
@@ -204,10 +206,26 @@ class BillingsService {
       );
 
       return {
-        billing: toBillingResponse(updatedBilling),
-        movement: toCashMovementResponse(movement),
+        clinicId: context.clinicId,
+        response: {
+          billing: toBillingResponse(updatedBilling),
+          movement: toCashMovementResponse(movement),
+        },
       };
     });
+
+    await cacheService.invalidate(transactionResult.clinicId, [
+      "appointments",
+      "cash",
+      "clients",
+    ]);
+    await domainEventBus.publish({
+      type: "billing.paid",
+      clinicId: transactionResult.clinicId,
+      aggregateId: transactionResult.response.billing.id,
+      actorId: userId,
+    });
+    return transactionResult.response;
   }
 }
 

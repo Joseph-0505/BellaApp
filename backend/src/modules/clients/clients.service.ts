@@ -17,6 +17,11 @@ import {
   ClientsQueryDto,
 } from "./clients.dtos";
 import { clientsRepository } from "./clients.repository";
+import {
+  buildCacheScope,
+  cacheService,
+} from "../../shared/cache/cache.service";
+import { domainEventBus } from "../../shared/events/domain-event-bus";
 
 type ClientActivityRecord = Awaited<
   ReturnType<typeof clientsRepository.listAppointmentActivityByClientIds>
@@ -215,7 +220,7 @@ class ClientsService {
     return {
       name: input.name,
       phone: input.phone,
-      ...(input.email ? { email: input.email } : {}),
+      ...("email" in input ? { email: input.email || null } : {}),
       ...(cpf ? { cpf } : {}),
       ...(input.notes ? { notes: input.notes } : {}),
     };
@@ -242,28 +247,37 @@ class ClientsService {
     query: ClientsQueryDto,
   ): Promise<ListClientsResponseDto> {
     const context = await userClinicContextService.getOrThrow(userId);
-
-    const [clients, total] = await Promise.all([
-      clientsRepository.listByUser({
+    return cacheService.getOrSet(
+      {
         clinicId: context.clinicId,
-        page: query.page,
-        limit: query.limit,
-        ...(query.search ? { search: query.search } : {}),
-      }),
-      clientsRepository.countByUser({
-        clinicId: context.clinicId,
-        ...(query.search ? { search: query.search } : {}),
-      }),
-    ]);
-    const clientIds = clients.map((client) => client.id);
-    const insightsMap = await this.getInsightsMap(context.clinicId, clientIds);
+        namespace: "clients",
+        query,
+        scope: buildCacheScope(context),
+      },
+      async () => {
+        const [clients, total] = await Promise.all([
+          clientsRepository.listByUser({
+            clinicId: context.clinicId,
+            page: query.page,
+            limit: query.limit,
+            ...(query.search ? { search: query.search } : {}),
+          }),
+          clientsRepository.countByUser({
+            clinicId: context.clinicId,
+            ...(query.search ? { search: query.search } : {}),
+          }),
+        ]);
+        const clientIds = clients.map((client) => client.id);
+        const insightsMap = await this.getInsightsMap(context.clinicId, clientIds);
 
-    return {
-      data: clients.map((client) =>
-        toClientResponse(client, insightsMap.get(client.id) ?? {}),
-      ),
-      meta: buildPaginationMeta(total, query.page, query.limit),
-    };
+        return {
+          data: clients.map((client) =>
+            toClientResponse(client, insightsMap.get(client.id) ?? {}),
+          ),
+          meta: buildPaginationMeta(total, query.page, query.limit),
+        };
+      },
+    );
   }
 
   async create(
@@ -282,6 +296,13 @@ class ClientsService {
     );
 
     const client = await clientsRepository.create(clientData);
+    await cacheService.invalidate(context.clinicId, "clients");
+    await domainEventBus.publish({
+      type: "client.created",
+      clinicId: context.clinicId,
+      aggregateId: client.id,
+      actorId: userId,
+    });
 
     return toClientResponse(client);
   }
@@ -310,6 +331,13 @@ class ClientsService {
     const clientData = this.buildClientUpdateData(input, cpf);
 
     const updatedClient = await clientsRepository.update(id, clientData);
+    await cacheService.invalidate(context.clinicId, "clients");
+    await domainEventBus.publish({
+      type: "client.updated",
+      clinicId: context.clinicId,
+      aggregateId: updatedClient.id,
+      actorId: userId,
+    });
 
     return toClientResponse(updatedClient);
   }
@@ -318,6 +346,13 @@ class ClientsService {
     const context = await userClinicContextService.getOrThrow(userId);
     await this.getClientOrThrow(context.clinicId, id);
     await clientsRepository.delete(id);
+    await cacheService.invalidate(context.clinicId, "clients");
+    await domainEventBus.publish({
+      type: "client.deleted",
+      clinicId: context.clinicId,
+      aggregateId: id,
+      actorId: userId,
+    });
   }
 }
 

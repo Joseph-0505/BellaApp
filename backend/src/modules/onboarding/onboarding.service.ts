@@ -11,6 +11,7 @@ import {
   CompleteOnboardingResponseDto,
   OnboardingStatusResponseDto,
 } from "./onboarding.dtos";
+import { cacheService } from "../../shared/cache/cache.service";
 
 type OnboardingTransaction = Prisma.TransactionClient | typeof prisma;
 type OnboardingUser = NonNullable<
@@ -186,7 +187,7 @@ class OnboardingService {
     assertClinicAdmin(context);
     const user = await this.getUserOrThrow(userId);
 
-    return prisma.$transaction((transaction) =>
+    const result = await prisma.$transaction((transaction) =>
       this.completeTransaction(
         context.clinicId,
         userId,
@@ -195,6 +196,12 @@ class OnboardingService {
         transaction,
       ),
     );
+    await cacheService.invalidate(context.clinicId, [
+      "onboarding",
+      "professionals",
+      "users",
+    ]);
+    return result;
   }
 }
 
