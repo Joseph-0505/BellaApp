@@ -11,6 +11,7 @@ orquestrada com Docker Compose e servida por Nginx como proxy reverso com HTTPS.
 | nginx    | `nginx:alpine`              | host: 80, 443                       |
 | frontend | build de `Frontend/...`     | interno (`expose 4173`)           |
 | backend  | build de `backend/`         | host: 3000 (para o app mobile)    |
+| notification-service | build de `notification-service/` | host: 3001 em desenvolvimento |
 | redis    | `redis:7-alpine`             | interno (`expose 6379`)           |
 | mysql    | `mysql:lts`                 | interno (`expose 3306`)           |
 
@@ -101,6 +102,36 @@ Use `LOG_LEVEL=debug` para visualizar hits e misses:
 ```bash
 docker compose logs -f backend
 docker compose exec redis redis-cli PUBSUB NUMSUB bellaapp:domain-events
+```
+
+## Microservico de notificacoes e fila
+
+O `notification-service` e um processo independente do backend. Ele oferece
+`POST /api/v1/notifications` e processa as mensagens de forma assincrona usando
+Redis Streams (`bellaapp:notifications`) e um grupo de consumidores. Falhas sao
+tentadas novamente ate tres vezes e, depois disso, seguem para a dead-letter
+queue `bellaapp:notifications:dead-letter`.
+
+O servico tambem assina `bellaapp:domain-events` e transforma eventos de
+agendamento e pagamento em notificacoes. Por padrao a entrega usa logs, sem
+enviar dados externamente. O modo SMTP pode ser habilitado pelas variaveis
+`NOTIFICATION_SMTP_*` do `.env` raiz.
+
+Exemplo de enfileiramento manual:
+
+```bash
+curl -X POST http://localhost:3001/api/v1/notifications \
+  -H "Content-Type: application/json" \
+  -d '{"channel":"email","recipient":"cliente@example.com","subject":"Agendamento confirmado","message":"Seu horario foi confirmado."}'
+```
+
+Para inspecionar a saude e as filas:
+
+```bash
+curl http://localhost:3001/health
+docker compose exec redis redis-cli XLEN bellaapp:notifications
+docker compose exec redis redis-cli XLEN bellaapp:notifications:dead-letter
+docker compose logs -f notification-service
 ```
 
 ## Testes end-to-end (Playwright)
