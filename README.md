@@ -18,6 +18,14 @@ O MySQL permanece isolado na rede `bellaapp-network`. O backend publica a porta 
 para que o app mobile consiga acessá-lo, enquanto o Nginx encerra o TLS, redireciona
 HTTP→HTTPS e faz proxy de `/` para o frontend e de `/api/` para o backend.
 
+### Documentação arquitetural
+
+- [Visão geral e roteiro de apresentação](docs/architecture/README.md)
+- [C4 — Contexto, Contêineres e implantação](docs/architecture/c4.md)
+- [DDD — Context Map, Bounded Contexts e modelo de domínio](docs/architecture/ddd.md)
+- [Architecture Decision Records](docs/architecture/adr/README.md)
+- [Cenários de qualidade mensuráveis](docs/architecture/quality-scenarios.md)
+
 ## Pré-requisitos
 
 - [Docker](https://docs.docker.com/get-docker/) + Docker Compose
