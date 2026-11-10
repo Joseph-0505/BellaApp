@@ -77,6 +77,10 @@ Isso, do zero:
 3. Aplica as migrations do Prisma automaticamente (`prisma migrate deploy`);
 4. Sobe backend, frontend e Nginx conforme os healthchecks.
 
+Os volumes nomeados `mysql_data`, `redis_data` e `profile_uploads` preservam banco,
+cache persistente e uploads entre reinícios. `docker compose down` mantém esses
+dados; use `-v` somente quando a remoção for intencional.
+
 Acesse: **https://bellaapp.local** (o HTTP em `http://bellaapp.local` redireciona
 automaticamente para HTTPS).
 
@@ -147,6 +151,27 @@ docker compose exec redis redis-cli XLEN bellaapp:notifications:dead-letter
 docker compose logs -f notification-service
 ```
 
+## Validação do ambiente completo
+
+O mesmo comando `docker compose up --build -d` sobe toda a aplicação. Confirme os
+healthchecks e execute os fluxos de login, cadastro de cliente e agenda pelos
+testes end-to-end servidos através do Nginx:
+
+```bash
+docker compose up --build -d
+docker compose ps
+npm run test:e2e
+```
+
+Os roteiros de cache, indisponibilidade e recuperação ficam em:
+
+- `docs/runbooks/redis-degradation.md`;
+- `docs/runbooks/application-down.md`;
+- `docs/reliability/slo-observability.md`.
+
+Com o stack ativo, o cenário automatizado de fail-open e recuperação do Redis pode
+ser executado por `node scripts/validate-redis-degradation.mjs`.
+
 ## Testes end-to-end (Playwright)
 
 Com o stack no ar:
@@ -183,6 +208,9 @@ somente variables/secrets do environment `production` do GitHub.
 - estrategia e rollback: `docs/deployment-strategy.md`
 - runbook de indisponibilidade: `docs/runbooks/application-down.md`
 - evidencias e limitacoes: `docs/ci-cd-evidence.md`
+- Cynefin, abordagem e papeis: `docs/management/cynefin-and-delivery.md`
+- SemVer e releases: `docs/versioning.md`
+- historico de mudancas: `CHANGELOG.md`
 
 Branches, titulos de PR e commits devem conter a chave Jira `KAN-n`. Exemplo de
 commit: `fix(auth): KAN-53 redireciona sessao expirada`.

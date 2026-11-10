@@ -52,6 +52,7 @@ export function mapDomainEventToNotification(
     subject: subjects[event.type],
     message: `${subjects[event.type]} para o recurso ${event.aggregateId}.`,
     metadata: {
+      ...event.metadata,
       source: "domain-event",
       domainEventId: event.eventId,
       domainEventType: event.type,
