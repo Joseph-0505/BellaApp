@@ -5,6 +5,7 @@ const DEFAULT_API_BASE_URL = "";
 const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 const SESSION_STORAGE_KEY = "bellaapp.session";
 const SESSION_CHANGE_EVENT = "bellaapp:session-change";
+const SESSION_EXPIRED_MESSAGE_KEY = "bellaapp.session-expired-message";
 const AUTH_BASE_PATH = "/api/v1/auth";
 const TOKEN_REFRESH_WINDOW_MS = 15000;
 
@@ -67,6 +68,17 @@ function writeStoredSession(session) {
 
   window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
   notifySessionChange(session);
+}
+
+function expireSession() {
+  if (hasWindow()) {
+    window.sessionStorage.setItem(
+      SESSION_EXPIRED_MESSAGE_KEY,
+      "Sua sessão expirou. Entre novamente.",
+    );
+  }
+
+  clearSession();
 }
 
 function buildUrl(path, query) {
@@ -165,7 +177,7 @@ async function refreshSessionIfNeeded(force = false) {
       const refreshResponseBody = await parseResponseBody(refreshResponse);
 
       if (!refreshResponse.ok) {
-        clearSession();
+        expireSession();
         const { code, details, message } = extractErrorPayload(refreshResponseBody);
         throw new ApiError(message, {
           code,
@@ -177,7 +189,7 @@ async function refreshSessionIfNeeded(force = false) {
       const refreshedSession = refreshResponseBody?.data || null;
 
       if (!refreshedSession?.token) {
-        clearSession();
+        expireSession();
         return null;
       }
 
@@ -214,7 +226,12 @@ function extractErrorPayload(body) {
   const details = apiError?.details || body.details || null;
   const detailMessages = Array.isArray(details)
     ? details
-        .map((detail) => (detail && typeof detail === "object" ? detail.message : ""))
+        .map((detail) => {
+          if (!detail || typeof detail !== "object") return "";
+          const message = typeof detail.message === "string" ? detail.message : "";
+          const path = typeof detail.path === "string" ? detail.path : "";
+          return path && message ? `${path}: ${message}` : message;
+        })
         .filter(Boolean)
     : [];
   const fallbackMessage = detailMessages.length > 0 ? detailMessages.join(" ") : "Erro na requisição.";
@@ -275,7 +292,7 @@ async function request(path, options = {}) {
     }
 
     if (auth && response.status === 401) {
-      clearSession();
+      expireSession();
     }
 
     const { code, details, message } = extractErrorPayload(responseBody);
@@ -299,6 +316,16 @@ export function setSession(session) {
 
 export function clearSession() {
   writeStoredSession(null);
+}
+
+export function consumeSessionExpiredMessage() {
+  if (!hasWindow()) {
+    return "";
+  }
+
+  const message = window.sessionStorage.getItem(SESSION_EXPIRED_MESSAGE_KEY) || "";
+  window.sessionStorage.removeItem(SESSION_EXPIRED_MESSAGE_KEY);
+  return message;
 }
 
 export function updateSessionUser(user) {

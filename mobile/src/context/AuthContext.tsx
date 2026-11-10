@@ -64,7 +64,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
 
-  useEffect(() => subscribeToSessionChanges(setSession), []);
+  useEffect(
+    () => subscribeToSessionChanges((nextSession) => setSession(nextSession)),
+    [],
+  );
 
   const refreshCurrentUser = useCallback(async () => {
     if (!getSession()?.token) {

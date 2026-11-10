@@ -58,3 +58,24 @@ test("web does not persist native session tokens", async () => {
   await storage.persistRefreshToken("token");
   assert.equal(await storage.readRefreshToken(), null);
 });
+
+test("expired sessions expose a one-shot reason for the login redirect", () => {
+  const api = load("services/api.ts", {
+    "expo-constants": {
+      default: {
+        expoConfig: null,
+        expoGoConfig: null,
+      },
+    },
+    "react-native": { Platform: { OS: "web" } },
+    "./session-storage": {
+      persistRefreshToken: async () => undefined,
+      readRefreshToken: async () => null,
+    },
+  });
+
+  api.clearSession("expired");
+
+  assert.equal(api.consumeSessionEndReason(), "expired");
+  assert.equal(api.consumeSessionEndReason(), null);
+});

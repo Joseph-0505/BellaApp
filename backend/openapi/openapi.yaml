@@ -1,0 +1,1133 @@
+openapi: 3.0.3
+info:
+  title: BellaApp API
+  version: 1.3.0
+  description: |
+    API do BellaApp para autenticação, configuração da clínica, clientes,
+    catálogo de serviços e agenda.
+
+    Para testar uma rota protegida nesta página:
+    1. execute `POST /api/v1/auth/login`;
+    2. copie `data.token` da resposta;
+    3. clique em **Authorize** e informe somente o token;
+    4. execute a rota desejada. O Swagger UI adicionará o prefixo `Bearer`.
+  contact:
+    name: Equipe BellaApp
+servers:
+  - url: /
+    description: Mesmo host da documentação
+  - url: http://localhost:3000
+    description: Backend local exposto pelo Docker Compose
+tags:
+  - name: Saúde
+    description: Disponibilidade da aplicação e de suas dependências.
+  - name: Autenticação
+    description: Cadastro, login e ciclo dos tokens.
+  - name: Usuário
+    description: Conta autenticada.
+  - name: Onboarding
+    description: Configuração inicial da clínica.
+  - name: Clientes
+    description: Cadastro e consulta de clientes da clínica.
+  - name: Serviços
+    description: Catálogo de serviços da clínica.
+  - name: Agenda
+    description: Agendamentos da clínica.
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/health:
+    get:
+      tags: [Saúde]
+      summary: Verifica a saúde do backend, MySQL e Redis
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: Aplicação e dependências obrigatórias saudáveis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthEnvelope"
+              example:
+                data:
+                  status: ok
+                  timestamp: "2026-11-09T15:00:00.000Z"
+                  uptimeSeconds: 3600
+                  dependencies:
+                    mysql: { status: up, latencyMs: 4 }
+                    redis: { status: up, latencyMs: 2 }
+        "503":
+          description: Uma dependência obrigatória está indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthEnvelope"
+  /api/v1/auth/register:
+    post:
+      tags: [Autenticação]
+      summary: Cadastra a conta administradora
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              name: Maria Silva
+              email: maria@example.com
+              password: Senha@123
+              cpf: "52998224725"
+              businessName: Clínica Bella
+              cnpj: "11222333000181"
+      responses:
+        "201":
+          description: Conta criada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: E-mail, CPF ou CNPJ já cadastrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Autentica e emite tokens
+      description: Use `data.token` no botão **Authorize** para testar as rotas protegidas.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: maria@example.com
+              password: Senha@123
+      responses:
+        "200":
+          description: Login realizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Credenciais inválidas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/auth/refresh:
+    post:
+      tags: [Autenticação]
+      summary: Renova o par de tokens
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Novos tokens emitidos; o refresh token anterior deixa de ser válido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/logout:
+    post:
+      tags: [Autenticação]
+      summary: Encerra a sessão associada ao refresh token
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Sessão encerrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/users/me:
+    get:
+      tags: [Usuário]
+      summary: Retorna o usuário autenticado
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Usuário e contexto da clínica.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags: [Usuário]
+      summary: Atualiza os dados da conta
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Conta atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      tags: [Usuário]
+      summary: Exclui a conta autenticada
+      operationId: deleteCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [password, confirmation]
+              properties:
+                password:
+                  type: string
+                  format: password
+                  maxLength: 72
+                confirmation:
+                  type: string
+                  enum: [EXCLUIR]
+      responses:
+        "204":
+          description: Conta excluída.
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/onboarding/status:
+    get:
+      tags: [Onboarding]
+      summary: Consulta se a configuração inicial foi concluída
+      operationId: getOnboardingStatus
+      responses:
+        "200":
+          description: Estado do onboarding.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingStatusEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/onboarding/complete:
+    post:
+      tags: [Onboarding]
+      summary: Conclui a configuração inicial da clínica
+      operationId: completeOnboarding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [businessName]
+              properties:
+                businessName:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+            example: { businessName: Clínica Bella }
+      responses:
+        "200":
+          description: Configuração concluída.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteOnboardingEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Onboarding já concluído ou conflito de dados.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/clients:
+    get:
+      tags: [Clientes]
+      summary: Lista clientes da clínica
+      operationId: listClients
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Página de clientes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Clientes]
+      summary: Cadastra um cliente
+      operationId: createClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientRequest"
+            example:
+              name: Ana Souza
+              phone: "+55 11 99999-0000"
+              email: ana@example.com
+              cpf: "52998224725"
+              notes: Prefere atendimento pela manhã.
+      responses:
+        "201":
+          description: Cliente criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: CPF ou e-mail em conflito.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/clients/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Clientes]
+      summary: Busca um cliente
+      operationId: getClient
+      responses:
+        "200":
+          description: Cliente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Clientes]
+      summary: Atualiza um cliente
+      operationId: updateClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientRequest"
+      responses:
+        "200":
+          description: Cliente atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Clientes]
+      summary: Exclui um cliente
+      operationId: deleteClient
+      responses:
+        "204":
+          description: Cliente excluído.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/services:
+    get:
+      tags: [Serviços]
+      summary: Lista o catálogo da clínica
+      operationId: listServices
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - name: active
+          in: query
+          schema: { type: boolean }
+        - name: risk
+          in: query
+          schema:
+            $ref: "#/components/schemas/ServiceRisk"
+        - name: minPrice
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: maxPrice
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: minDurationMinutes
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: maxDurationMinutes
+          in: query
+          schema: { type: integer, minimum: 0 }
+      responses:
+        "200":
+          description: Página do catálogo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Serviços]
+      summary: Cadastra um serviço
+      operationId: createService
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceRequest"
+            example:
+              name: Limpeza de pele
+              description: Higienização e hidratação facial.
+              price: 180
+              durationMinutes: 60
+              risk: baixo
+              icon: face
+              active: true
+      responses:
+        "201":
+          description: Serviço criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/services/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Serviços]
+      summary: Busca um serviço
+      operationId: getService
+      responses:
+        "200":
+          description: Serviço encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Serviços]
+      summary: Atualiza um serviço
+      operationId: updateService
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceRequest"
+      responses:
+        "200":
+          description: Serviço atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Serviços]
+      summary: Exclui um serviço
+      operationId: deleteService
+      responses:
+        "204":
+          description: Serviço excluído.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/appointments:
+    get:
+      tags: [Agenda]
+      summary: Lista agendamentos da clínica
+      operationId: listAppointments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/AppointmentStatus"
+        - name: date
+          in: query
+          description: Data local no formato YYYY-MM-DD.
+          schema:
+            type: string
+            format: date
+        - name: clientId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: serviceId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: professionalId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: roomId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Página de agendamentos.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentListResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Agenda]
+      summary: Cria um agendamento
+      operationId: createAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentRequest"
+            example:
+              clientId: 84b1b44c-9a92-4d7a-9023-0ea35fbb40b6
+              serviceId: b88cf0a5-a86c-459a-80c5-dd221d13ab29
+              professionalId: e77f5c82-1219-4828-9555-b582b878fc3e
+              scheduledAt: "2026-11-10T14:30:00-03:00"
+              status: SCHEDULED
+              notes: Primeira consulta.
+      responses:
+        "201":
+          description: Agendamento criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflito de horário ou regra de negócio.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/appointments/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Agenda]
+      summary: Busca um agendamento
+      operationId: getAppointment
+      responses:
+        "200":
+          description: Agendamento encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Agenda]
+      summary: Atualiza um agendamento
+      operationId: updateAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentRequest"
+      responses:
+        "200":
+          description: Agendamento atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflito de horário ou regra de negócio.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      tags: [Agenda]
+      summary: Exclui um agendamento
+      operationId: deleteAppointment
+      responses:
+        "204":
+          description: Agendamento excluído.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/appointments/{id}/complete:
+    post:
+      tags: [Agenda]
+      summary: Conclui um agendamento e gera a cobrança
+      operationId: completeAppointment
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                receivedBy:
+                  type: string
+                  enum: [CLINIC, PROFESSIONAL]
+              example: { receivedBy: CLINIC }
+      responses:
+        "200":
+          description: Agendamento concluído.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Agendamento já concluído ou não pode ser concluído.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token retornado por `POST /api/v1/auth/login`.
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Identificador UUID do recurso.
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    Search:
+      name: search
+      in: query
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido, expirado ou sessão encerrada.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: INVALID_TOKEN
+              message: Token inválido ou expirado.
+    ValidationError:
+      description: Parâmetros ou corpo inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Dados inválidos.
+              details:
+                - path: email
+                  message: Email inválido.
+    NotFound:
+      description: Recurso não encontrado no escopo da clínica.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: RESOURCE_NOT_FOUND
+              message: Recurso não encontrado.
+  schemas:
+    ErrorDetail:
+      type: object
+      additionalProperties: true
+      properties:
+        path: { type: string }
+        message: { type: string }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Dados inválidos.
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: "#/components/schemas/Error"
+    MessageEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [message]
+          properties:
+            message: { type: string }
+    HealthDependency:
+      type: object
+      required: [status, latencyMs]
+      properties:
+        status:
+          type: string
+          enum: [disabled, down, up]
+        latencyMs:
+          type: number
+          minimum: 0
+    Health:
+      type: object
+      required: [status, timestamp, uptimeSeconds, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [down, ok]
+        timestamp:
+          type: string
+          format: date-time
+        uptimeSeconds:
+          type: number
+          minimum: 0
+        dependencies:
+          type: object
+          required: [mysql, redis]
+          properties:
+            mysql: { $ref: "#/components/schemas/HealthDependency" }
+            redis: { $ref: "#/components/schemas/HealthDependency" }
+    HealthEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Health" }
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, password, cpf]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        email: { type: string, format: email }
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          description: Deve conter maiúscula, minúscula, número e símbolo.
+        cpf: { type: string, description: CPF com ou sem pontuação. }
+        businessName: { type: string, maxLength: 255 }
+        cnpj: { type: string, description: CNPJ com ou sem pontuação. }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, maxLength: 72 }
+    RefreshTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+    UpdateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [name, cpf, password]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        cpf: { type: string }
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          description: Confirma a alteração e deve cumprir a política de senha.
+        businessName: { type: string, maxLength: 255 }
+        cnpj: { type: string }
+    OnboardingStatus:
+      type: object
+      required: [completed, businessName, hasTeam, usesRooms, servicesCount, professionalsCount, roomsCount, defaultSchedule]
+      properties:
+        completed: { type: boolean }
+        businessName: { type: string }
+        hasTeam: { type: boolean }
+        usesRooms: { type: boolean }
+        servicesCount: { type: integer, minimum: 0 }
+        professionalsCount: { type: integer, minimum: 0 }
+        roomsCount: { type: integer, minimum: 0 }
+        defaultSchedule:
+          type: object
+          required: [mondayToFriday, saturday, sunday]
+          properties:
+            mondayToFriday:
+              type: object
+              properties:
+                start: { type: string, example: "08:00" }
+                end: { type: string, example: "18:00" }
+            saturday:
+              type: object
+              properties:
+                start: { type: string, example: "08:00" }
+                end: { type: string, example: "12:00" }
+            sunday:
+              type: object
+              properties:
+                closed: { type: boolean, enum: [true] }
+    OnboardingStatusEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/OnboardingStatus" }
+    CompleteOnboarding:
+      allOf:
+        - $ref: "#/components/schemas/OnboardingStatus"
+        - type: object
+          required: [created]
+          properties:
+            created:
+              type: object
+              required: [professional, services, rooms]
+              properties:
+                professional: { type: boolean }
+                services:
+                  type: array
+                  items: { type: string }
+                rooms:
+                  type: array
+                  items: { type: string }
+    CompleteOnboardingEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/CompleteOnboarding" }
+    User:
+      type: object
+      required: [id, name, email, cpf, businessProfile, clinic, membership, professional, permissions]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+        cpf: { type: string }
+        avatarUrl: { type: string, format: uri, nullable: true }
+        businessProfile:
+          type: object
+          nullable: true
+          properties:
+            businessName: { type: string }
+            cnpj: { type: string, nullable: true }
+            hasTeam: { type: boolean }
+            usesRooms: { type: boolean }
+        clinic:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string, format: uuid }
+            plan: { type: string }
+            trialEndsAt: { type: string, format: date-time, nullable: true }
+        membership:
+          type: object
+          nullable: true
+          properties:
+            role: { type: string }
+            professionalId: { type: string, format: uuid, nullable: true }
+        professional:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            specialty: { type: string }
+        permissions:
+          type: object
+          required: [manageProfessionals, viewAllAgenda, viewAllCash]
+          properties:
+            manageProfessionals: { type: boolean }
+            viewAllAgenda: { type: boolean }
+            viewAllCash: { type: boolean }
+    UserEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/User" }
+    LoginData:
+      allOf:
+        - type: object
+          required: [token, refreshToken, expiresIn, refreshTokenExpiresIn, user]
+          properties:
+            token: { type: string, description: JWT de acesso. }
+            refreshToken: { type: string, description: JWT usado somente para renovação. }
+            expiresIn: { type: string, example: 1d }
+            refreshTokenExpiresIn: { type: string, example: 7d }
+            user: { $ref: "#/components/schemas/User" }
+    LoginEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/LoginData" }
+    PaginationMeta:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page: { type: integer, minimum: 1 }
+        limit: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+    ClientRequest:
+      type: object
+      additionalProperties: false
+      required: [name, phone]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        phone: { type: string, minLength: 1, maxLength: 30 }
+        email: { type: string, format: email }
+        cpf: { type: string }
+        notes: { type: string, maxLength: 500 }
+    Client:
+      type: object
+      required: [id, name, email, phone, cpf, notes, latestVisitAt, latestVisitNote, nextAppointmentAt, professional, totalSpent, status]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email, nullable: true }
+        phone: { type: string }
+        cpf: { type: string, nullable: true }
+        notes: { type: string, nullable: true }
+        latestVisitAt: { type: string, format: date-time, nullable: true }
+        latestVisitNote: { type: string }
+        nextAppointmentAt: { type: string, format: date-time, nullable: true }
+        professional: { type: string, nullable: true }
+        totalSpent: { type: number, minimum: 0 }
+        status:
+          type: string
+          enum: [novo, ativo, inativo, risco]
+    ClientEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Client" }
+    ClientListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Client" }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+    ServiceRisk:
+      type: string
+      enum: [baixo, medio, alto]
+    ServiceRequest:
+      type: object
+      additionalProperties: false
+      required: [name, price, durationMinutes, active]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        description: { type: string, maxLength: 1000 }
+        price: { type: number, minimum: 0 }
+        durationMinutes: { type: integer, minimum: 1 }
+        risk: { $ref: "#/components/schemas/ServiceRisk" }
+        icon:
+          type: string
+          enum: [face, syringe, wand, drop, lotus, flask, spark, pulse, leaf]
+        active: { type: boolean }
+    Service:
+      type: object
+      required: [id, name, description, price, durationMinutes, active, risk, riskTone, riskLabel, icon, soldCount]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: number, minimum: 0 }
+        durationMinutes: { type: integer, minimum: 1 }
+        active: { type: boolean }
+        risk: { $ref: "#/components/schemas/ServiceRisk" }
+        riskTone: { $ref: "#/components/schemas/ServiceRisk" }
+        riskLabel: { type: string }
+        icon: { type: string }
+        soldCount: { type: integer, minimum: 0 }
+    ServiceEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Service" }
+    ServiceListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Service" }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+    AppointmentStatus:
+      type: string
+      enum: [SCHEDULED, CONFIRMED, COMPLETED, CANCELED]
+    AppointmentRequest:
+      type: object
+      additionalProperties: false
+      required: [clientId, serviceId, professionalId, scheduledAt, status]
+      properties:
+        clientId: { type: string, format: uuid }
+        serviceId: { type: string, format: uuid }
+        professionalId: { type: string, format: uuid }
+        roomId: { type: string, format: uuid }
+        scheduledAt: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/AppointmentStatus" }
+        notes: { type: string, maxLength: 500 }
+    Appointment:
+      type: object
+      required: [id, clientId, serviceId, professionalId, roomId, scheduledAt, status, receivedBy, notes, billingId, billingAmount, billingStatus, outstandingAmount]
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        serviceId: { type: string, format: uuid }
+        professionalId: { type: string, format: uuid, nullable: true }
+        roomId: { type: string, format: uuid, nullable: true }
+        scheduledAt: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/AppointmentStatus" }
+        receivedBy:
+          type: string
+          enum: [CLINIC, PROFESSIONAL]
+        notes: { type: string, nullable: true }
+        billingId: { type: string, format: uuid, nullable: true }
+        billingAmount: { type: number, nullable: true }
+        billingStatus:
+          type: string
+          enum: [PENDING, PARTIALLY_PAID, PAID]
+          nullable: true
+        outstandingAmount: { type: number, nullable: true }
+    AppointmentEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Appointment" }
+    AppointmentListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Appointment" }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }

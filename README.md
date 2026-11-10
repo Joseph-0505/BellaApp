@@ -80,6 +80,19 @@ Isso, do zero:
 Acesse: **https://bellaapp.local** (o HTTP em `http://bellaapp.local` redireciona
 automaticamente para HTTPS).
 
+## Documentacao da API
+
+Com o stack no ar, a documentacao OpenAPI navegavel fica disponivel em:
+
+- Swagger UI: **https://bellaapp.local/docs/**
+- contrato JSON servido: **https://bellaapp.local/docs/json**
+- contrato fonte versionado: `backend/openapi/openapi.yaml`
+
+Para testar endpoints protegidos, execute o login na propria pagina, copie
+`data.token`, clique em **Authorize** e informe somente o token. O roteiro completo
+de demonstracao esta em `docs/api-validation.md` e a decisao pelo MySQL em
+`docs/adr/0001-mysql-como-banco-transacional.md`.
+
 ## Cache, eventos e observabilidade
 
 O backend usa Redis em dois fluxos independentes:
@@ -160,6 +173,19 @@ Hooks configurados na raiz (`.husky/`):
 - **commit-msg** — valida o formato da mensagem (Conventional Commits)
 - **pre-commit** — roda o typecheck do frontend
 - **pre-push** — roda os testes end-to-end antes de permitir o push
+
+## Pipeline e operacao
+
+O workflow `.github/workflows/ci-cd.yml` valida backend, frontend, mobile,
+notificacoes e as imagens do Docker Compose. O deploy de `main` e opcional e usa
+somente variables/secrets do environment `production` do GitHub.
+
+- estrategia e rollback: `docs/deployment-strategy.md`
+- runbook de indisponibilidade: `docs/runbooks/application-down.md`
+- evidencias e limitacoes: `docs/ci-cd-evidence.md`
+
+Branches, titulos de PR e commits devem conter a chave Jira `KAN-n`. Exemplo de
+commit: `fix(auth): KAN-53 redireciona sessao expirada`.
 
 ## Fluxo de branches (GitFlow)
 
