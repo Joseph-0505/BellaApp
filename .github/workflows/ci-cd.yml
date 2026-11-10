@@ -1,0 +1,185 @@
+name: BellaApp CI/CD
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bellaapp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  jira-reference:
+    name: Jira references
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BRANCH: ${{ github.head_ref }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Validate KAN issue references
+        run: node scripts/validate-jira-references.mjs
+
+  backend:
+    name: Backend build and tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-${{ github.run_id }}-${{ github.run_attempt }} --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://root:ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:3306/bellaapp_ci
+      DATABASE_URL_TEST: mysql://root:ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:3306/bellaapp_ci_test
+      JWT_SECRET: ci-jwt-${{ github.run_id }}-${{ github.run_attempt }}-at-least-16-chars
+      REDIS_ENABLED: "false"
+      PUBSUB_ENABLED: "false"
+      CORS_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+      - run: npm test
+        working-directory: backend
+
+  frontend:
+    name: Web lint, typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: Frontend/bellaapp-frontend/package-lock.json
+      - run: npm ci
+        working-directory: Frontend/bellaapp-frontend
+      - run: npm run lint
+        working-directory: Frontend/bellaapp-frontend
+      - run: npm run typecheck
+        working-directory: Frontend/bellaapp-frontend
+      - run: npm run build
+        working-directory: Frontend/bellaapp-frontend
+
+  mobile:
+    name: Mobile lint, typecheck and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+        working-directory: mobile
+      - run: npm run lint
+        working-directory: mobile
+      - run: npx tsc --noEmit
+        working-directory: mobile
+      - run: npm test
+        working-directory: mobile
+
+  notification-service:
+    name: Notification service build and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: notification-service/package-lock.json
+      - run: npm ci
+        working-directory: notification-service
+      - run: npm run typecheck
+        working-directory: notification-service
+      - run: npm test
+        working-directory: notification-service
+      - run: npm run build
+        working-directory: notification-service
+
+  compose:
+    name: Docker Compose build
+    needs: [backend, frontend, mobile, notification-service]
+    runs-on: ubuntu-latest
+    env:
+      MYSQL_ROOT_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+      MYSQL_DATABASE: bellaapp_ci
+      TEST_USER_EMAIL: ci@example.invalid
+      TEST_USER_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare non-secret CI environment
+        run: |
+          cp .env.exemple .env
+          cp backend/.env.exemple backend/.env
+      - run: docker compose config --quiet
+      - run: docker compose build backend frontend notification-service
+
+  deploy:
+    name: Deploy production
+    needs: [compose]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate deployment configuration
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          test -n "$DEPLOY_APP_DIR"
+      - name: Configure SSH
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+      - name: Deploy and verify with automatic code rollback
+        run: >-
+          ssh "$DEPLOY_USER@$DEPLOY_HOST"
+          "APP_DIR='$DEPLOY_APP_DIR' RELEASE_SHA='$GITHUB_SHA' bash -s"
+          < scripts/deploy-remote.sh

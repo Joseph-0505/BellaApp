@@ -57,7 +57,11 @@ const AUTH_BASE_PATH = "/api/v1/auth";
 type QueryPrimitive = string | number | boolean;
 type QueryValue = QueryPrimitive | QueryPrimitive[] | null | undefined;
 type QueryParams = Record<string, QueryValue>;
-type SessionListener = (session: AuthSession | null) => void;
+type SessionEndReason = "expired" | null;
+type SessionListener = (
+  session: AuthSession | null,
+  reason: SessionEndReason,
+) => void;
 
 interface ApiErrorOptions {
   code?: string;
@@ -83,6 +87,7 @@ let currentSession: AuthSession | null = null;
 let sessionRevision = 0;
 let restoreInFlight: Promise<void> | null = null;
 let refreshInFlightPromise: Promise<AuthSession | null> | null = null;
+let pendingSessionEndReason: SessionEndReason = null;
 
 const sessionListeners = new Set<SessionListener>();
 
@@ -100,8 +105,11 @@ export class ApiError extends Error {
   }
 }
 
-function notifySessionChange(session: AuthSession | null) {
-  sessionListeners.forEach((listener) => listener(session));
+function notifySessionChange(
+  session: AuthSession | null,
+  reason: SessionEndReason = null,
+) {
+  sessionListeners.forEach((listener) => listener(session, reason));
 }
 
 function buildUrl(path: string, query?: QueryParams) {
@@ -170,7 +178,11 @@ function extractErrorPayload(body: unknown) {
     ? details
         .map((detail) =>
           detail && typeof detail === "object" && "message" in detail
-            ? String(detail.message || "")
+            ? `${
+                "path" in detail && typeof detail.path === "string" && detail.path
+                  ? `${detail.path}: `
+                  : ""
+              }${String(detail.message || "")}`
             : "",
         )
         .filter(Boolean)
@@ -213,7 +225,7 @@ async function refreshSession() {
       if (sessionRevision !== revision) return null;
 
       if (!response.ok) {
-        clearSession();
+        clearSession("expired");
 
         const { code, details, message } = extractErrorPayload(responseBody);
         throw new ApiError(message, {
@@ -226,7 +238,7 @@ async function refreshSession() {
       const refreshedSession = unwrapData<AuthSession>(responseBody);
 
       if (!refreshedSession?.token) {
-        clearSession();
+        clearSession("expired");
         return null;
       }
 
@@ -297,7 +309,7 @@ async function request(path: string, options: RequestOptions = {}) {
     }
 
     if (auth && response.status === 401 && getSession() === session) {
-      clearSession();
+      clearSession("expired");
     }
 
     const { code, details, message } = extractErrorPayload(responseBody);
@@ -330,10 +342,11 @@ export function getSession() {
 export function setSession(session: AuthSession | null) {
   sessionRevision++;
   currentSession = session;
+  if (session) pendingSessionEndReason = null;
   void persistRefreshToken(session?.refreshToken || null).catch(() => {
     console.warn("Não foi possível persistir a sessão no dispositivo.");
   });
-  notifySessionChange(session);
+  notifySessionChange(session, session ? null : pendingSessionEndReason);
 }
 
 async function restoreStoredSession() {
@@ -347,7 +360,9 @@ async function restoreStoredSession() {
     if (session?.token && session.refreshToken) setSession(session);
     else clearSession();
   } catch (error) {
-    if (revision === sessionRevision && error instanceof ApiError && [400, 401, 403].includes(error.status)) clearSession();
+    if (revision === sessionRevision && error instanceof ApiError && [400, 401, 403].includes(error.status)) {
+      clearSession("expired");
+    }
     throw error;
   }
 }
@@ -359,8 +374,15 @@ export function restoreSession() {
   return restoreInFlight;
 }
 
-export function clearSession() {
+export function clearSession(reason: SessionEndReason = null) {
+  pendingSessionEndReason = reason;
   setSession(null);
+}
+
+export function consumeSessionEndReason() {
+  const reason = pendingSessionEndReason;
+  pendingSessionEndReason = null;
+  return reason;
 }
 
 export function updateSessionUser(user: AuthSession["user"]) {

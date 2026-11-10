@@ -43,6 +43,12 @@ describe("DomainEventBus", () => {
       clinicId: "clinic-1",
       aggregateId: "appointment-1",
       actorId: "user-1",
+      metadata: {
+        clientId: "client-1",
+        professionalId: "professional-1",
+        scheduledAt: "2026-11-10T12:00:00.000Z",
+        serviceId: "service-1",
+      },
     });
 
     expect(event.eventId).toMatch(/^[0-9a-f-]{36}$/);
@@ -52,7 +58,47 @@ describe("DomainEventBus", () => {
       clinicId: "clinic-1",
       aggregateId: "appointment-1",
       actorId: "user-1",
+      metadata: {
+        clientId: "client-1",
+        professionalId: "professional-1",
+        scheduledAt: "2026-11-10T12:00:00.000Z",
+        serviceId: "service-1",
+      },
     });
+  });
+
+  it("mantem a operacao principal quando a publicacao falha", async () => {
+    const publisher = new FakePublisher();
+    publisher.publish = jest.fn().mockRejectedValue(new Error("redis unavailable"));
+    const logger = {
+      error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+    };
+    const bus = new DomainEventBus(publisher, () => new FakeSubscriber(), {
+      channel: "bellaapp:test-events",
+      enabled: true,
+      ensurePublisherConnection: async () => undefined,
+    });
+    bus.setLogger(logger);
+
+    await expect(bus.publish({
+      type: "appointment.created",
+      clinicId: "clinic-1",
+      aggregateId: "appointment-1",
+      actorId: "user-1",
+    })).resolves.toMatchObject({
+      type: "appointment.created",
+      aggregateId: "appointment-1",
+    });
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "domain_event.publish_failed",
+        domainEventType: "appointment.created",
+      }),
+      "Domain event could not be published",
+    );
   });
 
   it("assina, valida e entrega mensagens aos consumidores", async () => {

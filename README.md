@@ -11,6 +11,7 @@ orquestrada com Docker Compose e servida por Nginx como proxy reverso com HTTPS.
 | nginx    | `nginx:alpine`              | host: 80, 443                       |
 | frontend | build de `Frontend/...`     | interno (`expose 4173`)           |
 | backend  | build de `backend/`         | host: 3000 (para o app mobile)    |
+| notification-service | build de `notification-service/` | host: 3001 em desenvolvimento |
 | redis    | `redis:7-alpine`             | interno (`expose 6379`)           |
 | mysql    | `mysql:lts`                 | interno (`expose 3306`)           |
 
@@ -84,8 +85,25 @@ Isso, do zero:
 3. Aplica as migrations do Prisma automaticamente (`prisma migrate deploy`);
 4. Sobe backend, frontend e Nginx conforme os healthchecks.
 
+Os volumes nomeados `mysql_data`, `redis_data` e `profile_uploads` preservam banco,
+cache persistente e uploads entre reinícios. `docker compose down` mantém esses
+dados; use `-v` somente quando a remoção for intencional.
+
 Acesse: **https://bellaapp.local** (o HTTP em `http://bellaapp.local` redireciona
 automaticamente para HTTPS).
+
+## Documentacao da API
+
+Com o stack no ar, a documentacao OpenAPI navegavel fica disponivel em:
+
+- Swagger UI: **https://bellaapp.local/docs/**
+- contrato JSON servido: **https://bellaapp.local/docs/json**
+- contrato fonte versionado: `backend/openapi/openapi.yaml`
+
+Para testar endpoints protegidos, execute o login na propria pagina, copie
+`data.token`, clique em **Authorize** e informe somente o token. O roteiro completo
+de demonstracao esta em `docs/api-validation.md` e a decisao pelo MySQL em
+`docs/adr/0001-mysql-como-banco-transacional.md`.
 
 ## Cache, eventos e observabilidade
 
@@ -110,6 +128,57 @@ Use `LOG_LEVEL=debug` para visualizar hits e misses:
 docker compose logs -f backend
 docker compose exec redis redis-cli PUBSUB NUMSUB bellaapp:domain-events
 ```
+
+## Microservico de notificacoes e fila
+
+O `notification-service` e um processo independente do backend. Ele oferece
+`POST /api/v1/notifications` e processa as mensagens de forma assincrona usando
+Redis Streams (`bellaapp:notifications`) e um grupo de consumidores. Falhas sao
+tentadas novamente ate tres vezes e, depois disso, seguem para a dead-letter
+queue `bellaapp:notifications:dead-letter`.
+
+O servico tambem assina `bellaapp:domain-events` e transforma eventos de
+agendamento e pagamento em notificacoes. Por padrao a entrega usa logs, sem
+enviar dados externamente. O modo SMTP pode ser habilitado pelas variaveis
+`NOTIFICATION_SMTP_*` do `.env` raiz.
+
+Exemplo de enfileiramento manual:
+
+```bash
+curl -X POST http://localhost:3001/api/v1/notifications \
+  -H "Content-Type: application/json" \
+  -d '{"channel":"email","recipient":"cliente@example.com","subject":"Agendamento confirmado","message":"Seu horario foi confirmado."}'
+```
+
+Para inspecionar a saude e as filas:
+
+```bash
+curl http://localhost:3001/health
+docker compose exec redis redis-cli XLEN bellaapp:notifications
+docker compose exec redis redis-cli XLEN bellaapp:notifications:dead-letter
+docker compose logs -f notification-service
+```
+
+## Validação do ambiente completo
+
+O mesmo comando `docker compose up --build -d` sobe toda a aplicação. Confirme os
+healthchecks e execute os fluxos de login, cadastro de cliente e agenda pelos
+testes end-to-end servidos através do Nginx:
+
+```bash
+docker compose up --build -d
+docker compose ps
+npm run test:e2e
+```
+
+Os roteiros de cache, indisponibilidade e recuperação ficam em:
+
+- `docs/runbooks/redis-degradation.md`;
+- `docs/runbooks/application-down.md`;
+- `docs/reliability/slo-observability.md`.
+
+Com o stack ativo, o cenário automatizado de fail-open e recuperação do Redis pode
+ser executado por `node scripts/validate-redis-degradation.mjs`.
 
 ## Testes end-to-end (Playwright)
 
@@ -137,6 +206,22 @@ Hooks configurados na raiz (`.husky/`):
 - **commit-msg** — valida o formato da mensagem (Conventional Commits)
 - **pre-commit** — roda o typecheck do frontend
 - **pre-push** — roda os testes end-to-end antes de permitir o push
+
+## Pipeline e operacao
+
+O workflow `.github/workflows/ci-cd.yml` valida backend, frontend, mobile,
+notificacoes e as imagens do Docker Compose. O deploy de `main` e opcional e usa
+somente variables/secrets do environment `production` do GitHub.
+
+- estrategia e rollback: `docs/deployment-strategy.md`
+- runbook de indisponibilidade: `docs/runbooks/application-down.md`
+- evidencias e limitacoes: `docs/ci-cd-evidence.md`
+- Cynefin, abordagem e papeis: `docs/management/cynefin-and-delivery.md`
+- SemVer e releases: `docs/versioning.md`
+- historico de mudancas: `CHANGELOG.md`
+
+Branches, titulos de PR e commits devem conter a chave Jira `KAN-n`. Exemplo de
+commit: `fix(auth): KAN-53 redireciona sessao expirada`.
 
 ## Fluxo de branches (GitFlow)
 
