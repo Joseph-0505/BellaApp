@@ -6,6 +6,8 @@ const mockBillingsService = {
   ensureForCompletedAppointment: jest.fn(),
 };
 
+const mockPublishDomainEvent = jest.fn();
+
 jest.mock("../../lib/prisma", () => ({
   prisma: mockPrisma,
 }));
@@ -30,6 +32,12 @@ jest.mock("./appointments.repository", () => ({
 
 jest.mock("../billings/billings.service", () => ({
   billingsService: mockBillingsService,
+}));
+
+jest.mock("../../shared/events/domain-event-bus", () => ({
+  domainEventBus: {
+    publish: mockPublishDomainEvent,
+  },
 }));
 
 jest.mock("../../shared/auth/user-clinic-context", () => {
@@ -89,6 +97,7 @@ describe("appointmentsService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    mockPublishDomainEvent.mockResolvedValue(undefined);
   });
 
   it("deve bloquear criacao de agendamento no passado", async () => {
@@ -270,6 +279,18 @@ describe("appointmentsService", () => {
       billingAmount: null,
       billingStatus: null,
       outstandingAmount: null,
+    });
+    expect(mockPublishDomainEvent).toHaveBeenCalledWith({
+      type: "appointment.created",
+      clinicId: "user-1",
+      aggregateId: "appointment-new",
+      actorId: "user-1",
+      metadata: {
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt: scheduledAt.toISOString(),
+      },
     });
   });
 

@@ -19,9 +19,13 @@ import { useAuth } from "../../hooks/useAuth";
 import { styles } from "../../styles/login.styles";
 import { formatRequestError } from "../../utils/request-errors";
 import { getAuthenticatedEntryRoute } from "../../utils/routes";
+import { consumeSessionEndReason } from "../../services/api";
 
 export default function LoginScreen() {
-  const { email: registeredEmail } = useLocalSearchParams<{ email?: string }>();
+  const { email: registeredEmail, message } = useLocalSearchParams<{
+    email?: string;
+    message?: string;
+  }>();
   const {
     bootstrapping,
     isAuthenticated,
@@ -41,6 +45,17 @@ export default function LoginScreen() {
       setEmail(registeredEmail);
     }
   }, [registeredEmail]);
+
+  useEffect(() => {
+    if (typeof message === "string" && message) {
+      setRequestError(message);
+      return;
+    }
+
+    if (consumeSessionEndReason() === "expired") {
+      setRequestError("Sua sessão expirou. Entre novamente.");
+    }
+  }, [message]);
 
   async function handleLogin() {
     const nextErrors = { email: "", password: "" };

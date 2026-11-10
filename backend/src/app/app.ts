@@ -1,6 +1,9 @@
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import Fastify, { FastifyInstance } from "fastify";
+import path from "node:path";
 import { env } from "../config/env";
 import { registerErrorHandler } from "../shared/http/error-handler";
 import { authRoutes } from "../modules/auth/auth.routes";
@@ -55,6 +58,26 @@ export function buildApp(): FastifyInstance {
   }
   cacheService.setLogger(app.log);
   domainEventBus.setLogger(app.log);
+
+  const openApiDirectory = path.resolve(__dirname, "../../openapi");
+
+  app.register(swagger, {
+    mode: "static",
+    specification: {
+      path: path.join(openApiDirectory, "openapi.yaml"),
+      baseDir: openApiDirectory,
+    },
+  });
+
+  app.register(swaggerUi, {
+    routePrefix: "/docs",
+    uiConfig: {
+      docExpansion: "list",
+      deepLinking: true,
+      persistAuthorization: true,
+    },
+    staticCSP: true,
+  });
 
   app.register(cors, {
     origin: resolveCorsOrigin(),

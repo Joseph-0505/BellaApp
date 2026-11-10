@@ -84,6 +84,7 @@ class AppointmentsService {
     actorId: string;
     appointmentId: string;
     clinicId: string;
+    metadata?: Record<string, unknown>;
     type: Extract<DomainEventType, `appointment.${string}`>;
   }): Promise<void> {
     await this.invalidateRelatedCaches(args.clinicId);
@@ -92,7 +93,17 @@ class AppointmentsService {
       clinicId: args.clinicId,
       aggregateId: args.appointmentId,
       actorId: args.actorId,
+      ...(args.metadata ? { metadata: args.metadata } : {}),
     });
+  }
+
+  private buildCreatedEventMetadata(appointment: AppointmentCreateData) {
+    return {
+      clientId: appointment.clientId,
+      serviceId: appointment.serviceId,
+      professionalId: appointment.professionalId ?? null,
+      scheduledAt: appointment.scheduledAt.toISOString(),
+    };
   }
 
   private buildBillingSnapshot(
@@ -551,6 +562,7 @@ class AppointmentsService {
         actorId: userId,
         appointmentId: result.appointment.id,
         clinicId: context.clinicId,
+        metadata: this.buildCreatedEventMetadata(appointmentData),
         type: "appointment.created",
       });
       return result.appointment;
@@ -561,6 +573,7 @@ class AppointmentsService {
       actorId: userId,
       appointmentId: appointment.id,
       clinicId: context.clinicId,
+      metadata: this.buildCreatedEventMetadata(appointmentData),
       type: "appointment.created",
     });
     return toAppointmentResponse(appointment);

@@ -85,8 +85,25 @@ Isso, do zero:
 3. Aplica as migrations do Prisma automaticamente (`prisma migrate deploy`);
 4. Sobe backend, frontend e Nginx conforme os healthchecks.
 
+Os volumes nomeados `mysql_data`, `redis_data` e `profile_uploads` preservam banco,
+cache persistente e uploads entre reinícios. `docker compose down` mantém esses
+dados; use `-v` somente quando a remoção for intencional.
+
 Acesse: **https://bellaapp.local** (o HTTP em `http://bellaapp.local` redireciona
 automaticamente para HTTPS).
+
+## Documentacao da API
+
+Com o stack no ar, a documentacao OpenAPI navegavel fica disponivel em:
+
+- Swagger UI: **https://bellaapp.local/docs/**
+- contrato JSON servido: **https://bellaapp.local/docs/json**
+- contrato fonte versionado: `backend/openapi/openapi.yaml`
+
+Para testar endpoints protegidos, execute o login na propria pagina, copie
+`data.token`, clique em **Authorize** e informe somente o token. O roteiro completo
+de demonstracao esta em `docs/api-validation.md` e a decisao pelo MySQL em
+`docs/adr/0001-mysql-como-banco-transacional.md`.
 
 ## Cache, eventos e observabilidade
 
@@ -142,6 +159,27 @@ docker compose exec redis redis-cli XLEN bellaapp:notifications:dead-letter
 docker compose logs -f notification-service
 ```
 
+## Validação do ambiente completo
+
+O mesmo comando `docker compose up --build -d` sobe toda a aplicação. Confirme os
+healthchecks e execute os fluxos de login, cadastro de cliente e agenda pelos
+testes end-to-end servidos através do Nginx:
+
+```bash
+docker compose up --build -d
+docker compose ps
+npm run test:e2e
+```
+
+Os roteiros de cache, indisponibilidade e recuperação ficam em:
+
+- `docs/runbooks/redis-degradation.md`;
+- `docs/runbooks/application-down.md`;
+- `docs/reliability/slo-observability.md`.
+
+Com o stack ativo, o cenário automatizado de fail-open e recuperação do Redis pode
+ser executado por `node scripts/validate-redis-degradation.mjs`.
+
 ## Testes end-to-end (Playwright)
 
 Com o stack no ar:
@@ -168,6 +206,22 @@ Hooks configurados na raiz (`.husky/`):
 - **commit-msg** — valida o formato da mensagem (Conventional Commits)
 - **pre-commit** — roda o typecheck do frontend
 - **pre-push** — roda os testes end-to-end antes de permitir o push
+
+## Pipeline e operacao
+
+O workflow `.github/workflows/ci-cd.yml` valida backend, frontend, mobile,
+notificacoes e as imagens do Docker Compose. O deploy de `main` e opcional e usa
+somente variables/secrets do environment `production` do GitHub.
+
+- estrategia e rollback: `docs/deployment-strategy.md`
+- runbook de indisponibilidade: `docs/runbooks/application-down.md`
+- evidencias e limitacoes: `docs/ci-cd-evidence.md`
+- Cynefin, abordagem e papeis: `docs/management/cynefin-and-delivery.md`
+- SemVer e releases: `docs/versioning.md`
+- historico de mudancas: `CHANGELOG.md`
+
+Branches, titulos de PR e commits devem conter a chave Jira `KAN-n`. Exemplo de
+commit: `fix(auth): KAN-53 redireciona sessao expirada`.
 
 ## Fluxo de branches (GitFlow)
 

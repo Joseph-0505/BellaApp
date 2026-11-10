@@ -4,5 +4,5 @@ const base = require("./jest.config.cjs");
 module.exports = {
   ...base,
   globalSetup: undefined,
-  testMatch: ["**/modules/**/*.spec.ts", "**/shared/**/*.spec.ts"],
+  testMatch: ["**/app/**/*.spec.ts", "**/modules/**/*.spec.ts", "**/shared/**/*.spec.ts"],
 };

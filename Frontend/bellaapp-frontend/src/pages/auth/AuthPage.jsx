@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo2.png";
 import AuthPasswordField from "../../components/auth/AuthPasswordField";
-import { isAuthenticated } from "../../services/api";
+import { consumeSessionExpiredMessage, isAuthenticated } from "../../services/api";
 import { loginAndStoreSession, register } from "../../services/authService";
 import { showSuccessAlert } from "../../utils/alerts";
 import { formatCpf, normalizeEmail } from "../../utils/formatters";
@@ -55,7 +55,7 @@ export default function AuthPage() {
   const location = useLocation();
   const [mode, setMode] = useState(() => resolveInitialAuthMode(location.search));
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => consumeSessionExpiredMessage());
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
