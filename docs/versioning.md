@@ -63,3 +63,10 @@ git push origin v1.1.0 v1.2.0 v1.3.0 v1.4.0
 
 As notas de cada GitHub Release são a seção correspondente do `CHANGELOG.md`.
 
+## Situação em 11/11/2026
+
+As quatro tags e as quatro GitHub Releases estão publicadas, e as versões do
+Jira foram liberadas na mesma data. As versões do Jira agrupam cards por tema e
+não têm o mesmo conteúdo das tags de mesmo número. Detalhes em
+[jira/status-2026-11-11.md](jira/status-2026-11-11.md).
+
