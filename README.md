@@ -21,10 +21,13 @@ HTTP→HTTPS e faz proxy de `/` para o frontend e de `/api/` para o backend.
 
 ### Documentação arquitetural
 
+- [Mapa da rubrica: onde está cada evidência](docs/README.md)
 - [Visão geral e roteiro de apresentação](docs/architecture/README.md)
 - [C4 — Contexto, Contêineres e implantação](docs/architecture/c4.md)
 - [DDD — Context Map, Bounded Contexts e modelo de domínio](docs/architecture/ddd.md)
 - [Architecture Decision Records](docs/architecture/adr/README.md)
+- [Product Backlog com user stories](docs/product-backlog.md)
+- [SLOs, resiliência e observabilidade](docs/reliability/slo-observability.md)
 - [Cenários de qualidade mensuráveis](docs/architecture/quality-scenarios.md)
 
 ## Pré-requisitos
