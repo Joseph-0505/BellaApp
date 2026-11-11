@@ -1,6 +1,6 @@
 # DDD — Context Map, Bounded Contexts e modelo de domínio
 
-Data da revisão: 05/11/2026.
+Data da revisão: 10/11/2026.
 
 ## Escopo e nível de adoção
 
@@ -18,7 +18,7 @@ não afirma que existem microserviços ou bancos independentes.
 | Suporte | Catálogo e Clientes | Mantém clientes e serviços usados pela agenda, inclusive duração e preço |
 | Suporte | Financeiro | Materializa cobranças de atendimentos e controla caixa e movimentos |
 | Genérico | Identidade e Acesso | Login, tokens, sessão e recuperação de identidade autenticada |
-| Genérico | Plataforma Operacional | Cache, eventos, health check, arquivos, logs e entrega de e-mail |
+| Genérico | Plataforma Operacional | Cache, eventos, health check, arquivos, logs, fila de notificações e entrega de e-mail |
 
 ## Linguagem ubíqua
 
@@ -87,7 +87,7 @@ contratos remotos ou eventos duráveis.
 | Catálogo e Clientes | Cadastro e consulta de clientes e serviços dentro da clínica | `clients`, `services` |
 | Agendamento | Criar, listar, alterar, concluir e excluir agendamentos; validar escopo, agenda e ciclo de vida | `appointments` |
 | Financeiro | Cobranças derivadas de atendimentos e abertura, movimentação e fechamento de caixa | `billings`, `cash` |
-| Plataforma Operacional | Saúde, cache, Pub/Sub, logs, tratamento de erros, imagens e e-mail | `health`, `profile-images`, `shared/cache`, `shared/events`, `lib`, `config` |
+| Plataforma Operacional | Saúde, cache, Pub/Sub, logs, tratamento de erros, imagens, e-mail e notificações assíncronas | `health`, `profile-images`, `shared/cache`, `shared/events`, `lib`, `config` e o processo separado `notification-service` |
 
 As fronteiras foram escolhidas por vocabulário, regras e ritmo de mudança. Por
 exemplo, alterar preço de um serviço não reescreve uma cobrança histórica,

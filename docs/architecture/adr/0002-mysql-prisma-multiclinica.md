@@ -38,6 +38,12 @@ cobrança e caixa.
 Ofereceria isolamento físico maior, porém multiplicaria migrations, conexões,
 backup e provisionamento. É complexidade prematura para o volume atual.
 
+### SQLite
+
+É simples para testes e protótipos locais, porém não representa adequadamente o
+uso concorrente e a operação em contêineres esperados para demonstração e
+evolução do produto.
+
 ### SQL manual sem ORM
 
 Daria controle fino, mas aumentaria código repetitivo de mapeamento, risco de
@@ -81,6 +87,25 @@ consultas e transações. O modelo é multiclínica em schema compartilhado:
 - chaves Redis também incluem clínica e escopo;
 - testes de papéis e ciclo de vida verificam acesso e regras;
 - constraints e índices do Prisma funcionam como segunda linha de defesa.
+
+## Salvaguardas operacionais
+
+- MySQL sem porta pública no `docker-compose.yml`, com volume `mysql_data` e
+  healthcheck; a porta 3307 só existe no override local;
+- `prisma migrate deploy` executado antes de o backend iniciar;
+- MySQL verificado por `GET /api/v1/health`, que retorna 503 quando o banco cai;
+- Redis nunca substitui o MySQL: cache, Pub/Sub e filas podem falhar sem afetar a
+  fonte de verdade transacional;
+- credenciais somente por variáveis de ambiente, sem versionar segredos;
+- migrations seguem expand/contract, conforme
+  [estratégia de deploy](../../deployment-strategy.md#banco-de-dados).
+
+## Critério para revisitar
+
+Reavaliar a decisão se surgirem requisitos comprovados que o MySQL não atenda,
+como recursos geoespaciais avançados, replicação multi-região específica ou uma
+carga documental predominante. A revisão deve comparar métricas e custo de
+migração, não apenas preferência tecnológica.
 
 ## Evidências
 

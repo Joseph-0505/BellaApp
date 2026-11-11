@@ -1,6 +1,6 @@
 {
   "name": "bellaapp-notification-service",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Microservico de notificacoes com fila Redis Streams da BellaApp",
   "main": "dist/server.js",

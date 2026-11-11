@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: BellaApp API
-  version: 1.3.0
+  version: 1.4.0
   description: |
     API do BellaApp para autenticação, configuração da clínica, clientes,
     catálogo de serviços e agenda.
@@ -33,6 +33,18 @@ tags:
     description: Catálogo de serviços da clínica.
   - name: Agenda
     description: Agendamentos da clínica.
+  - name: Profissionais
+    description: Equipe da clínica, convites e status de acesso.
+  - name: Salas
+    description: Recursos físicos opcionais usados na agenda.
+  - name: Plano
+    description: Plano contratado pela clínica.
+  - name: Cobranças
+    description: Pagamento das cobranças geradas por atendimentos concluídos.
+  - name: Caixa
+    description: Abertura, consulta e fechamento do caixa do dia.
+  - name: Imagens
+    description: Avatares de perfil enviados pelos usuários.
 security:
   - bearerAuth: []
 paths:
@@ -681,6 +693,588 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/auth/activation:
+    get:
+      tags: [Autenticação]
+      summary: Consulta um convite de ativação
+      description: Usado pela tela de ativação para mostrar clínica, nome e e-mail do convite.
+      operationId: getActivationStatus
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Convite válido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationStatusEnvelope"
+        "400":
+          $ref: "#/components/responses/InviteError"
+        "409":
+          $ref: "#/components/responses/InviteError"
+        "410":
+          $ref: "#/components/responses/InviteError"
+  /api/v1/auth/activate:
+    post:
+      tags: [Autenticação]
+      summary: Ativa a conta de um profissional convidado
+      operationId: activateAccount
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateAccountRequest"
+      responses:
+        "200":
+          description: Conta ativada; o profissional já pode fazer login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivateAccountEnvelope"
+        "400":
+          description: Dados inválidos ou token de convite inválido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          $ref: "#/components/responses/InviteError"
+        "410":
+          $ref: "#/components/responses/InviteError"
+  /api/v1/users/me/avatar:
+    post:
+      tags: [Usuário]
+      summary: Envia a foto de perfil
+      operationId: uploadCurrentUserAvatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: Imagem JPEG, PNG ou WebP de até 5 MB.
+      responses:
+        "200":
+          description: Avatar atualizado; `avatarUrl` aponta para a nova imagem.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "400":
+          description: Arquivo ausente ou conteúdo que não é uma imagem válida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          description: Imagem maior que 5 MB.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: IMAGE_TOO_LARGE
+                  message: A imagem deve ter no máximo 5 MB.
+    delete:
+      tags: [Usuário]
+      summary: Remove a foto de perfil
+      operationId: removeCurrentUserAvatar
+      responses:
+        "200":
+          description: Avatar removido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/profile-images/{fileName}:
+    get:
+      tags: [Imagens]
+      summary: Baixa uma imagem de perfil
+      description: Endereço público retornado em `avatarUrl`. A resposta é cacheável por um ano.
+      operationId: getProfileImage
+      security: []
+      parameters:
+        - name: fileName
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Conteúdo da imagem.
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/professionals:
+    get:
+      tags: [Profissionais]
+      summary: Lista profissionais da clínica
+      operationId: listProfessionals
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ativo, inativo]
+      responses:
+        "200":
+          description: Página de profissionais.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Profissionais]
+      summary: Cadastra um profissional sem acesso ao sistema
+      operationId: createProfessional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfessionalRequest"
+            example:
+              name: Carla Lima
+              specialty: Esteticista
+              phone: "+55 11 98888-0000"
+              email: carla@example.com
+              status: ativo
+      responses:
+        "201":
+          description: Profissional criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/TrialExpired"
+        "409":
+          $ref: "#/components/responses/PlanLimit"
+  /api/v1/professionals/invite:
+    post:
+      tags: [Profissionais]
+      summary: Convida um profissional por e-mail
+      description: Cria o profissional e envia um link de ativação com prazo de validade.
+      operationId: inviteProfessional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteProfessionalRequest"
+            example:
+              name: Carla Lima
+              email: carla@example.com
+      responses:
+        "201":
+          description: Convite criado; `accessStatus` fica `invite_pending`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/TrialExpired"
+        "409":
+          $ref: "#/components/responses/PlanLimit"
+  /api/v1/professionals/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Profissionais]
+      summary: Busca um profissional
+      operationId: getProfessional
+      responses:
+        "200":
+          description: Profissional encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Profissionais]
+      summary: Atualiza um profissional
+      operationId: updateProfessional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfessionalRequest"
+      responses:
+        "200":
+          description: Profissional atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: E-mail já cadastrado para outro usuário.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      tags: [Profissionais]
+      summary: Exclui um profissional
+      operationId: deleteProfessional
+      responses:
+        "204":
+          description: Profissional excluído.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Último profissional da clínica ou profissional vinculado a um usuário.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/professionals/{id}/resend-invite:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Profissionais]
+      summary: Reenvia o convite de ativação
+      operationId: resendProfessionalInvite
+      responses:
+        "200":
+          description: Novo convite gerado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Profissional sem e-mail, sem convite disponível ou com conta já ativa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/rooms:
+    get:
+      tags: [Salas]
+      summary: Lista salas da clínica
+      operationId: listRooms
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - name: active
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Página de salas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Salas]
+      summary: Cadastra uma sala
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomRequest"
+            example:
+              name: Sala 1
+              color: "#E8B4B8"
+              active: true
+      responses:
+        "201":
+          description: Sala criada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Já existe uma sala com esse nome na clínica.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/rooms/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Salas]
+      summary: Busca uma sala
+      operationId: getRoom
+      responses:
+        "200":
+          description: Sala encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Salas]
+      summary: Atualiza uma sala
+      operationId: updateRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomRequest"
+      responses:
+        "200":
+          description: Sala atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Salas]
+      summary: Exclui uma sala
+      operationId: deleteRoom
+      responses:
+        "204":
+          description: Sala excluída.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/billing:
+    get:
+      tags: [Plano]
+      summary: Consulta o plano da clínica
+      operationId: getCurrentPlan
+      responses:
+        "200":
+          description: Plano atual e fim do período de teste.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/billing/upgrade:
+    post:
+      tags: [Plano]
+      summary: Faz upgrade do plano
+      operationId: upgradePlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpgradePlanRequest"
+            example:
+              plan: TEAM
+      responses:
+        "200":
+          description: Plano alterado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/cobrancas/{id}/pagar:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Cobranças]
+      summary: Registra o pagamento de uma cobrança
+      description: |
+        Aceita pagamento parcial. Atualiza o saldo da cobrança e cria a
+        movimentação de entrada no caixa na mesma transação. Publica o evento
+        `billing.paid` depois do commit.
+      operationId: payBilling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayBillingRequest"
+            example:
+              amount: 150
+              paymentMethod: PIX
+              notes: Pagamento na recepção.
+      responses:
+        "200":
+          description: Pagamento registrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayBillingEnvelope"
+        "400":
+          description: Dados inválidos ou valor maior que o saldo da cobrança.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Cobrança já quitada ou caixa do dia fechado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/caixa:
+    get:
+      tags: [Caixa]
+      summary: Consulta o caixa do dia
+      description: Retorna `data` nulo quando o caixa do dia ainda não foi aberto.
+      operationId: getTodayCash
+      parameters:
+        - name: professionalId
+          in: query
+          description: Caixa de um profissional. Sem o parâmetro, retorna o caixa da clínica.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Caixa do dia, ou nulo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NullableCashEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/caixa/abrir:
+    post:
+      tags: [Caixa]
+      summary: Abre o caixa do dia
+      operationId: openTodayCash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenCashRequest"
+            example:
+              openingAmount: 100
+      responses:
+        "201":
+          description: Caixa aberto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CashEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Caixa do dia já aberto ou já fechado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/caixa/fechar:
+    post:
+      tags: [Caixa]
+      summary: Fecha o caixa do dia
+      description: Calcula a diferença entre o valor esperado e o valor informado.
+      operationId: closeTodayCash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloseCashRequest"
+            example:
+              informedClosingAmount: 450
+      responses:
+        "200":
+          description: Caixa fechado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CashEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Caixa do dia não foi aberto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Caixa do dia já fechado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 components:
   securitySchemes:
     bearerAuth:
@@ -751,6 +1345,31 @@ components:
             error:
               code: RESOURCE_NOT_FOUND
               message: Recurso não encontrado.
+    TrialExpired:
+      description: Período de teste expirado; é preciso fazer upgrade do plano.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: TRIAL_EXPIRED
+              message: Seu periodo de teste expirou. Faca upgrade para continuar.
+    PlanLimit:
+      description: Limite de profissionais do plano atingido (`TRIAL_LIMIT` ou `PLAN_LIMIT`), ou e-mail já cadastrado.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InviteError:
+      description: |
+        Convite inválido (400 `INVITE_TOKEN_INVALID`), já utilizado ou conta já
+        ativa (409 `INVITE_TOKEN_USED`, `ACCOUNT_ALREADY_ACTIVE`) ou expirado
+        (410 `INVITE_TOKEN_EXPIRED`).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
   schemas:
     ErrorDetail:
       type: object
@@ -1131,3 +1750,272 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Appointment" }
         meta: { $ref: "#/components/schemas/PaginationMeta" }
+    ActivationStatus:
+      type: object
+      required: [clinicName, email, name]
+      properties:
+        clinicName: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+    ActivationStatusEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/ActivationStatus" }
+    ActivateAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [token, password]
+      properties:
+        token: { type: string, minLength: 1 }
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          description: Deve conter maiúscula, minúscula, número e símbolo.
+    ActivateAccountEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [email, name]
+          properties:
+            email: { type: string, format: email }
+            name: { type: string }
+    ProfessionalRequest:
+      type: object
+      additionalProperties: false
+      required: [name, specialty, phone, status]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        specialty: { type: string, minLength: 1, maxLength: 255 }
+        phone: { type: string, minLength: 1, maxLength: 30 }
+        email: { type: string, format: email }
+        status:
+          type: string
+          enum: [ativo, inativo]
+    InviteProfessionalRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        email: { type: string, format: email }
+    Professional:
+      type: object
+      required: [id, name, specialty, email, phone, status, initials, tone, accessStatus, inviteExpiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        specialty: { type: string }
+        email: { type: string, format: email, nullable: true }
+        phone: { type: string }
+        status:
+          type: string
+          enum: [ativo, inativo]
+        initials: { type: string, example: CL }
+        tone:
+          type: string
+          enum: [rose, sand, sage, mist]
+        accessStatus:
+          type: string
+          enum: [active, invite_pending, invite_expired, no_access]
+        inviteExpiresAt: { type: string, format: date-time, nullable: true }
+    ProfessionalEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Professional" }
+    ProfessionalListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Professional" }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+    RoomRequest:
+      type: object
+      additionalProperties: false
+      required: [name, active]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          example: "#E8B4B8"
+        active: { type: boolean }
+    Room:
+      type: object
+      required: [id, name, color, active, status, monthlyAppointments, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        color: { type: string, nullable: true }
+        active: { type: boolean }
+        status:
+          type: string
+          enum: [ativo, inativo]
+        monthlyAppointments: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RoomEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Room" }
+    RoomListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Room" }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+    ClinicPlan:
+      type: string
+      enum: [TRIAL, INDIVIDUAL, TEAM]
+    Plan:
+      type: object
+      required: [plan, trialEndsAt]
+      properties:
+        plan: { $ref: "#/components/schemas/ClinicPlan" }
+        trialEndsAt: { type: string, format: date-time, nullable: true }
+    PlanEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Plan" }
+    UpgradePlanRequest:
+      type: object
+      additionalProperties: false
+      required: [plan]
+      properties:
+        plan:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+    PaymentMethod:
+      type: string
+      enum: [CASH, PIX, CREDIT_CARD, DEBIT_CARD, TRANSFER, OTHER]
+    PayBillingRequest:
+      type: object
+      additionalProperties: false
+      required: [amount, paymentMethod]
+      properties:
+        amount: { type: number, exclusiveMinimum: true, minimum: 0 }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        notes: { type: string, maxLength: 255 }
+    Billing:
+      type: object
+      description: Snapshot financeiro gerado ao concluir um atendimento.
+      required: [id, appointmentId, clientId, clientName, serviceId, serviceName, professionalId, professionalName, amount, paidAmount, remainingAmount, status, receivedBy, appointmentScheduledAt, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        appointmentId: { type: string, format: uuid, nullable: true }
+        clientId: { type: string, format: uuid }
+        clientName: { type: string }
+        serviceId: { type: string, format: uuid }
+        serviceName: { type: string }
+        professionalId: { type: string, format: uuid, nullable: true }
+        professionalName: { type: string, nullable: true }
+        amount: { type: number }
+        paidAmount: { type: number }
+        remainingAmount: { type: number }
+        status:
+          type: string
+          enum: [PENDING, PARTIALLY_PAID, PAID]
+        receivedBy:
+          type: string
+          enum: [CLINIC, PROFESSIONAL]
+        appointmentScheduledAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CashMovement:
+      type: object
+      required: [id, billingId, type, status, paymentMethod, description, amount, countsInCash, occurredAt, clientName, serviceName, professionalName]
+      properties:
+        id: { type: string, format: uuid }
+        billingId: { type: string, format: uuid, nullable: true }
+        type:
+          type: string
+          enum: [INCOME, EXPENSE]
+        status:
+          type: string
+          enum: [PENDING, PAID]
+        paymentMethod:
+          allOf:
+            - $ref: "#/components/schemas/PaymentMethod"
+          nullable: true
+        description: { type: string, nullable: true }
+        amount: { type: number }
+        countsInCash: { type: boolean }
+        occurredAt: { type: string, format: date-time }
+        clientName: { type: string, nullable: true }
+        serviceName: { type: string, nullable: true }
+        professionalName: { type: string, nullable: true }
+    PayBillingEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [billing, movement]
+          properties:
+            billing: { $ref: "#/components/schemas/Billing" }
+            movement: { $ref: "#/components/schemas/CashMovement" }
+    OpenCashRequest:
+      type: object
+      additionalProperties: false
+      required: [openingAmount]
+      properties:
+        professionalId: { type: string, format: uuid }
+        openingAmount: { type: number, minimum: 0 }
+    CloseCashRequest:
+      type: object
+      additionalProperties: false
+      required: [informedClosingAmount]
+      properties:
+        professionalId: { type: string, format: uuid }
+        informedClosingAmount: { type: number, minimum: 0 }
+    Cash:
+      type: object
+      required: [id, date, status, scope, professionalId, professionalName, openingAmount, totalPaid, totalExpenses, totalBalance, expectedClosingAmount, informedClosingAmount, differenceAmount, openedAt, closedAt, createdAt, movements]
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        scope:
+          type: string
+          enum: [CLINIC, PROFESSIONAL]
+        professionalId: { type: string, format: uuid, nullable: true }
+        professionalName: { type: string, nullable: true }
+        openingAmount: { type: number }
+        totalPaid: { type: number }
+        totalExpenses: { type: number }
+        totalBalance: { type: number }
+        expectedClosingAmount: { type: number }
+        informedClosingAmount: { type: number, nullable: true }
+        differenceAmount: { type: number, nullable: true }
+        openedAt: { type: string, format: date-time }
+        closedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        movements:
+          type: array
+          items: { $ref: "#/components/schemas/CashMovement" }
+    CashEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Cash" }
+    NullableCashEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/Cash"
+          nullable: true

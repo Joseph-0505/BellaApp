@@ -2,6 +2,18 @@ import { buildApp } from "./app";
 
 describe("OpenAPI HTTP documentation", () => {
   const app = buildApp();
+  const registeredApiRoutes: string[] = [];
+
+  // Os plugins de rota só são registrados no ready(), então o hook captura todos.
+  app.addHook("onRoute", (route) => {
+    const methods = Array.isArray(route.method) ? route.method : [route.method];
+
+    for (const method of methods) {
+      if (route.url.startsWith("/api/") && !["HEAD", "OPTIONS"].includes(method)) {
+        registeredApiRoutes.push(`${method} ${route.url.replace(/\/$/, "")}`);
+      }
+    }
+  });
 
   afterAll(async () => {
     await app.close();
@@ -36,6 +48,10 @@ describe("OpenAPI HTTP documentation", () => {
       paths: expect.objectContaining({
         "/api/v1/auth/login": expect.any(Object),
         "/api/v1/appointments": expect.any(Object),
+        "/api/v1/professionals": expect.any(Object),
+        "/api/v1/rooms": expect.any(Object),
+        "/api/v1/cobrancas/{id}/pagar": expect.any(Object),
+        "/api/v1/caixa": expect.any(Object),
       }),
     }));
 
@@ -53,5 +69,23 @@ describe("OpenAPI HTTP documentation", () => {
         }
       }
     }
+  });
+
+  it("documents every API route registered in Fastify", async () => {
+    const response = await app.inject({ method: "GET", url: "/docs/json" });
+    const contract = response.json<{
+      paths: Record<string, Record<string, unknown>>;
+    }>();
+
+    const documentedRoutes = new Set(
+      Object.entries(contract.paths).flatMap(([openApiPath, operations]) =>
+        Object.keys(operations)
+          .filter((method) => ["get", "post", "put", "patch", "delete"].includes(method))
+          .map((method) => `${method.toUpperCase()} ${openApiPath.replace(/\{([^}]+)\}/g, ":$1")}`),
+      ),
+    );
+
+    expect(registeredApiRoutes.length).toBeGreaterThan(0);
+    expect(registeredApiRoutes.filter((route) => !documentedRoutes.has(route))).toEqual([]);
   });
 });
