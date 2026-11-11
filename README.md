@@ -21,10 +21,13 @@ HTTP→HTTPS e faz proxy de `/` para o frontend e de `/api/` para o backend.
 
 ### Documentação arquitetural
 
+- [Mapa da rubrica: onde está cada evidência](docs/README.md)
 - [Visão geral e roteiro de apresentação](docs/architecture/README.md)
 - [C4 — Contexto, Contêineres e implantação](docs/architecture/c4.md)
 - [DDD — Context Map, Bounded Contexts e modelo de domínio](docs/architecture/ddd.md)
 - [Architecture Decision Records](docs/architecture/adr/README.md)
+- [Product Backlog com user stories](docs/product-backlog.md)
+- [SLOs, resiliência e observabilidade](docs/reliability/slo-observability.md)
 - [Cenários de qualidade mensuráveis](docs/architecture/quality-scenarios.md)
 
 ## Pré-requisitos
@@ -103,7 +106,7 @@ Com o stack no ar, a documentacao OpenAPI navegavel fica disponivel em:
 Para testar endpoints protegidos, execute o login na propria pagina, copie
 `data.token`, clique em **Authorize** e informe somente o token. O roteiro completo
 de demonstracao esta em `docs/api-validation.md` e a decisao pelo MySQL em
-`docs/adr/0001-mysql-como-banco-transacional.md`.
+`docs/architecture/adr/0002-mysql-prisma-multiclinica.md`.
 
 ## Cache, eventos e observabilidade
 

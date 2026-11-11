@@ -7,12 +7,21 @@ const baseSha = process.env.PR_BASE_SHA || "";
 const headSha = process.env.PR_HEAD_SHA || "HEAD";
 const failures = [];
 
-if (!issuePattern.test(branch)) {
-  failures.push(`branch '${branch}' must contain a Jira key such as KAN-53`);
-}
+// PRs de promocao (develop -> main) agrupam varias historias; a rastreabilidade
+// fica nos commits, que continuam sendo validados abaixo.
+const promotionBranches = new Set(["develop"]);
+const isPromotion = promotionBranches.has(branch);
 
-if (!issuePattern.test(title)) {
-  failures.push("pull request title must contain a Jira key such as KAN-53");
+if (isPromotion) {
+  console.log(`Promotion pull request from '${branch}': branch and title checks skipped.`);
+} else {
+  if (!issuePattern.test(branch)) {
+    failures.push(`branch '${branch}' must contain a Jira key such as KAN-53`);
+  }
+
+  if (!issuePattern.test(title)) {
+    failures.push("pull request title must contain a Jira key such as KAN-53");
+  }
 }
 
 let commitSubjects = [];

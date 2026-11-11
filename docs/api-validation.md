@@ -27,7 +27,9 @@ servida pela aplicação fica em `https://bellaapp.local/docs/json`.
 
 ## Contratos e erros
 
-1. Confira os parâmetros, corpos e exemplos de clientes, serviços e agenda.
+1. Confira os grupos documentados: Saúde, Autenticação, Usuário, Onboarding,
+   Clientes, Serviços, Agenda, Profissionais, Salas, Plano, Cobranças, Caixa e
+   Imagens. Cada operação traz parâmetros, corpo, exemplos e respostas de erro.
 2. Envie um e-mail inválido no login e confirme HTTP 400 com
    `error.code = VALIDATION_ERROR`.
 3. Remova a autorização e execute uma rota protegida; confirme HTTP 401 com
@@ -44,5 +46,10 @@ npm run build
 npx jest --config jest.unit.config.cjs --runInBand --runTestsByPath src/app/openapi.spec.ts
 ```
 
-O teste confirma que o Swagger UI e o contrato JSON estão publicados e contêm
-os principais fluxos da aplicação.
+O teste confirma três coisas:
+
+- o Swagger UI e o contrato JSON estão publicados;
+- toda operação documentada existe no Fastify;
+- toda rota `/api/` registrada no Fastify está documentada.
+
+Assim, uma rota nova sem documentação quebra o pipeline de CI.

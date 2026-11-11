@@ -48,7 +48,9 @@ Docker Compose no diretório configurado.
 1. Criar branch contendo a chave Jira, por exemplo `feature/KAN-53-erros-claros`.
 2. Usar a chave em todos os commits e no título do PR.
 3. Abrir PR para `develop` e aguardar CI verde.
-4. Promover por PR de `develop` para `main`.
+4. Promover por PR de `develop` para `main`. Esse PR agrupa várias histórias,
+   por isso o job `Jira references` dispensa a chave no nome da branch e no
+   título e continua exigindo a chave em cada commit.
 5. Aprovar o environment de produção, quando configurado.
 6. Conferir o job `Deploy production`, o healthcheck e os logs do serviço.
 

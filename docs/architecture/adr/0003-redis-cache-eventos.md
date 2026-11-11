@@ -78,6 +78,14 @@ ou integração que não pode ser perdida, migrar esse fluxo para Outbox + broke
 durável/Redis Streams. Pub/Sub permanece adequado para sinalização efêmera e
 demonstração de eventos em tempo real.
 
+## Atualização — 10/11/2026
+
+A regra de evolução acima foi aplicada às notificações. Elas passaram a usar um
+serviço próprio com Redis Streams, consumer group, retry e dead-letter, conforme
+[ADR-0005](0005-notificacoes-redis-streams.md). O risco "não há retry,
+dead-letter queue ou confirmação de processamento" continua válido apenas para
+o canal Pub/Sub. A decisão de cache-aside e de Pub/Sub para sinalização não mudou.
+
 ## Evidências
 
 - `backend/src/shared/cache/cache.service.ts`;

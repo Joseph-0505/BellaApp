@@ -1,12 +1,16 @@
 # Cenários de qualidade mensuráveis
 
-Data da revisão: 05/11/2026.
+Data da revisão: 10/11/2026.
 
 ## Como ler
 
 Cada cenário segue a estrutura: **fonte**, **estímulo**, **artefato**,
 **ambiente**, **resposta** e **medida**. A coluna de evidência separa o que já
 foi observado das metas que ainda exigem experimento.
+
+Os números de latência, disponibilidade e taxa de cache são os mesmos SLOs de
+[slo-observability.md](../reliability/slo-observability.md). Aquele documento é
+a fonte única das metas; os cenários descrevem como cada uma é provocada e medida.
 
 ## Q-01 — Desempenho de consulta frequente
 
@@ -17,7 +21,7 @@ foi observado das metas que ainda exigem experimento.
 | Artefato | API Fastify, `CacheService`, Redis e repositório Prisma |
 | Ambiente | Stack Docker saudável; até 20 requisições por segundo; páginas de até 100 itens |
 | Resposta | A primeira requisição lê a origem e preenche o cache; as seguintes reutilizam o valor isolado por clínica e escopo |
-| Medida | Após aquecimento, taxa de hit ≥ 90% para filtros repetidos e latência p95 ≤ 500 ms; miss p95 ≤ 1.500 ms |
+| Medida | Após aquecimento, taxa de hit ≥ 80% no catálogo de serviços e latência p95 de leitura ≤ 400 ms (SLOs de cache e de latência de leitura); leitura em miss p95 ≤ 1.500 ms |
 
 **Evidência atual:** o fluxo miss → hit, a existência das chaves, TTL e mudança
 de versão após mutação foram comprovados no Docker. As metas de carga e p95 são
@@ -34,9 +38,11 @@ metas propostas e ainda precisam de k6/Artillery ou ferramenta equivalente.
 | Resposta | A API registra `cache.read_failed`, consulta o MySQL e não retorna dado de outra clínica; o health check sinaliza a dependência como `down` |
 | Medida | A requisição deve terminar sem corrupção; resposta da listagem em até 6 s; `/api/v1/health` retorna 503 enquanto Redis estiver indisponível |
 
-**Evidência atual:** há teste unitário do comportamento fail-open e health check
-real com dependências saudáveis. A injeção de falha do Redis deve fazer parte da
-demonstração de resiliência antes de declarar a meta temporal cumprida.
+**Evidência atual:** teste unitário do comportamento fail-open em
+`cache.service.spec.ts` e injeção de falha automatizada em
+`scripts/validate-redis-degradation.mjs`, que para o Redis, confirma a
+listagem com HTTP 200 pelo MySQL, religa o Redis e confirma a volta do cache. O
+roteiro manual está em [redis-degradation.md](../runbooks/redis-degradation.md).
 
 ## Q-03 — Detecção de indisponibilidade da fonte de verdade
 
@@ -98,7 +104,7 @@ demonstração de resiliência antes de declarar a meta temporal cumprida.
 | Cenário | Automatizado hoje | Demonstração recomendada |
 |---|---|---|
 | Q-01 | Parcial: testes de cache | Duas leituras e comparação de logs/chaves; depois teste de carga |
-| Q-02 | Parcial: fail-open unitário | Pausar Redis após subir a API e observar resposta/health |
+| Q-02 | Sim: teste unitário e `scripts/validate-redis-degradation.mjs` | Executar o script com o stack no ar e mostrar os logs `cache.read_failed` |
 | Q-03 | Parcial: health e erros | Pausar MySQL em ambiente isolado e observar 503/log sanitizado |
 | Q-04 | Parcial: testes de papéis/escopo | Duas clínicas, tentativa cruzada e inspeção do cache |
 | Q-05 | Sim, em testes de serviço/integração existentes | Concluir atendimento e conferir cobrança única |
