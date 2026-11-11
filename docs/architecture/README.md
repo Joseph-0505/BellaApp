@@ -2,7 +2,8 @@
 
 Este diretório reúne as evidências das tarefas Jira **KAN-1 (ARQ-01)** e
 **KAN-2 (ARQ-02)**. A documentação descreve o sistema encontrado no
-repositório em 05/11/2026; quando algo é apenas uma meta ou uma proposta, o
+repositório em 05/11/2026, revisado em 10/11/2026 para incluir o serviço de
+notificações; quando algo é apenas uma meta ou uma proposta, o
 texto identifica isso explicitamente.
 
 ## Mapa dos documentos
@@ -14,6 +15,7 @@ texto identifica isso explicitamente.
 | Cenários de qualidade | [quality-scenarios.md](quality-scenarios.md) | Estímulo, ambiente, resposta e medida verificável |
 | Context Map e Bounded Contexts | [ddd.md](ddd.md) | Domínios, subdomínios, fronteiras e relacionamentos |
 | Modelo de domínio | [ddd.md](ddd.md#modelo-do-domínio-de-agendamento) | Entidades, Value Objects, agregados, raiz e invariantes |
+| SLOs, resiliência e observabilidade | [../reliability/slo-observability.md](../reliability/slo-observability.md) | SLIs, SLOs, estratégias de resiliência e plano de observabilidade |
 
 ## Fontes de verdade examinadas
 
@@ -22,6 +24,7 @@ texto identifica isso explicitamente.
 - `backend/prisma/schema.prisma`;
 - `backend/src/shared/auth`, `backend/src/shared/cache` e
   `backend/src/shared/events`;
+- `notification-service/src` (fila, worker e assinatura de eventos);
 - `Frontend/bellaapp-frontend/src`;
 - `mobile/src` e a auditoria existente em `mobile/docs`.
 
@@ -74,7 +77,8 @@ npx jest --config jest.unit.config.cjs --runInBand
 npx tsc -p tsconfig.json --noEmit
 ```
 
-Resultados já observados em 02/11/2026: cinco serviços iniciados, Redis com
+Resultados já observados em 02/11/2026, antes do serviço de notificações: cinco
+serviços iniciados, Redis com
 `PONG`, health check HTTPS com MySQL e Redis `up`, e 14 suítes/63 testes do
 backend aprovados.
 
@@ -86,6 +90,9 @@ backend aprovados.
   documento, mas hoje são representados no código por DTOs validados, enums do
   Prisma e tipos primitivos.
 - Redis Pub/Sub fornece entrega em tempo real, não durável e no máximo uma vez
-  para assinantes conectados; não substitui uma fila persistente.
+  para assinantes conectados. Por isso as notificações usam uma fila persistente
+  em Redis Streams, com retry e dead-letter ([ADR-0005](adr/0005-notificacoes-redis-streams.md)).
+  Um evento publicado enquanto o serviço de notificações está desconectado ainda
+  pode ser perdido antes de chegar à fila.
 - As metas de latência deste pacote não são resultados históricos. Precisam ser
   validadas por teste de carga antes de serem tratadas como SLO cumprido.

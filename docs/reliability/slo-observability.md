@@ -2,6 +2,10 @@
 
 Relacionado a KAN-7, KAN-20, KAN-21, KAN-22 e KAN-52.
 
+Este documento é a fonte única das metas numéricas. Os cenários que provocam e
+medem cada meta estão em
+[quality-scenarios.md](../architecture/quality-scenarios.md).
+
 ## Indicadores e objetivos
 
 Um **SLI** é a medida observada; um **SLO** é a meta acordada para essa medida.
@@ -35,6 +39,24 @@ de 99,5% permite até 0,5% de erro, aproximadamente 201,6 minutos em 28 dias.
 Para a apresentação local, `docker compose logs` é a fonte consultável. Em
 produção, os mesmos campos devem ser enviados a uma ferramenta centralizada e
 agregados por janela de 5 minutos e de 28 dias.
+
+## Plano de observabilidade
+
+O que é coletado, de onde vem, para que serve e qual sinal exige ação.
+
+| Sinal | Tipo | Fonte | Uso | Sinal de alerta |
+|---|---|---|---|---|
+| `res.statusCode` e `responseTime` do log "request completed" | Log estruturado convertido em métrica | Fastify do backend | SLIs de disponibilidade e latência | taxa de 5xx > 0,5% em 5 min ou p95 de GET > 400 ms |
+| `X-Request-Id` | Campo de correlação | Header da resposta e logs do backend | Ligar a reclamação do usuário ao log | não se aplica |
+| `cache.hit`, `cache.miss` | Log em nível debug | `CacheService` | SLI de taxa de cache | taxa de hit do catálogo < 80% após aquecimento |
+| `cache.read_failed`, `cache.write_failed`, `cache.invalidation_failed` | Log warn | `CacheService` | Detectar operação degradada sem Redis | qualquer ocorrência contínua por mais de 5 min |
+| `domain_event.published`, `domain_event.publish_failed` | Log info/warn | `DomainEventBus` | SLI de evento consumido | `publish_failed` acima de 1% dos eventos |
+| `notification.retry`, `notification.dead_letter` | Log warn/error | Worker do notification-service | Saúde da fila de notificações | qualquer job na dead-letter |
+| `queue.queued` e `queue.deadLetter` | Métrica pontual | `GET /health` do notification-service | Backlog e falhas acumuladas | fila crescendo por 3 leituras seguidas |
+| `dependencies.mysql` e `dependencies.redis` | Healthcheck | `GET /api/v1/health` do backend | Disponibilidade das dependências | HTTP 503 |
+| Estado `healthy` dos contêineres | Healthcheck | Docker Compose | Ordem de subida e reinício | contêiner `unhealthy` |
+
+Logs redigem `Authorization`, cookies e `Set-Cookie` antes de serem gravados.
 
 ## Estratégias de resiliência aplicadas
 

@@ -103,7 +103,7 @@ Com o stack no ar, a documentacao OpenAPI navegavel fica disponivel em:
 Para testar endpoints protegidos, execute o login na propria pagina, copie
 `data.token`, clique em **Authorize** e informe somente o token. O roteiro completo
 de demonstracao esta em `docs/api-validation.md` e a decisao pelo MySQL em
-`docs/adr/0001-mysql-como-banco-transacional.md`.
+`docs/architecture/adr/0002-mysql-prisma-multiclinica.md`.
 
 ## Cache, eventos e observabilidade
 
