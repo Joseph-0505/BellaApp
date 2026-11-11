@@ -34,14 +34,32 @@ O arquivo `CHANGELOG.md` segue Keep a Changelog. Mudanças entram primeiro em
 Tags e releases são artefatos públicos e não devem ser simulados. Uma versão só é
 considerada fechada depois de tag, GitHub Release e versão Jira liberada existirem.
 
-## Plano parcial
+## Versões publicadas
 
-| Versão Jira | Conteúdo | Condição de liberação |
-|---|---|---|
-| v1.1.0 Fundação | arquitetura, Compose, Nginx, Cynefin e backlog | stack reproduzível e documentação revisada |
-| v1.2.0 Cache e eventos | cache-aside e Pub/Sub | testes de isolamento, invalidação, fail-open e consumo |
-| v1.3.0 Qualidade e API | OpenAPI, SLOs e resiliência | contrato e cenários de falha validados |
-| v1.4.0 Entrega | CI/CD, runbooks e gestão | pipeline aprovado e evidências consolidadas |
+| Tag | Commit em `main` | Data | Conteúdo |
+|---|---|---|---|
+| v1.1.0 | `061e3ac` (PR #10) | 2026-09-16 | API, web, mobile, Compose, Nginx com HTTPS, E2E e Husky |
+| v1.2.0 | `9c10c60` (PR #13) | 2026-11-05 | cache-aside, Pub/Sub, health check, C4, DDD, ADRs e cenários de qualidade |
+| v1.3.0 | `bffa2e4` (PR #16) | 2026-11-10 | notificações com Redis Streams, OpenAPI, CI/CD, SLOs, runbooks e Cynefin |
+| v1.4.0 | merge do PR de promoção do branch `feature/KAN-45-ajustes-rubrica` | 2026-11-11 | OpenAPI completo, documentação consolidada, user stories e mapa da rubrica |
 
-KAN-45 permanece dependente da publicação real de pelo menos duas tags e releases.
+As tags v1.1.0, v1.2.0 e v1.3.0 foram criadas depois, sobre os commits de merge
+reais que levaram cada entrega para `main`. Nenhum commit foi reescrito; a tag
+apenas dá nome a um estado que já existia. O conteúdo de cada versão foi
+conferido com `git ls-tree` antes da marcação.
+
+A partir da v1.4.0, a tag é criada no momento do merge em `main`, seguindo o
+fluxo acima.
+
+## Comandos usados
+
+```bash
+git tag -a v1.1.0 061e3ac -m "BellaApp v1.1.0"
+git tag -a v1.2.0 9c10c60 -m "BellaApp v1.2.0"
+git tag -a v1.3.0 bffa2e4 -m "BellaApp v1.3.0"
+git tag -a v1.4.0 <sha-do-merge> -m "BellaApp v1.4.0"
+git push origin v1.1.0 v1.2.0 v1.3.0 v1.4.0
+```
+
+As notas de cada GitHub Release são a seção correspondente do `CHANGELOG.md`.
 
