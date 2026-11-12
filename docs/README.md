@@ -28,7 +28,7 @@ Pré-requisito das demonstrações ao vivo: stack no ar com `docker compose up -
 
 | Item da rubrica | Evidência | Como demonstrar | Cards |
 |---|---|---|---|
-| Gestão do trabalho no Jira | Board do projeto KAN, [jira/status-2026-11-09.md](jira/status-2026-11-09.md), `.husky/commit-msg`, `scripts/validate-jira-references.mjs` | Abrir o board e as duas JQLs de auditoria; mostrar um commit vinculado a um card | KAN-46 |
+| Gestão do trabalho no Jira | Board do projeto KAN, [jira/status-2026-11-11.md](jira/status-2026-11-11.md), `.husky/commit-msg`, `scripts/validate-jira-references.mjs` | Abrir o board e as duas JQLs de auditoria; mostrar um commit vinculado a um card | KAN-46 |
 | Cynefin e escolha da abordagem | [management/cynefin-and-delivery.md](management/cynefin-and-delivery.md) | Explicar por que o domínio é Complexo e a gestão é híbrida | KAN-37, KAN-38, KAN-39 |
 | Ciclo de vida: backlog, user stories, critérios de aceite e versões | [product-backlog.md](product-backlog.md), [versioning.md](versioning.md), `CHANGELOG.md` | Mostrar as histórias no Jira e as Releases v1.1.0 a v1.4.0 no GitHub | KAN-40, KAN-43, KAN-44, KAN-45 |
 
