@@ -9,7 +9,10 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
-Nada pendente.
+### Added
+
+- snapshot final do Jira em `docs/jira/status-2026-11-11.md`, com os 55 cards
+  concluídos e as quatro versões liberadas.
 
 ## [1.4.0] - 2026-11-11
 
