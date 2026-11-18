@@ -2,30 +2,176 @@
 
 Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 
-> As histórias abaixo foram redigidas a partir do comportamento implementado e
-> verificável no repositório. Em caso de divergência de texto, prevalece o card
-> no Jira, e este arquivo deve ser corrigido.
+> As histórias US-01 a US-12 foram redigidas a partir do comportamento implementado
+> e verificável no repositório; US-07 a US-12 foram registradas no Jira em
+> 18/11/2026, depois de a funcionalidade existir. US-13 e US-14 são trabalho futuro.
+> Em caso de divergência de texto, prevalece o card no Jira, e este arquivo deve ser
+> corrigido.
 
 ## Ordem priorizada
 
-1. **KAN-50 / US-01 — Catálogo rápido (Alta):** reduz impacto direto no atendimento e valida o cache distribuído.
-2. **KAN-51 / US-02 — Aviso de novo agendamento (Alta):** entrega rastreabilidade do evento central do produto.
-3. **KAN-52 / US-03 — Operação sem cache (Média):** protege a continuidade depois que cache e eventos já existem.
-4. **KAN-53 / US-04 — Mensagens de erro claras (Média):** melhora recuperação de falhas nos fluxos já entregues.
-5. **KAN-54 / US-05 — Documentação navegável (Média):** habilita integrações após estabilizar os contratos principais.
-6. **KAN-55 / US-06 — Ambiente com um comando (Média):** consolida a reprodução e a demonstração do conjunto.
+### Pendente (v1.6.0 Evolução)
+
+1. **KAN-76 / US-13 — Lembrete de agendamento (Alta):** ataca faltas, a principal perda da agenda, e reaproveita a fila de notificações.
+2. **KAN-77 / BE-08 — Concorrência no conflito de agenda (Alta):** fecha a limitação registrada no modelo de domínio antes de abrir novos canais de agendamento.
+3. **KAN-78 / ARQ-08 — Teste de carga (Média):** mede os SLOs de latência que ainda são metas.
+4. **KAN-79 / US-14 — Autoagendamento por link (Média):** depende do controle de concorrência, porque aumenta a disputa por horários.
+
+### Entregue
+
+| Ordem | Card | História | Prioridade | Versão |
+|---:|---|---|---|---|
+| 1 | KAN-70 | US-07 Agendar sem conflito de horário | Alta | v1.1.0 |
+| 2 | KAN-71 | US-08 Cadastrar e manter clientes | Alta | v1.1.0 |
+| 3 | KAN-73 | US-10 Concluir atendimento com cobrança única | Alta | v1.5.0 (testes) |
+| 4 | KAN-75 | US-12 Profissional acessa a própria agenda | Alta | v1.5.0 (testes) |
+| 5 | KAN-50 | US-01 Catálogo rápido | Alta | v1.2.0 |
+| 6 | KAN-51 | US-02 Aviso de novo agendamento | Alta | v1.2.0 |
+| 7 | KAN-72 | US-09 Manter o catálogo de serviços | Média | v1.1.0 |
+| 8 | KAN-74 | US-11 Convidar profissional | Média | v1.1.0 |
+| 9 | KAN-52 | US-03 Operação sem cache | Média | v1.3.0 |
+| 10 | KAN-53 | US-04 Mensagens de erro claras | Média | v1.3.0 |
+| 11 | KAN-54 | US-05 Documentação navegável | Média | v1.3.0 |
+| 12 | KAN-55 | US-06 Ambiente com um comando | Média | v1.1.0 |
 
 ## Regra usada
 
-Primeiro vêm histórias de maior valor operacional e dependências técnicas do
-ciclo. Em seguida entram resiliência e usabilidade. Documentação e empacotamento
-fecham o ciclo quando os contratos e os serviços que descrevem já estão estáveis.
+Primeiro vem o que sustenta a operação da clínica: agenda, clientes e cobrança.
+Depois, histórias de maior valor operacional e dependências técnicas do ciclo. Em
+seguida entram resiliência e usabilidade. Documentação e empacotamento fecham o
+ciclo quando os contratos e os serviços que descrevem já estão estáveis. No backlog
+pendente, um item que reduz risco de outro vem antes dele.
 
 Todas as histórias usam o formato “Como..., quero..., para...”, possuem critérios
-de aceite verificáveis, prioridade do Jira, versão de entrega e vínculo `relates to`
-com a tarefa técnica correspondente.
+de aceite verificáveis, prioridade do Jira e versão de entrega.
 
-## Histórias
+## Histórias do núcleo do produto
+
+### KAN-70 / US-07 — Agendar sem conflito de horário
+
+**Como** recepcionista, **quero** agendar um atendimento e ser impedida de marcar
+um horário ocupado, **para** não prometer dois atendimentos ao mesmo tempo.
+
+- Prioridade: Alta. Versão: v1.1.0 Fundação.
+- Critérios de aceite:
+  1. **Dado** cliente, serviço e profissional válidos em horário livre, **quando**
+     crio o agendamento, **então** ele é salvo.
+  2. **Dado** um agendamento ativo que se sobrepõe ao horário, **quando** crio
+     outro, **então** recebo erro 409.
+  3. **Dado** uma data no passado, **quando** crio, **então** ele é recusado.
+  4. **Dado** um agendamento cancelado ou concluído no horário, **quando** crio
+     outro, **então** ele não gera conflito.
+- Evidência: `appointments.service.spec.ts`, `crud.integration.spec.ts` e
+  `resources.http.spec.ts`.
+
+### KAN-71 / US-08 — Cadastrar e manter clientes
+
+**Como** recepcionista, **quero** cadastrar e manter os clientes, **para** encontrar
+os dados deles na hora de agendar.
+
+- Prioridade: Alta. Versão: v1.1.0 Fundação.
+- Critérios de aceite:
+  1. **Dado** os campos obrigatórios preenchidos, **quando** salvo, **então** o
+     cliente aparece na lista.
+  2. **Dado** um campo obrigatório vazio, **quando** salvo, **então** o cadastro não
+     é concluído.
+  3. **Dado** um cliente existente, **quando** edito ou excluo, **então** a lista
+     reflete a mudança.
+  4. **Dado** clientes de outra clínica, **quando** consulto, **então** eles não
+     aparecem para mim.
+- Evidência: `e2e/clientes.spec.ts` e `crud.integration.spec.ts`.
+
+### KAN-72 / US-09 — Manter o catálogo de serviços
+
+**Como** administradora, **quero** manter os serviços com preço e duração, **para**
+que a agenda e a cobrança usem valores corretos.
+
+- Prioridade: Média. Versão: v1.1.0 Fundação.
+- Critérios de aceite:
+  1. **Dado** um nome válido, **quando** salvo o serviço, **então** ele aparece no
+     catálogo.
+  2. **Dado** o nome vazio, **quando** salvo, **então** o cadastro não é concluído.
+  3. **Dado** um preço negativo, **quando** envio, **então** recebo erro de validação.
+  4. **Dado** um serviço existente, **quando** edito ou excluo, **então** o catálogo
+     reflete a mudança.
+- Evidência: `e2e/servicos.spec.ts` e `resources.http.spec.ts`.
+
+### KAN-73 / US-10 — Concluir atendimento com cobrança única
+
+**Como** profissional, **quero** concluir o atendimento e ter a cobrança criada
+automaticamente, **para** não lançar nem duplicar valores à mão.
+
+- Prioridade: Alta. Versão: v1.5.0, que adiciona os testes de um comportamento
+  existente desde a v1.1.0.
+- Critérios de aceite:
+  1. **Dado** um agendamento ativo, **quando** concluo, **então** ele fica concluído
+     e a cobrança é criada na mesma transação.
+  2. **Dado** um atendimento já concluído, **quando** repito a conclusão, **então**
+     nenhuma cobrança nova é criada.
+  3. **Dado** um agendamento cancelado, **quando** tento concluir, **então** recebo
+     erro 409 e nenhuma cobrança é criada.
+- Evidência: `appointments.service.spec.ts` e `billings.service.spec.ts`.
+
+### KAN-74 / US-11 — Convidar profissional
+
+**Como** administradora, **quero** convidar um profissional por e-mail, **para** que
+ele tenha acesso sem eu definir a senha dele.
+
+- Prioridade: Média. Versão: v1.1.0 Fundação.
+- Critérios de aceite:
+  1. **Dado** um convite enviado, **quando** o profissional ativa a conta, **então**
+     ele consegue fazer login normalmente.
+  2. **Dado** um convite reenviado, **quando** o token anterior é usado, **então** ele
+     não é mais aceito.
+- Evidência: `invite-activation.integration.spec.ts`.
+
+### KAN-75 / US-12 — Profissional acessa apenas a própria agenda
+
+**Como** profissional, **quero** ver e alterar somente meus atendimentos, **para**
+que a agenda dos colegas fique protegida.
+
+- Prioridade: Alta. Versão: v1.5.0, que adiciona os testes de um comportamento
+  existente desde a v1.1.0.
+- Critérios de aceite:
+  1. **Dado** que sou profissional, **quando** filtro a agenda por outro profissional,
+     **então** recebo erro 403.
+  2. **Dado** um agendamento de outro profissional, **quando** tento concluí-lo,
+     **então** recebo erro 403.
+  3. **Dado** que sou profissional, **quando** tento criar serviço ou sala, **então**
+     recebo erro 403.
+- Evidência: `appointments.service.spec.ts` e `role-access.integration.spec.ts`.
+
+## Histórias pendentes
+
+### KAN-76 / US-13 — Lembrete de agendamento
+
+**Como** recepcionista, **quero** que o cliente receba um lembrete antes do horário,
+**para** reduzir faltas.
+
+- Prioridade: Alta. Versão planejada: v1.6.0 Evolução.
+- Critérios de aceite:
+  1. **Dado** um agendamento confirmado com e-mail do cliente, **quando** faltam 24
+     horas, **então** um lembrete entra na fila de notificações.
+  2. **Dado** um agendamento cancelado ou remarcado, **quando** chega o horário antigo
+     do lembrete, **então** nada é enviado.
+  3. **Dado** uma falha de entrega, **quando** as tentativas se esgotam, **então** o
+     envio vai para a dead-letter.
+
+### KAN-79 / US-14 — Autoagendamento por link público
+
+**Como** cliente da clínica, **quero** escolher serviço e horário por um link,
+**para** agendar sem depender do telefone.
+
+- Prioridade: Média. Versão planejada: v1.6.0 Evolução.
+- Critérios de aceite:
+  1. **Dado** o link da clínica, **quando** abro, **então** vejo somente serviços
+     ativos e horários livres.
+  2. **Dado** um horário livre, **quando** confirmo, **então** o agendamento aparece na
+     agenda da clínica.
+  3. **Dado** que o horário foi ocupado antes da confirmação, **quando** confirmo,
+     **então** sou avisada e escolho outro.
+
+## Histórias técnicas e de qualidade
 
 ### KAN-50 / US-01 — Catálogo rápido
 
