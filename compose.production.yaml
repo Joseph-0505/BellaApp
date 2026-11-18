@@ -1,0 +1,70 @@
+# Ambiente de demonstração em servidor compartilhado, atrás de um proxy externo com TLS.
+# Uso: docker compose -p bellaapp -f docker-compose.yml -f compose.production.yaml up -d --no-build
+# As imagens são construídas fora do servidor e identificadas por BELLAAPP_TAG.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  mysql:
+    command:
+      - --innodb-buffer-pool-size=64M
+      - --innodb-log-buffer-size=8M
+      - --performance-schema=OFF
+      - --max-connections=40
+    mem_limit: 448m
+    cpus: 0.5
+    logging: *logging
+
+  redis:
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 64mb
+      - --maxmemory-policy
+      - noeviction
+    mem_limit: 96m
+    cpus: 0.25
+    logging: *logging
+
+  backend:
+    image: bellaapp-backend:${BELLAAPP_TAG:?defina BELLAAPP_TAG}
+    build: !reset null
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *logging
+
+  notification-service:
+    image: bellaapp-notification-service:${BELLAAPP_TAG:?defina BELLAAPP_TAG}
+    build: !reset null
+    mem_limit: 96m
+    cpus: 0.25
+    logging: *logging
+
+  frontend:
+    image: bellaapp-frontend:${BELLAAPP_TAG:?defina BELLAAPP_TAG}
+    build: !reset null
+    mem_limit: 128m
+    cpus: 0.25
+    logging: *logging
+
+  nginx:
+    ports: !reset []
+    volumes: !override
+      - ./nginx/production.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - bellaapp-network
+      - proxy
+    mem_limit: 32m
+    cpus: 0.25
+    logging: *logging
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-horarius_web}
