@@ -210,7 +210,7 @@ classDiagram
 | Tradução Agenda → Financeiro | `buildBillingSnapshot` e `billingsService.ensureForCompletedAppointment` |
 | Escopo da clínica e profissional | `backend/src/shared/auth/user-clinic-context.ts` e helpers de escopo |
 | Invalidação e evento pós-mutação | `recordMutation` em `appointments.service.ts` |
-| Casos de sucesso e violações de invariantes | `appointments.service.spec.ts` e `appointments.repository.spec.ts` |
+| Casos de sucesso e violações de invariantes | `appointments.service.spec.ts`, `appointments.repository.spec.ts` e `billings.service.spec.ts` |
 
 ## Exemplo para apresentação
 

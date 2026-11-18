@@ -107,6 +107,6 @@ roteiro manual está em [redis-degradation.md](../runbooks/redis-degradation.md)
 | Q-02 | Sim: teste unitário e `scripts/validate-redis-degradation.mjs` | Executar o script com o stack no ar e mostrar os logs `cache.read_failed` |
 | Q-03 | Parcial: health e erros | Pausar MySQL em ambiente isolado e observar 503/log sanitizado |
 | Q-04 | Parcial: testes de papéis/escopo | Duas clínicas, tentativa cruzada e inspeção do cache |
-| Q-05 | Sim, em testes de serviço/integração existentes | Concluir atendimento e conferir cobrança única |
+| Q-05 | Parcial: `appointments.service.spec.ts` e `billings.service.spec.ts` cobrem conclusão, repetição e recusa com repositórios simulados; o rollback real da transação no MySQL não é testado | Concluir atendimento e conferir cobrança única |
 | Q-06 | Não automatizado | Reiniciar sem `-v` e consultar dado anterior |
 | Q-07 | Sim: typecheck/testes/lint | Mostrar estrutura e executar a suíte |
