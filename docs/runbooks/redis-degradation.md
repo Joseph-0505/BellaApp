@@ -4,20 +4,33 @@ Relacionado a KAN-21, KAN-22 e KAN-52.
 
 ## Resultado esperado
 
-Com o Redis parado, consultas ao catálogo continuam respondendo pelo MySQL e
-agendamentos continuam sendo criados. O backend registra `cache.read_failed` ou
-`domain_event.publish_failed`. Após o Redis voltar, novas consultas voltam a
-popular e usar o cache sem reiniciar o backend.
+Com o Redis parado ou travado, consultas ao catálogo continuam respondendo pelo
+MySQL e agendamentos continuam sendo criados. O backend registra
+`cache.read_failed` ou `domain_event.publish_failed` e, após 3 falhas seguidas,
+`redis.circuit_open`. Depois que o Redis volta, a primeira chamada liberada após 30 s
+registra `redis.circuit_half_open` e `redis.circuit_closed`, e o cache volta a ser
+usado sem reiniciar o backend.
 
 ## Demonstração reproduzível
 
-A validação automatizada executa o cenário completo e sempre religa o Redis:
+A validação automatizada trava o Redis, depois o desliga, mede cada resposta e
+sempre o restaura. Leva cerca de 1 minuto e meio:
 
 ```bash
 node scripts/validate-redis-degradation.mjs
 ```
 
-Pré-requisito: stack iniciado, usuário autenticado e token armazenado em `TOKEN`.
+Para simular só o travamento:
+
+```bash
+docker compose pause redis
+curl -i -H "Authorization: Bearer $TOKEN" https://bellaapp.local/api/v1/services
+docker compose logs --since=2m backend | grep 'redis.circuit'
+docker compose unpause redis
+```
+
+Roteiro manual do Redis desligado. Pré-requisito: stack iniciado, usuário
+autenticado e token armazenado em `TOKEN`.
 
 ```bash
 docker compose up --build -d
@@ -48,8 +61,8 @@ curl -i -H "Authorization: Bearer $TOKEN" https://bellaapp.local/api/v1/services
 docker compose logs --since=2m backend | grep 'cache.hit'
 ```
 
-O `PING` deve retornar `PONG`, a primeira leitura repopula o cache e a segunda
-registra `cache.hit`, sem reiniciar o backend.
+O `PING` deve retornar `PONG`. Passados 30 s da abertura do circuito, a primeira
+leitura repopula o cache e a segunda registra `cache.hit`, sem reiniciar o backend.
 
 ## Escalonamento
 
