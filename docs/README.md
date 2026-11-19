@@ -3,7 +3,10 @@
 Este índice liga cada item da rubrica final ao material do repositório e a uma
 forma rápida de demonstrá-lo. Os caminhos são relativos à raiz do projeto.
 
-Pré-requisito das demonstrações ao vivo: stack no ar com `docker compose up --build -d`.
+**Link do site:** <https://bella.flynnapp.com.br> (Swagger em
+<https://bella.flynnapp.com.br/docs/>).
+
+Pré-requisito das demonstrações ao vivo locais: stack no ar com `docker compose up --build -d`.
 
 ## Arquitetura de Software
 
@@ -13,7 +16,7 @@ Pré-requisito das demonstrações ao vivo: stack no ar com `docker compose up -
 | Estilos e DDD: Context Map, Bounded Contexts, Entities, Value Objects e Aggregates | [architecture/ddd.md](architecture/ddd.md) | Percorrer o Context Map e o modelo do agregado `Appointment` | KAN-2 |
 | Integração, APIs e dados: OpenAPI e ADR do banco | `backend/openapi/openapi.yaml`, [architecture/adr/0002-mysql-prisma-multiclinica.md](architecture/adr/0002-mysql-prisma-multiclinica.md), [api-validation.md](api-validation.md) | Abrir `https://bellaapp.local/docs/`, fazer login e usar **Authorize** | KAN-6, KAN-54 |
 | Qualidade, resiliência e observabilidade: SLOs/SLIs, estratégias e plano de observabilidade | [reliability/slo-observability.md](reliability/slo-observability.md) | Executar `node scripts/validate-redis-degradation.mjs` e mostrar `redis.circuit_open` e `redis.circuit_closed` nos logs | KAN-7, KAN-20, KAN-21, KAN-22, KAN-52, KAN-64, KAN-80 |
-| Entrega contínua: pipeline, estratégia de deploy e runbook | `.github/workflows/ci-cd.yml`, [deployment-strategy.md](deployment-strategy.md), [runbooks/application-down.md](runbooks/application-down.md), [ci-cd-evidence.md](ci-cd-evidence.md) | Mostrar a aba Actions do GitHub com os jobs verdes | KAN-8 |
+| Entrega contínua: pipeline, estratégia de deploy e runbook | `.github/workflows/ci-cd.yml`, [deployment-strategy.md](deployment-strategy.md), [runbooks/application-down.md](runbooks/application-down.md), [ci-cd-evidence.md](ci-cd-evidence.md) | Mostrar a aba Actions do GitHub com os jobs verdes e o site publicado em `https://bella.flynnapp.com.br/api/v1/health` | KAN-8, KAN-65 |
 
 ## Back-end Avançado
 

@@ -4,6 +4,10 @@ Aplicação full-stack (React + Vite no frontend, Fastify + Prisma no backend,
 MySQL e Redis)
 orquestrada com Docker Compose e servida por Nginx como proxy reverso com HTTPS.
 
+**Site de demonstração:** <https://bella.flynnapp.com.br> (API em
+`/api/v1/health`, Swagger em `/docs/`). Como foi publicado:
+[estratégia de deploy](docs/deployment-strategy.md#ambiente-de-demonstração-publicado).
+
 ## Arquitetura
 
 | Serviço  | Imagem / Build              | Exposição                         |

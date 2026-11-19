@@ -53,9 +53,20 @@ PR_BRANCH=feature/sem-chave PR_TITLE=Teste PR_BASE_SHA=origin/main node scripts/
 
 O primeiro comando passa e o segundo falha.
 
+### Execução de 19/11/2026
+
+Run #13 (`pull_request`, `feature/KAN-64-resiliencia-e-evidencias` → `develop`,
+<https://github.com/Joseph-0505/BellaApp/actions/runs/44537049995>): sucesso em
+todos os jobs — backend, web, mobile, notificações, build do Compose e `Jira
+references`. `Deploy production` aparece como pulado. Antes do push, o hook
+`pre-push` rodou o E2E contra o stack local: 14 de 14.
+
 ## Limitações atuais
 
-- deploy depende da configuração do environment `production` e de um host remoto,
-  que não existem neste projeto acadêmico; o job fica pulado de forma explícita;
+- deploy depende da configuração do environment `production` e de um host remoto
+  com o repositório clonado, que não existem neste projeto acadêmico; o job fica
+  pulado de forma explícita. O ambiente de demonstração em
+  <https://bella.flynnapp.com.br> é publicado à mão com imagens construídas fora
+  do servidor (ver [deployment-strategy.md](deployment-strategy.md));
 - o E2E completo roda no hook `pre-push` contra o stack local com TLS, e não no
   GitHub Actions, porque exige certificado `mkcert` e o host `bellaapp.local`.

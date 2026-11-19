@@ -18,6 +18,7 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 - evidência de logs reais de cache e Pub/Sub em `docs/evidence/logs-cache-pubsub.md`.
 - Kanban explícito, histórias do núcleo do produto e backlog pendente priorizado.
 - `compose.production.yaml` e `nginx/production.conf` para o ambiente de demonstração.
+- ambiente de demonstração publicado em <https://bella.flynnapp.com.br>.
 
 ### Changed
 
