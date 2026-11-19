@@ -50,6 +50,7 @@ O que é coletado, de onde vem, para que serve e qual sinal exige ação.
 | `X-Request-Id` | Campo de correlação | Header da resposta e logs do backend | Ligar a reclamação do usuário ao log | não se aplica |
 | `cache.hit`, `cache.miss` | Log em nível debug | `CacheService` | SLI de taxa de cache | taxa de hit do catálogo < 80% após aquecimento |
 | `cache.read_failed`, `cache.write_failed`, `cache.invalidation_failed` | Log warn | `CacheService` | Detectar operação degradada sem Redis | qualquer ocorrência contínua por mais de 5 min |
+| `redis.circuit_open`, `redis.circuit_half_open`, `redis.circuit_closed` | Log warn/info | `CircuitBreaker` | Mostrar quando a API deixou de chamar o Redis e quando voltou | circuito aberto por mais de 5 min |
 | `domain_event.published`, `domain_event.publish_failed` | Log info/warn | `DomainEventBus` | SLI de evento consumido | `publish_failed` acima de 1% dos eventos |
 | `notification.retry`, `notification.dead_letter` | Log warn/error | Worker do notification-service | Saúde da fila de notificações | qualquer job na dead-letter |
 | `queue.queued` e `queue.deadLetter` | Métrica pontual | `GET /health` do notification-service | Backlog e falhas acumuladas | fila crescendo por 3 leituras seguidas |
@@ -64,6 +65,8 @@ Logs redigem `Authorization`, cookies e `Set-Cookie` antes de serem gravados.
 |---|---|---|
 | Redis/cache | cache-aside, TTL, invalidação por versão e fail-open para o banco | `cache.service.ts` e testes unitários |
 | Conexão Redis | timeout de conexão de 5 s e reconexão com espera limitada a 3 s | `lib/redis.ts` |
+| Comandos Redis | timeout de 500 ms por comando durante a requisição e no health check | `lib/redis.ts` e `circuit-breaker.spec.ts` |
+| Redis indisponível ou travado | circuit breaker: abre após 3 falhas seguidas, espera 30 s, testa com uma chamada e fecha no sucesso | `shared/resilience/circuit-breaker.ts` e `scripts/validate-redis-degradation.mjs` |
 | Redis/Pub-Sub | publicação best-effort; falha é registrada e não desfaz o agendamento | `domain-event-bus.ts` e teste de falha |
 | Notificações | até três tentativas e dead-letter queue | `notification-service/src/queue.ts` |
 | Deploy | healthcheck, verificação pós-deploy e rollback do código | `scripts/deploy-remote.sh` |
@@ -72,15 +75,28 @@ Não há retry automático de requisições de escrita da API: repetir uma opera
 não idempotente pode duplicar dados. O retry fica restrito a conexões e ao
 processamento assíncrono, onde há identificador e controle de tentativa.
 
-### Avaliação de circuit breaker
+### Circuit breaker do Redis
 
-Um circuit breaker explícito não foi adicionado ao cache/Pub-Sub. O cache já falha
-aberto, o publisher não bloqueia a operação principal e o cliente Redis reconecta
-com backoff limitado; portanto, um breaker duplicaria esses mecanismos neste
-estágio. A decisão deve ser revista se a latência de falha do Redis consumir mais
-de 10% do orçamento de latência ou se ocorrerem falhas repetidas por mais de cinco
-minutos. Para integrações HTTP externas futuras, timeout + circuit breaker passa a
-ser o padrão.
+Todos os comandos que o backend faz ao Redis durante uma requisição passam por
+`guardedRedis`, em `lib/redis.ts`. Cache e publicação de eventos usam esse único
+ponto, então a proteção vale para os dois.
+
+| Estado | Comportamento |
+|---|---|
+| Fechado | Comandos executam com limite de 500 ms; 3 falhas seguidas abrem o circuito |
+| Aberto | Por 30 s, leituras, escritas de cache e publicações falham na hora e a API segue pelo MySQL |
+| Meio-aberto | Uma chamada testa o Redis: sucesso fecha o circuito, falha reabre por mais 30 s |
+
+Duas exceções são intencionais. A **invalidação de cache** sempre tenta, porque
+perdê-la serviria dado antigo depois da recuperação; o TTL continua sendo a rede de
+segurança. O **health check** fica fora do circuito, com o mesmo limite de 500 ms,
+porque precisa informar o estado real do Redis.
+
+A medição de 18/11/2026 mostrou que, sem limite de tempo, um Redis travado deixava a
+API sem responder (KAN-80). Os números estão no cenário
+[Q-02](../architecture/quality-scenarios.md#q-02--disponibilidade-diante-de-falha-do-cache).
+Para integrações HTTP externas futuras, timeout + circuit breaker passa a ser o
+padrão.
 
 ## Diagnóstico
 

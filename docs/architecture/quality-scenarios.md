@@ -33,16 +33,30 @@ metas propostas e ainda precisam de k6/Artillery ou ferramenta equivalente.
 |---|---|
 | Fonte | Redis deixa de responder depois que a API já está em execução |
 | Estímulo | Um usuário solicita uma listagem cacheada |
-| Artefato | Cliente Redis, cache-aside, MySQL e health check |
-| Ambiente | API e MySQL disponíveis; Redis indisponível |
-| Resposta | A API registra `cache.read_failed`, consulta o MySQL e não retorna dado de outra clínica; o health check sinaliza a dependência como `down` |
-| Medida | A requisição deve terminar sem corrupção; resposta da listagem em até 6 s; `/api/v1/health` retorna 503 enquanto Redis estiver indisponível |
+| Artefato | Cliente Redis, circuit breaker, cache-aside, MySQL e health check |
+| Ambiente | API e MySQL disponíveis; Redis desligado ou travado (aceita conexão e não responde) |
+| Resposta | Cada comando tem limite de 500 ms. A API registra `cache.read_failed`, consulta o MySQL e, após 3 falhas seguidas, abre o circuito e para de chamar o Redis por 30 s; o health check sinaliza a dependência como `down` |
+| Medida | Toda listagem responde em até 1,5 s; com o circuito aberto, não há espera pelo Redis; `/api/v1/health` retorna 503; ao voltar, o circuito fecha sem reiniciar o backend |
 
-**Evidência atual:** teste unitário do comportamento fail-open em
-`cache.service.spec.ts` e injeção de falha automatizada em
-`scripts/validate-redis-degradation.mjs`, que para o Redis, confirma a
-listagem com HTTP 200 pelo MySQL, religa o Redis e confirma a volta do cache. O
-roteiro manual está em [redis-degradation.md](../runbooks/redis-degradation.md).
+**Evidência atual:** `circuit-breaker.spec.ts`, `cache.service.spec.ts` e injeção
+de falha automatizada em `scripts/validate-redis-degradation.mjs`, que trava e
+depois desliga o Redis, mede cada resposta e confirma os logs de abertura e
+fechamento do circuito. O roteiro manual está em
+[redis-degradation.md](../runbooks/redis-degradation.md).
+
+Medição local de 18/11/2026, no Docker, com a máquina ocupada por outra suíte de
+testes. Os valores servem para comparar a ordem de grandeza, não como SLO:
+
+| Situação | Antes do limite e do circuito | Depois |
+|---|---|---|
+| Redis travado: 3 primeiras listagens | sem resposta em 15 s, quando o teste desistiu | cerca de 530 ms cada |
+| Redis travado: listagens seguintes | sem resposta em 15 s | 24 a 36 ms |
+| Redis travado: cadastro de serviço | sem resposta em 15 s | cerca de 540 ms |
+| Redis travado: `/api/v1/health` | sem resposta em 15 s | 503 em cerca de 510 ms |
+| Redis desligado: listagens | 29 a 49 ms | 23 a 50 ms |
+
+O defeito foi registrado em KAN-80. Com o Redis desligado o comando falha na hora,
+por isso o teste anterior não o revelava.
 
 ## Q-03 — Detecção de indisponibilidade da fonte de verdade
 
@@ -104,9 +118,9 @@ roteiro manual está em [redis-degradation.md](../runbooks/redis-degradation.md)
 | Cenário | Automatizado hoje | Demonstração recomendada |
 |---|---|---|
 | Q-01 | Parcial: testes de cache | Duas leituras e comparação de logs/chaves; depois teste de carga |
-| Q-02 | Sim: teste unitário e `scripts/validate-redis-degradation.mjs` | Executar o script com o stack no ar e mostrar os logs `cache.read_failed` |
+| Q-02 | Sim: testes unitários e `scripts/validate-redis-degradation.mjs` | Executar o script com o stack no ar e mostrar `redis.circuit_open` e `redis.circuit_closed` nos logs |
 | Q-03 | Parcial: health e erros | Pausar MySQL em ambiente isolado e observar 503/log sanitizado |
 | Q-04 | Parcial: testes de papéis/escopo | Duas clínicas, tentativa cruzada e inspeção do cache |
-| Q-05 | Sim, em testes de serviço/integração existentes | Concluir atendimento e conferir cobrança única |
+| Q-05 | Parcial: `appointments.service.spec.ts` e `billings.service.spec.ts` cobrem conclusão, repetição e recusa com repositórios simulados; o rollback real da transação no MySQL não é testado | Concluir atendimento e conferir cobrança única |
 | Q-06 | Não automatizado | Reiniciar sem `-v` e consultar dado anterior |
 | Q-07 | Sim: typecheck/testes/lint | Mostrar estrutura e executar a suíte |

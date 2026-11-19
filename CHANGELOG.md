@@ -13,6 +13,25 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 - snapshot final do Jira em `docs/jira/status-2026-11-11.md`, com os 55 cards
   concluídos e as quatro versões liberadas.
+- circuit breaker e limite de 500 ms nos comandos Redis feitos durante a requisição.
+- testes da conclusão de atendimento, da cobrança única e do escopo do profissional.
+- evidência de logs reais de cache e Pub/Sub em `docs/evidence/logs-cache-pubsub.md`.
+- Kanban explícito, histórias do núcleo do produto e backlog pendente priorizado.
+- `compose.production.yaml` e `nginx/production.conf` para o ambiente de demonstração.
+- ambiente de demonstração publicado em <https://bella.flynnapp.com.br>.
+
+### Changed
+
+- `scripts/validate-redis-degradation.mjs` valida Redis travado e desligado, mede as
+  respostas e confere a abertura e o fechamento do circuito.
+
+### Fixed
+
+- a API e os health checks ficavam sem responder quando o Redis travava (KAN-80).
+
+### Removed
+
+- binário `mkcert.exe` do repositório.
 
 ## [1.4.0] - 2026-11-11
 
