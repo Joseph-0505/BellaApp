@@ -19,7 +19,12 @@ import { cashRoutes } from "../modules/cash/cash.routes";
 import { billingRoutes } from "../modules/billing/billing.routes";
 import { prisma } from "../lib/prisma";
 import { profileImagesRoutes } from "../modules/profile-images/profile-images.routes";
-import { connectRedis, disconnectRedis, redis } from "../lib/redis";
+import {
+  connectRedis,
+  disconnectRedis,
+  redis,
+  redisCircuitBreaker,
+} from "../lib/redis";
 import { cacheService } from "../shared/cache/cache.service";
 import { domainEventBus } from "../shared/events/domain-event-bus";
 import { healthRoutes } from "../modules/health/health.routes";
@@ -58,6 +63,7 @@ export function buildApp(): FastifyInstance {
   }
   cacheService.setLogger(app.log);
   domainEventBus.setLogger(app.log);
+  redisCircuitBreaker.setLogger(app.log);
 
   const openApiDirectory = path.resolve(__dirname, "../../openapi");
 

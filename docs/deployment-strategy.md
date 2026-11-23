@@ -74,9 +74,54 @@ somente remover campos em uma versão posterior. Antes de uma migration destruti
 é obrigatório criar e testar backup. Se a falha envolver dados, interrompa o
 rollback automático, preserve evidências e siga o plano de restauração aprovado.
 
+## Ambiente de demonstração publicado
+
+Relacionado a KAN-65. No ar desde 19/11/2026 em <https://bella.flynnapp.com.br>.
+
+O ambiente roda num servidor compartilhado com outros projetos, atrás de um Caddy
+que já é dono das portas 80/443 e encerra o TLS. Por isso ele não usa o job
+`Deploy production` acima, e sim uma publicação manual com estas regras:
+
+- **Imagens construídas fora do servidor.** O build roda na máquina de
+  desenvolvimento (mesma arquitetura `amd64`) e as imagens seguem por
+  `docker save | ssh docker load`, conferindo os IDs dos dois lados. O servidor
+  nunca compila nada: um build com o disco cheio já derrubou serviços vizinhos.
+- **Override de produção.** `compose.production.yaml` troca o build pelas imagens
+  `bellaapp-*:${BELLAAPP_TAG}`, tira as portas do host, monta
+  `nginx/production.conf` (HTTP puro, o TLS fica com o Caddy) e impõe limite de
+  memória e CPU por serviço. Só o `bellaapp-nginx` entra na rede do proxy
+  (`horarius_web`); MySQL, Redis e backend ficam na rede interna.
+- **Segredos gerados no servidor.** `.env` e `backend/.env` são criados lá com
+  valores aleatórios e `chmod 600`, com `NODE_ENV=production`, `LOG_LEVEL=info`,
+  CORS e `APP_BASE_URL` no domínio público e e-mail apenas em log.
+- **Proxy.** O bloco `bella.flynnapp.com.br` → `bellaapp-nginx:80` foi acrescentado
+  ao Caddyfile depois de um backup, validado com `caddy validate` e aplicado com
+  `caddy reload`, sem reiniciar o proxy. O mesmo bloco foi versionado no
+  repositório de infraestrutura do servidor, para que o deploy de lá não o apague.
+
+Comandos usados (no servidor, em `/opt/apps/bellaapp`):
+
+```bash
+docker compose -p bellaapp -f docker-compose.yml -f compose.production.yaml up -d --no-build
+docker compose -p bellaapp ps
+```
+
+Verificação feita em 19/11/2026, com a tag `5cd2e64`:
+
+- os seis serviços `healthy`; `GET /api/v1/health`, `/` e `/docs/` com 200 pela
+  rede do proxy e depois pelo domínio, com certificado válido;
+- uso em repouso de ~362 MiB (MySQL 174, backend 71, frontend 56, notificações 53,
+  Nginx 5, Redis 4);
+- os outros sites do servidor continuaram respondendo 200 depois do reload.
+
+Rollback: `docker compose -p bellaapp down`, restaurar o backup do Caddyfile e
+`caddy reload`. O ambiente é temporário e será removido depois da avaliação.
+
 ## Limitações atuais
 
-- o deploy real depende de host e GitHub Secrets que não existem no repositório;
+- o job `Deploy production` depende de host e GitHub Secrets que não existem no
+  repositório e continua pulado; o ambiente de demonstração é publicado à mão,
+  como descrito acima;
 - não há ambiente blue/green, canary ou rollback automático de banco;
 - o teste E2E completo exige o stack com TLS e usuário de teste;
 - a primeira execução em produção deve ser acompanhada e anexada ao card Jira.

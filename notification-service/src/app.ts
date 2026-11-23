@@ -4,6 +4,8 @@ import { env } from "./config";
 import { notificationInputSchema } from "./notification";
 import { NotificationQueue } from "./queue";
 
+const HEALTH_TIMEOUT_MS = 1_000;
+
 export function buildApp(
   redis: Pick<ReturnType<typeof createClient>, "ping">,
   queue: NotificationQueue,
@@ -20,9 +22,15 @@ export function buildApp(
 
   app.get("/health", async (_request, reply) => {
     try {
-      const [redisStatus, queueStats] = await Promise.all([
-        redis.ping(),
-        queue.stats(),
+      // Um Redis travado não responde nem falha: sem limite, o health check ficaria preso.
+      const [redisStatus, queueStats] = await Promise.race([
+        Promise.all([redis.ping(), queue.stats()]),
+        new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error("Redis health check timed out")),
+            HEALTH_TIMEOUT_MS,
+          );
+        }),
       ]);
       return reply.code(200).send({
         status: "ok",

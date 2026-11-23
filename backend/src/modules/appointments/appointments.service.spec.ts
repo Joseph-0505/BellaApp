@@ -25,6 +25,7 @@ jest.mock("./appointments.repository", () => ({
     findAppointmentsForDay: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    markAsCompleted: jest.fn(),
     delete: jest.fn(),
   },
   CONFLICT_BLOCKING_STATUSES: ["SCHEDULED", "CONFIRMED"],
@@ -481,6 +482,181 @@ describe("appointmentsService", () => {
       billingAmount: 120,
       billingStatus: "PENDING",
       outstandingAmount: 120,
+    });
+  });
+
+  describe("conclusão e escopo do profissional", () => {
+    const appointmentRecord = (overrides: Record<string, unknown> = {}) =>
+      ({
+        id: "appointment-1",
+        userId: "user-1",
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        roomId: null,
+        scheduledAt: new Date("2026-11-20T13:00:00.000Z"),
+        status: AppointmentStatus.SCHEDULED,
+        receivedBy: "CLINIC",
+        notes: null,
+        billing: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+      }) as never;
+
+    const detailedRecord = () =>
+      ({
+        ...(appointmentRecord({
+          status: AppointmentStatus.COMPLETED,
+        }) as object),
+        client: { name: "Cliente 1" },
+        service: { name: "Serviço 1", price: 120, durationMinutes: 60 },
+        professional: { name: "Profissional 1" },
+      }) as never;
+
+    const actAsProfessional = () =>
+      mockedUserClinicContextService.getOrThrow.mockResolvedValue({
+        userId: "user-2",
+        clinicId: "user-1",
+        plan: ClinicPlan.TEAM,
+        trialEndsAt: null,
+        role: ClinicUserRole.PROFESSIONAL,
+        professionalId: "professional-1",
+      });
+
+    it("deve concluir e solicitar a cobrança dentro da mesma transação", async () => {
+      mockedAppointmentsRepository.findById
+        .mockResolvedValueOnce(appointmentRecord())
+        .mockResolvedValueOnce(
+          appointmentRecord({ status: AppointmentStatus.COMPLETED }),
+        );
+      mockedAppointmentsRepository.findDetailedById.mockResolvedValue(
+        detailedRecord(),
+      );
+
+      const result = await appointmentsService.complete(
+        "user-1",
+        "appointment-1",
+        {},
+      );
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockedAppointmentsRepository.markAsCompleted).toHaveBeenCalledWith(
+        "appointment-1",
+        "CLINIC",
+        mockPrisma,
+      );
+      expect(
+        mockBillingsService.ensureForCompletedAppointment,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        mockBillingsService.ensureForCompletedAppointment,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clinicId: "user-1",
+          db: mockPrisma,
+          appointment: expect.objectContaining({
+            appointmentId: "appointment-1",
+            serviceName: "Serviço 1",
+          }),
+        }),
+      );
+      expect(result.billing.id).toBe("billing-1");
+      expect(mockPublishDomainEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "appointment.completed" }),
+      );
+    });
+
+    it("não deve regravar o status ao repetir a conclusão", async () => {
+      mockedAppointmentsRepository.findById.mockResolvedValue(
+        appointmentRecord({ status: AppointmentStatus.COMPLETED }),
+      );
+      mockedAppointmentsRepository.findDetailedById.mockResolvedValue(
+        detailedRecord(),
+      );
+
+      await appointmentsService.complete("user-1", "appointment-1", {});
+
+      expect(
+        mockedAppointmentsRepository.markAsCompleted,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("deve recusar a conclusão de agendamento cancelado sem gerar cobrança", async () => {
+      mockedAppointmentsRepository.findById.mockResolvedValue(
+        appointmentRecord({ status: AppointmentStatus.CANCELED }),
+      );
+
+      await expect(
+        appointmentsService.complete("user-1", "appointment-1", {}),
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        code: "INVALID_APPOINTMENT_STATUS",
+      });
+
+      expect(
+        mockedAppointmentsRepository.markAsCompleted,
+      ).not.toHaveBeenCalled();
+      expect(
+        mockBillingsService.ensureForCompletedAppointment,
+      ).not.toHaveBeenCalled();
+      expect(mockPublishDomainEvent).not.toHaveBeenCalled();
+    });
+
+    it("deve impedir o profissional de concluir agendamento de outro profissional", async () => {
+      actAsProfessional();
+      mockedAppointmentsRepository.findById.mockResolvedValue(
+        appointmentRecord({ professionalId: "professional-2" }),
+      );
+
+      await expect(
+        appointmentsService.complete("user-2", "appointment-1", {}),
+      ).rejects.toMatchObject({ statusCode: 403 });
+
+      expect(
+        mockedAppointmentsRepository.markAsCompleted,
+      ).not.toHaveBeenCalled();
+      expect(
+        mockBillingsService.ensureForCompletedAppointment,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("deve impedir o profissional de abrir agendamento de outro profissional", async () => {
+      actAsProfessional();
+      mockedAppointmentsRepository.findById.mockResolvedValue(
+        appointmentRecord({ professionalId: "professional-2" }),
+      );
+
+      await expect(
+        appointmentsService.getById("user-2", "appointment-1"),
+      ).rejects.toMatchObject({ statusCode: 403 });
+    });
+
+    it("deve recusar filtro da agenda de outro profissional", async () => {
+      actAsProfessional();
+
+      await expect(
+        appointmentsService.list("user-2", {
+          page: 1,
+          limit: 10,
+          professionalId: "professional-2",
+        }),
+      ).rejects.toMatchObject({ statusCode: 403 });
+
+      expect(mockedAppointmentsRepository.listByUser).not.toHaveBeenCalled();
+    });
+
+    it("deve limitar a listagem à agenda do próprio profissional", async () => {
+      actAsProfessional();
+      mockedAppointmentsRepository.listByUser.mockResolvedValue([]);
+      mockedAppointmentsRepository.countByUser.mockResolvedValue(0);
+
+      await appointmentsService.list("user-2", { page: 1, limit: 10 });
+
+      expect(mockedAppointmentsRepository.listByUser).toHaveBeenCalledWith(
+        "user-1",
+        expect.objectContaining({ professionalId: "professional-1" }),
+      );
     });
   });
 });

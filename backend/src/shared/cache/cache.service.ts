@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { env } from "../../config/env";
-import { connectRedis, redis } from "../../lib/redis";
+import { ensureRedisForRequest, guardedRedis } from "../../lib/redis";
 
 export type CacheNamespace =
   | "appointments"
@@ -203,10 +203,7 @@ export class CacheService {
   }
 }
 
-export const cacheService = new CacheService(
-  redis as unknown as CacheClient,
-  {
-    enabled: env.REDIS_ENABLED,
-    ensureConnection: connectRedis,
-  },
-);
+export const cacheService = new CacheService(guardedRedis, {
+  enabled: env.REDIS_ENABLED,
+  ensureConnection: ensureRedisForRequest,
+});

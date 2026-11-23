@@ -6,6 +6,8 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const baseUrl = process.env.BELLAAPP_BASE_URL ?? "https://bellaapp.local";
 const password = "RedisValidation@123";
 const email = `redis-validation-${Date.now()}@bellaapp.test`;
+const maxDegradedResponseMs = 1_500;
+const circuitCooldownMs = 31_000;
 
 if (new URL(baseUrl).hostname === "bellaapp.local") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -71,6 +73,48 @@ async function waitForRedis() {
   throw new Error("Redis did not become healthy within 30 seconds");
 }
 
+async function listServices(authorization) {
+  const startedAt = performance.now();
+  const result = await request("/api/v1/services", {
+    headers: { authorization },
+  });
+  return { ...result, ms: Math.round(performance.now() - startedAt) };
+}
+
+function assertLogged(logs, event) {
+  const found = logs.includes(`"event":"${event}"`);
+  console.log(`${event}_logged=${found}`);
+  if (!found) {
+    throw new Error(`Expected ${event} in backend logs`);
+  }
+}
+
+async function validateFailure(name, failCommand, restoreCommand, authorization) {
+  const since = new Date().toISOString();
+  compose(failCommand, "redis");
+  try {
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      const { ms, status } = await listServices(authorization);
+      console.log(`redis_${name}_request_${attempt}_http=${status} ms=${ms}`);
+      if (ms > maxDegradedResponseMs) {
+        throw new Error(`Request took ${ms}ms with Redis ${name}`);
+      }
+    }
+    const logs = compose("logs", "--since", since, "backend");
+    assertLogged(logs, "cache.read_failed");
+    assertLogged(logs, "redis.circuit_open");
+  } finally {
+    compose(restoreCommand, "redis");
+    await waitForRedis();
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, circuitCooldownMs));
+  await listServices(authorization);
+  const recovered = await listServices(authorization);
+  console.log(`redis_${name}_recovered_http=${recovered.status} ms=${recovered.ms}`);
+  assertLogged(compose("logs", "--since", since, "backend"), "redis.circuit_closed");
+}
+
 async function main() {
   await request("/api/v1/auth/register", {
     method: "POST",
@@ -92,36 +136,12 @@ async function main() {
     body: JSON.stringify({ businessName: "Redis Validation Clinic" }),
   });
 
-  const baseline = await request("/api/v1/services", {
-    headers: { authorization },
-  });
-  console.log(`redis_up_http=${baseline.status}`);
+  const baseline = await listServices(authorization);
+  console.log(`redis_up_http=${baseline.status} ms=${baseline.ms}`);
 
-  compose("stop", "redis");
-  try {
-    const degraded = await request("/api/v1/services", {
-      headers: { authorization },
-    });
-    console.log(`redis_down_http=${degraded.status}`);
-    const logs = compose("logs", "--since", "2m", "backend");
-    const failureLogged = logs.includes("cache.read_failed");
-    console.log(`cache_read_failed_logged=${failureLogged}`);
-    if (!failureLogged) {
-      throw new Error("Expected cache.read_failed in backend logs");
-    }
-  } finally {
-    compose("start", "redis");
-    await waitForRedis();
-  }
-
-  const recovered = await request("/api/v1/services", {
-    headers: { authorization },
-  });
-  const cachedAgain = await request("/api/v1/services", {
-    headers: { authorization },
-  });
-  console.log(`redis_recovered_http=${recovered.status}`);
-  console.log(`redis_reused_http=${cachedAgain.status}`);
+  // "pause" simula um Redis travado; "stop", um Redis fora do ar.
+  await validateFailure("frozen", "pause", "unpause", authorization);
+  await validateFailure("stopped", "stop", "start", authorization);
 }
 
 main().catch((error) => {
