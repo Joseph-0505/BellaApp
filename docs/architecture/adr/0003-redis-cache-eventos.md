@@ -51,7 +51,9 @@ Usar uma única implantação Redis com dois fluxos independentes:
    contém `eventId`, tipo, clínica, agregado, ator, data e metadados opcionais.
 
 Leitura/escrita/invalidação do cache e publicação do evento são fail-open no
-caso de uso. A fonte de verdade continua sendo o MySQL.
+caso de uso. A fonte de verdade continua sendo o MySQL. Esses comandos têm limite de
+500 ms e passam por um circuit breaker, para que um Redis travado não prenda as
+requisições.
 
 ## Consequências positivas
 

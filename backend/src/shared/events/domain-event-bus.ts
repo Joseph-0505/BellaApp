@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { env } from "../../config/env";
-import { connectRedis, redis } from "../../lib/redis";
+import { ensureRedisForRequest, guardedRedis, redis } from "../../lib/redis";
 
 export const domainEventTypes = [
   "appointment.completed",
@@ -204,11 +204,11 @@ export class DomainEventBus {
 }
 
 export const domainEventBus = new DomainEventBus(
-  redis as unknown as PublisherClient,
+  guardedRedis,
   () => redis.duplicate() as unknown as SubscriberClient,
   {
     channel: env.PUBSUB_CHANNEL,
     enabled: env.REDIS_ENABLED && env.PUBSUB_ENABLED,
-    ensurePublisherConnection: connectRedis,
+    ensurePublisherConnection: ensureRedisForRequest,
   },
 );

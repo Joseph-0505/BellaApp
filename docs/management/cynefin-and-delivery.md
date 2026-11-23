@@ -58,6 +58,29 @@ Responsabilidades operacionais:
 - bloqueios e mudanças de escopo são registrados no card;
 - somente itens demonstráveis são movidos para Concluído.
 
+## Método de execução: Kanban
+
+A execução usa **Kanban**, no quadro `KAN board` do Jira, sem sprints. O trabalho
+entra pelo backlog priorizado e é puxado quando alguém fica disponível.
+
+| Coluna | Significado | Política para avançar |
+|---|---|---|
+| A fazer | Item priorizado, com responsável e prazo | Critérios de aceite compreendidos |
+| Em andamento | Alguém está implementando | Código ou documento pronto, com validação local |
+| Em revisão | Aguarda a revisão do outro integrante | CI verde e critérios conferidos |
+| Concluído | Entregue e demonstrável | Evidência registrada no card |
+
+Kanban foi escolhido em vez de Scrum porque, no domínio Complexo, a prioridade muda
+a cada experimento, e sprints de tamanho fixo pouco acrescentariam a uma equipe de
+duas pessoas com marcos já definidos pela rúbrica. O fluxo contínuo permite
+repriorizar sem esperar o fim de um ciclo. Os marcos preditivos são representados
+pelas versões do Jira. O quadro não tem limite formal de itens por coluna; com dois
+integrantes, a regra é terminar ou revisar um item antes de puxar outro.
+
+Defeitos entram como cards do tipo **Erro**, com sintoma, causa, correção e commit.
+Os erros anteriores à adoção do Jira foram registrados depois e estão identificados
+com o rótulo `registro-retroativo`.
+
 ## Ciclo de trabalho
 
 `A fazer → Em andamento → Em revisão → Concluído`.
