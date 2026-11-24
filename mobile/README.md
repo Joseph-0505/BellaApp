@@ -14,7 +14,7 @@ A documentação acadêmica e técnica está organizada em [`docs/`](docs/README
 - dois diagramas de sequência;
 - prompt pronto para gerar versões visuais em outra IA.
 
-Os arquivos históricos [EVOLUCAO.md](EVOLUCAO.md), [REQUISITOS.md](REQUISITOS.md) e [VALIDACAO.md](VALIDACAO.md) foram preservados. Os documentos distinguem implementação localizada no código de homologação em dispositivos e no banco.
+O conteúdo dos antigos `EVOLUCAO.md` e `REQUISITOS.md` foi reescrito em [01 — Contexto e evolução](docs/01-CONTEXTO-E-EVOLUCAO.md) e [02 — Requisitos e auditoria](docs/02-REQUISITOS-E-AUDITORIA.md), e o [VALIDACAO.md](docs/VALIDACAO.md) foi preservado em `docs/`. Os documentos distinguem implementação localizada no código de homologação em dispositivos e no banco.
 
 ## Funcionalidades atuais
 
@@ -82,4 +82,4 @@ Não confundir esses testes com homologação de interface, segurança completa 
 - No navegador, a sessão permanece em memória.
 - Permissões, conflitos de agenda e restrições de plano são verificados pela API.
 - Recuperação de senha, notificações push reais e sincronização offline não estão implementadas no mobile.
-- Testes Android/iOS, integração com banco e análise dos avisos de dependências continuam pendentes. Consulte [VALIDACAO.md](VALIDACAO.md).
+- Testes Android/iOS, integração com banco e análise dos avisos de dependências continuam pendentes. Consulte [VALIDACAO.md](docs/VALIDACAO.md).

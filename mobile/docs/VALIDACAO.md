@@ -1,6 +1,6 @@
 # Validação do mobile
 
-Documentos relacionados: [documentação acadêmica e diagramas](docs/README.md), [evolução do produto](EVOLUCAO.md) e [requisitos e critérios de aceite](REQUISITOS.md).
+Documentos relacionados: [documentação acadêmica e diagramas](README.md), [evolução do produto](01-CONTEXTO-E-EVOLUCAO.md) e [requisitos e critérios de aceite](02-REQUISITOS-E-AUDITORIA.md).
 
 ## Implementado
 

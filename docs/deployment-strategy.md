@@ -114,12 +114,24 @@ Verificação feita em 19/11/2026, com a tag `5cd2e64`:
   Nginx 5, Redis 4);
 - os outros sites do servidor continuaram respondendo 200 depois do reload.
 
-A versão 1.5.0, de 24/11/2026, não foi republicada neste ambiente: ele continua na
-tag `5cd2e64`, anterior à correção do KAN-81 e à troca da versão do contrato
-OpenAPI. Por isso o Swagger do site mostra 1.4.0.
+Republicação feita em 24/11/2026, com a tag `4de4c58` (versão 1.5.0):
 
-Rollback: `docker compose -p bellaapp down`, restaurar o backup do Caddyfile e
-`caddy reload`. O ambiente é temporário e será removido depois da avaliação.
+- antes do envio, o conteúdo das três imagens foi comparado por hash com o código
+  versionado; depois do `docker load`, os IDs bateram dos dois lados;
+- no servidor só mudou o valor de `BELLAAPP_TAG` no `.env`, com cópia do arquivo
+  anterior. O mesmo `up -d --no-build` recriou backend, frontend e notificações em
+  22 s, sem recriar MySQL, Redis e Nginx;
+- `GET /api/v1/health` com 200 e dependências `up`; `/docs/json` informa a versão
+  1.5.0; rota inexistente responde 404 com `ROUTE_NOT_FOUND` e `X-Request-Id`
+  (KAN-81);
+- os outros sites do servidor responderam 200 antes e depois da troca.
+
+As imagens `5cd2e64` continuam no servidor. Para voltar à versão anterior, basta
+restaurar o valor de `BELLAAPP_TAG` e repetir o comando de subida.
+
+Remoção do ambiente: `docker compose -p bellaapp down`, restaurar o backup do
+Caddyfile e `caddy reload`. O ambiente é temporário e será removido depois da
+avaliação.
 
 ## Limitações atuais
 
