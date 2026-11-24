@@ -114,6 +114,10 @@ Verificação feita em 19/11/2026, com a tag `5cd2e64`:
   Nginx 5, Redis 4);
 - os outros sites do servidor continuaram respondendo 200 depois do reload.
 
+A versão 1.5.0, de 24/11/2026, não foi republicada neste ambiente: ele continua na
+tag `5cd2e64`, anterior à correção do KAN-81 e à troca da versão do contrato
+OpenAPI. Por isso o Swagger do site mostra 1.4.0.
+
 Rollback: `docker compose -p bellaapp down`, restaurar o backup do Caddyfile e
 `caddy reload`. O ambiente é temporário e será removido depois da avaliação.
 

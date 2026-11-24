@@ -42,7 +42,7 @@ considerada fechada depois de tag, GitHub Release e versão Jira liberada existi
 | v1.2.0 | `9c10c60` (PR #13) | 2026-11-05 | cache-aside, Pub/Sub, health check, C4, DDD, ADRs e cenários de qualidade |
 | v1.3.0 | `bffa2e4` (PR #16) | 2026-11-10 | notificações com Redis Streams, OpenAPI, CI/CD, SLOs, runbooks e Cynefin |
 | v1.4.0 | merge do PR de promoção do branch `feature/KAN-45-ajustes-rubrica` | 2026-11-11 | OpenAPI completo, documentação consolidada, user stories e mapa da rubrica |
-| v1.5.0 | merge do PR de promoção do branch `feature/KAN-69-release-1.5.0` | 2026-11-24 | circuit breaker e limite de tempo no Redis, testes de conclusão com cobrança e de escopo, logs reais de cache e Pub/Sub, ambiente de demonstração publicado e 404 no envelope padrão |
+| v1.5.0 | `4de4c58` (PR #24) | 2026-11-24 | circuit breaker e limite de tempo no Redis, testes de conclusão com cobrança e de escopo, logs reais de cache e Pub/Sub, ambiente de demonstração publicado e 404 no envelope padrão |
 
 As tags v1.1.0, v1.2.0 e v1.3.0 foram criadas depois, sobre os commits de merge
 reais que levaram cada entrega para `main`. Nenhum commit foi reescrito; a tag
@@ -72,4 +72,13 @@ As quatro tags e as quatro GitHub Releases estão publicadas, e as versões do
 Jira foram liberadas na mesma data. As versões do Jira agrupam cards por tema e
 não têm o mesmo conteúdo das tags de mesmo número. Detalhes em
 [jira/status-2026-11-11.md](jira/status-2026-11-11.md).
+
+## Situação em 24/11/2026
+
+A tag `v1.5.0` e a GitHub Release
+<https://github.com/Joseph-0505/BellaApp/releases/tag/v1.5.0> foram publicadas em
+24/11/2026, sobre o merge do PR #24 em `main`. A versão "v1.5.0 Publicação e
+resiliência" do Jira foi liberada na mesma data, com dez cards concluídos. A
+v1.6.0 Evolução continua planejada, com quatro itens no backlog. Detalhes em
+[jira/status-2026-11-24.md](jira/status-2026-11-24.md).
 
