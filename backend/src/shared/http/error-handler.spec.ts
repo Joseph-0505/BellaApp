@@ -106,6 +106,21 @@ describe("registerErrorHandler", () => {
     });
   });
 
+  it("deve responder rota inexistente no envelope padrão", async () => {
+    const response = await app.inject({
+      method: "GET",
+      url: "/rota-que-nao-existe",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(JSON.parse(response.body)).toEqual({
+      error: {
+        code: "ROUTE_NOT_FOUND",
+        message: "Rota não encontrada.",
+      },
+    });
+  });
+
   it("deve traduzir ZodError para payload de validação", async () => {
     const response = await app.inject({
       method: "GET",

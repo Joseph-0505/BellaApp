@@ -62,6 +62,20 @@ function logHandledError(
 
 // Converte erros técnicos e de validação em respostas HTTP padronizadas.
 export function registerErrorHandler(app: FastifyInstance): void {
+  // Rota inexistente não passa pelo setErrorHandler; sem isto sai o 404 nativo do Fastify.
+  app.setNotFoundHandler((request, reply) => {
+    const errorPayload = {
+      code: "ROUTE_NOT_FOUND",
+      message: "Rota não encontrada.",
+    };
+
+    logHandledError({ appPayload: errorPayload, request, statusCode: 404 });
+
+    return reply.status(404).send({
+      error: errorPayload,
+    });
+  });
+
   app.setErrorHandler((error: Error, request, reply) => {
     if (error instanceof AppError) {
       const errorPayload = {
