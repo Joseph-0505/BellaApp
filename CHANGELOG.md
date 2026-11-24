@@ -9,6 +9,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
+### Added
+
+- snapshot do Jira de 24/11/2026 em `docs/jira/status-2026-11-24.md`, com 81 cards,
+  nove erros e a versão 1.5.0 liberada.
+
 ## [1.5.0] - 2026-11-24
 
 ### Added
