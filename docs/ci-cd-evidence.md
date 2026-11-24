@@ -61,6 +61,17 @@ todos os jobs — backend, web, mobile, notificações, build do Compose e `Jira
 references`. `Deploy production` aparece como pulado. Antes do push, o hook
 `pre-push` rodou o E2E contra o stack local: 14 de 14.
 
+### Execução de 24/11/2026 (versão 1.5.0)
+
+| Run | Evento | Branch | Resultado |
+|---|---|---|---|
+| [#18](https://github.com/Joseph-0505/BellaApp/actions/runs/45422160543) | pull_request | `feature/KAN-69-release-1.5.0` → `develop` (PR #23) | sucesso |
+| [#19](https://github.com/Joseph-0505/BellaApp/actions/runs/45423847741) | push | `develop` | sucesso |
+| [#20](https://github.com/Joseph-0505/BellaApp/actions/runs/45423871742) | pull_request | `develop` → `main` (PR #24) | sucesso |
+| [#21](https://github.com/Joseph-0505/BellaApp/actions/runs/45424467747) | push | `main` (`4de4c58`, tag `v1.5.0`) | sucesso; `Deploy production` pulado |
+
+Antes de cada push, o hook `pre-push` rodou o E2E contra o stack local: 14 de 14.
+
 ## Limitações atuais
 
 - deploy depende da configuração do environment `production` e de um host remoto
