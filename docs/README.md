@@ -25,7 +25,7 @@ Pré-requisito das demonstrações ao vivo locais: stack no ar com `docker compo
 | Cache distribuído com Redis: cache-aside, TTL e invalidação | `backend/src/shared/cache/cache.service.ts`, `cache.service.spec.ts` e [evidence/logs-cache-pubsub.md](evidence/logs-cache-pubsub.md) | Duas chamadas a `GET /api/v1/services` e `docker compose logs backend` mostrando `cache.miss` e depois `cache.hit` com `LOG_LEVEL=debug` | KAN-50, KAN-67 |
 | Mensageria Pub/Sub: publicar e consumir eventos | `backend/src/shared/events/domain-event-bus.ts`, `notification-service/src/domain-events.ts`, [architecture/adr/0005-notificacoes-redis-streams.md](architecture/adr/0005-notificacoes-redis-streams.md), [evidence/logs-cache-pubsub.md](evidence/logs-cache-pubsub.md) | Criar um agendamento e seguir `domain_event.published`, `domain_event.received` e `notification.enqueued_from_domain_event` nos logs | KAN-51, KAN-67 |
 | Docker Compose e Nginx como proxy reverso | `docker-compose.yml`, `nginx/default.conf`, [architecture/adr/0004-docker-compose-nginx.md](architecture/adr/0004-docker-compose-nginx.md) | `docker compose ps` com todos os serviços `healthy`; `http://bellaapp.local` redireciona para HTTPS | KAN-55 |
-| Boas práticas: módulos, DTOs, services, controllers, logs e erros | `backend/src/modules/*`, `backend/src/shared/http/error-handler.ts` | Abrir `backend/src/modules/appointments`; enviar login inválido e mostrar `VALIDATION_ERROR` e o header `X-Request-Id` | KAN-53 |
+| Boas práticas: módulos, DTOs, services, controllers, logs e erros | `backend/src/modules/*`, `backend/src/shared/http/error-handler.ts` | Abrir `backend/src/modules/appointments`; enviar login inválido e mostrar `VALIDATION_ERROR` e o header `X-Request-Id`; chamar uma rota inexistente e mostrar `ROUTE_NOT_FOUND` | KAN-53, KAN-81 |
 
 ## Tech Forge
 
@@ -33,7 +33,7 @@ Pré-requisito das demonstrações ao vivo locais: stack no ar com `docker compo
 |---|---|---|---|
 | Gestão do trabalho no Jira | Board do projeto KAN, [jira/status-2026-11-11.md](jira/status-2026-11-11.md), `.husky/commit-msg`, `scripts/validate-jira-references.mjs` | Abrir o board e as duas JQLs de auditoria; mostrar um commit vinculado a um card | KAN-46 |
 | Cynefin e escolha da abordagem | [management/cynefin-and-delivery.md](management/cynefin-and-delivery.md) | Explicar por que o domínio é Complexo, a gestão é híbrida e a execução usa Kanban | KAN-37, KAN-38, KAN-39 |
-| Ciclo de vida: backlog, user stories, critérios de aceite e versões | [product-backlog.md](product-backlog.md), [versioning.md](versioning.md), `CHANGELOG.md` | Mostrar as histórias no Jira e as Releases v1.1.0 a v1.4.0 no GitHub | KAN-40, KAN-43, KAN-44, KAN-45 |
+| Ciclo de vida: backlog, user stories, critérios de aceite e versões | [product-backlog.md](product-backlog.md), [versioning.md](versioning.md), `CHANGELOG.md` | Mostrar as histórias no Jira e as Releases v1.1.0 a v1.5.0 no GitHub | KAN-40, KAN-43, KAN-44, KAN-45 |
 
 ## Validação automatizada
 

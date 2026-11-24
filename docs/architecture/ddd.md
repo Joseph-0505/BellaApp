@@ -164,6 +164,9 @@ classDiagram
 
 ### Agregados, entidades e Value Objects
 
+- **Entidades:** `Appointment` e `Billing`, cada uma com identidade própria (`id`)
+  e ciclo de vida. `Client`, `Service`, `Professional` e `Room` também são
+  entidades, mas pertencem a outros agregados.
 - **Raiz do agregado de Agenda:** `Appointment`. Alterações de horário, estado,
   profissional e sala passam por `AppointmentsService`.
 - **Agregados referenciados:** Cliente, Serviço, Profissional e Sala mantêm ciclo

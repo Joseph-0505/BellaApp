@@ -42,6 +42,7 @@ considerada fechada depois de tag, GitHub Release e versão Jira liberada existi
 | v1.2.0 | `9c10c60` (PR #13) | 2026-11-05 | cache-aside, Pub/Sub, health check, C4, DDD, ADRs e cenários de qualidade |
 | v1.3.0 | `bffa2e4` (PR #16) | 2026-11-10 | notificações com Redis Streams, OpenAPI, CI/CD, SLOs, runbooks e Cynefin |
 | v1.4.0 | merge do PR de promoção do branch `feature/KAN-45-ajustes-rubrica` | 2026-11-11 | OpenAPI completo, documentação consolidada, user stories e mapa da rubrica |
+| v1.5.0 | merge do PR de promoção do branch `feature/KAN-69-release-1.5.0` | 2026-11-24 | circuit breaker e limite de tempo no Redis, testes de conclusão com cobrança e de escopo, logs reais de cache e Pub/Sub, ambiente de demonstração publicado e 404 no envelope padrão |
 
 As tags v1.1.0, v1.2.0 e v1.3.0 foram criadas depois, sobre os commits de merge
 reais que levaram cada entrega para `main`. Nenhum commit foi reescrito; a tag
@@ -59,6 +60,8 @@ git tag -a v1.2.0 9c10c60 -m "BellaApp v1.2.0"
 git tag -a v1.3.0 bffa2e4 -m "BellaApp v1.3.0"
 git tag -a v1.4.0 <sha-do-merge> -m "BellaApp v1.4.0"
 git push origin v1.1.0 v1.2.0 v1.3.0 v1.4.0
+git tag -a v1.5.0 <sha-do-merge> -m "BellaApp v1.5.0"
+git push origin v1.5.0
 ```
 
 As notas de cada GitHub Release são a seção correspondente do `CHANGELOG.md`.

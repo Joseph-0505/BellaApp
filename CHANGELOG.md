@@ -9,10 +9,13 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-24
+
 ### Added
 
 - snapshot final do Jira em `docs/jira/status-2026-11-11.md`, com os 55 cards
   concluídos e as quatro versões liberadas.
+- item explícito de entidades no modelo de domínio de `docs/architecture/ddd.md`.
 - circuit breaker e limite de 500 ms nos comandos Redis feitos durante a requisição.
 - testes da conclusão de atendimento, da cobrança única e do escopo do profissional.
 - evidência de logs reais de cache e Pub/Sub em `docs/evidence/logs-cache-pubsub.md`.
@@ -24,10 +27,13 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 - `scripts/validate-redis-degradation.mjs` valida Redis travado e desligado, mede as
   respostas e confere a abertura e o fechamento do circuito.
+- versões dos pacotes e do contrato OpenAPI passam a 1.5.0.
 
 ### Fixed
 
 - a API e os health checks ficavam sem responder quando o Redis travava (KAN-80).
+- rota inexistente respondia com o 404 nativo do Fastify, fora do envelope
+  `{ error: { code, message } }`; agora responde `ROUTE_NOT_FOUND` (KAN-81).
 
 ### Removed
 
@@ -106,7 +112,8 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 - Nginx como proxy reverso com HTTPS local e cabeçalhos de segurança;
 - testes E2E com Playwright e hooks de qualidade com Husky.
 
-[Unreleased]: https://github.com/Joseph-0505/BellaApp/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/Joseph-0505/BellaApp/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.1.0...v1.2.0
