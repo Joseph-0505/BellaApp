@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: BellaApp API
-  version: 1.4.0
+  version: 1.5.0
   description: |
     API do BellaApp para autenticação, configuração da clínica, clientes,
     catálogo de serviços e agenda.
