@@ -64,7 +64,7 @@ type ClientAppointmentEmailData = z.infer<typeof clientAppointmentEmailSchema>;
 type EmailCopy = { subject: string; heading: string; intro: string };
 
 function renderClientAppointmentEmail(
-  data: ClientAppointmentEmailData,
+  data: Omit<ClientAppointmentEmailData, "status">,
   copy: EmailCopy,
 ): Pick<NotificationInput, "channel" | "recipient" | "subject" | "message" | "html"> {
   const { clientEmail, clientName, serviceName, professionalName, scheduledAt } = data;
@@ -112,14 +112,53 @@ function renderClientAppointmentEmail(
   };
 }
 
-function buildClientAppointmentEmail(event: DomainEvent) {
-  if (event.type !== "appointment.created") return null;
-  const parsed = clientAppointmentEmailSchema.safeParse(event.metadata);
-  if (!parsed.success) return null;
-  return renderClientAppointmentEmail(parsed.data, {
-    subject: `Seu horário está agendado: ${parsed.data.serviceName}`,
-    heading: "Seu horário está agendado",
-    intro: "Seu horário foi agendado.",
+// KAN-84: o backend manda o estado anterior no appointment.updated; só cancelar, remarcar ou reabrir vira e-mail.
+const previousStateSchema = z.object({
+  previousScheduledAt: z.string().datetime(),
+  previousStatus: z.enum(["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELED"]),
+});
+const canceledAppointmentEmailSchema = clientAppointmentEmailSchema.extend({
+  status: z.literal("CANCELED"),
+});
+
+const scheduledCopy = (data: ClientAppointmentEmailData): EmailCopy => ({
+  subject: `Seu horário está agendado: ${data.serviceName}`,
+  heading: "Seu horário está agendado",
+  intro: "Seu horário foi agendado.",
+});
+
+function buildClientAppointmentEmail(event: DomainEvent, now = Date.now()) {
+  if (event.type === "appointment.created") {
+    const parsed = clientAppointmentEmailSchema.safeParse(event.metadata);
+    return parsed.success ? renderClientAppointmentEmail(parsed.data, scheduledCopy(parsed.data)) : null;
+  }
+
+  if (event.type !== "appointment.updated") return null;
+  const previous = previousStateSchema.safeParse(event.metadata);
+  if (!previous.success) return null;
+  const wasOpen = ["SCHEDULED", "CONFIRMED"].includes(previous.data.previousStatus);
+
+  const canceled = canceledAppointmentEmailSchema.safeParse(event.metadata);
+  if (canceled.success) {
+    // Cancelar o que já passou não interessa ao cliente.
+    if (!wasOpen || Date.parse(canceled.data.scheduledAt) <= now) return null;
+    return renderClientAppointmentEmail(canceled.data, {
+      subject: `Seu horário foi cancelado: ${canceled.data.serviceName}`,
+      heading: "Seu horário foi cancelado",
+      intro: "Seu horário foi cancelado.",
+    });
+  }
+
+  const open = clientAppointmentEmailSchema.safeParse(event.metadata);
+  if (!open.success) return null;
+  if (!wasOpen) return renderClientAppointmentEmail(open.data, scheduledCopy(open.data));
+  if (Date.parse(open.data.scheduledAt) === Date.parse(previous.data.previousScheduledAt)) return null;
+
+  const before = scheduledAtFormatter.format(new Date(previous.data.previousScheduledAt));
+  return renderClientAppointmentEmail(open.data, {
+    subject: `Seu horário foi remarcado: ${open.data.serviceName}`,
+    heading: "Seu horário foi remarcado",
+    intro: `Seu horário foi remarcado; antes era ${before}.`,
   });
 }
 

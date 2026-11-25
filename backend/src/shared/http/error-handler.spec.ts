@@ -81,6 +81,10 @@ describe("registerErrorHandler", () => {
       throw new Error("Boom");
     });
 
+    app.get("/fetch-timeout", async () => {
+      throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+    });
+
     await app.ready();
   });
 
@@ -226,6 +230,21 @@ describe("registerErrorHandler", () => {
     const response = await app.inject({
       method: "GET",
       url: "/generic",
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body)).toEqual({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Erro interno do servidor.",
+      },
+    });
+  });
+
+  it("deve manter o envelope quando o erro tem code numérico", async () => {
+    const response = await app.inject({
+      method: "GET",
+      url: "/fetch-timeout",
     });
 
     expect(response.statusCode).toBe(500);

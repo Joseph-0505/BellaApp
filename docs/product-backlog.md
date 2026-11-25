@@ -12,9 +12,7 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 
 ### Pendente (v1.6.0 Evolução)
 
-1. **KAN-77 / BE-08 — Concorrência no conflito de agenda (Alta):** fecha a limitação registrada no modelo de domínio antes de abrir novos canais de agendamento.
-2. **KAN-78 / ARQ-08 — Teste de carga (Média):** mede os SLOs de latência que ainda são metas.
-3. **KAN-79 / US-14 — Autoagendamento por link (Média):** depende do controle de concorrência, porque aumenta a disputa por horários.
+1. **KAN-79 / US-14 — Autoagendamento por link (Média):** dependia do controle de concorrência (KAN-77, entregue), porque aumenta a disputa por horários.
 
 ### Entregue
 
@@ -34,6 +32,10 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 | 12 | KAN-55 | US-06 Ambiente com um comando | Média | v1.1.0 |
 | 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 (Unreleased) |
 | 14 | KAN-76 | US-13 Lembrete de agendamento | Alta | v1.6.0 (Unreleased) |
+| 15 | KAN-77 | BE-08 Concorrência no conflito de agenda | Alta | v1.6.0 (Unreleased) |
+| 16 | KAN-83 | ARQ-09 Envio de e-mail unificado no notification-service | Alta | v1.6.0 (Unreleased) |
+| 17 | KAN-84 | US-16 E-mail de cancelamento e remarcação | Média | v1.6.0 (Unreleased) |
+| 18 | KAN-78 | ARQ-08 Teste de carga dos SLOs de leitura | Média | v1.6.0 (Unreleased) |
 
 ## Regra usada
 
@@ -197,6 +199,29 @@ agendado, **para** ter a confirmação com serviço, data e profissional.
   `notification-service/src/queue.spec.ts` (critério 3: retry e dead-letter) e
   `backend/src/modules/appointments/appointments.service.spec.ts` (dados do
   cliente no evento).
+
+### KAN-84 / US-16 — E-mail de cancelamento e remarcação
+
+**Como** cliente da clínica, **quero** receber um e-mail quando meu horário for
+cancelado, remarcado ou reaberto, **para** não ir à clínica no horário errado.
+
+- Prioridade: Média. Versão planejada: v1.6.0 Evolução.
+- Critérios de aceite:
+  1. **Dado** um agendamento futuro em aberto de cliente com e-mail, **quando** ele
+     é cancelado, **então** um e-mail de cancelamento com serviço e horário entra
+     na fila de notificações.
+  2. **Dado** um agendamento em aberto, **quando** o horário muda, **então** um
+     e-mail de remarcação com o horário novo e o anterior entra na fila.
+  3. **Dado** um agendamento cancelado, **quando** ele volta a ficar agendado ou
+     confirmado, **então** o cliente recebe de novo o e-mail de horário agendado.
+  4. **Dado** só uma mudança de observação, de agendado para confirmado, ou a
+     exclusão do agendamento, **então** nada é enviado ao cliente e o evento segue
+     só no log.
+  5. **Dado** o cancelamento de um horário que já passou, **então** nada é enviado
+     ao cliente.
+- Testes: `notification-service/src/domain-events.spec.ts` (critérios 1 a 5) e
+  `backend/src/modules/appointments/appointments.service.spec.ts` (estado
+  anterior no evento).
 
 ## Histórias técnicas e de qualidade
 

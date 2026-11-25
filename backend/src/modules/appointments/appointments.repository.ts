@@ -214,7 +214,21 @@ class AppointmentsRepository {
     });
   }
 
-  findAppointmentsForDay(params: FindAppointmentsForDayParams) {
+  // KAN-77: trava profissional e sala até o fim da transação. A ordem é sempre a mesma, para não haver deadlock.
+  async lockScheduleResources(
+    params: { professionalId?: string | null; roomId?: string | null },
+    db: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (params.professionalId) {
+      await db.$queryRaw`SELECT id FROM Professional WHERE id = ${params.professionalId} FOR UPDATE`;
+    }
+
+    if (params.roomId) {
+      await db.$queryRaw`SELECT id FROM Room WHERE id = ${params.roomId} FOR UPDATE`;
+    }
+  }
+
+  findAppointmentsForDay(params: FindAppointmentsForDayParams, db: PrismaExecutor = prisma) {
     const { clinicId, scheduledAt, excludeId, professionalId, roomId } = params;
     const dayStart = new Date(
       Date.UTC(
@@ -239,7 +253,7 @@ class AppointmentsRepository {
       ),
     );
 
-    return prisma.appointment.findMany({
+    return db.appointment.findMany({
       where: {
         clinicId,
         status: {

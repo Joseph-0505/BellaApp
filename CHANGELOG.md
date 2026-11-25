@@ -11,6 +11,12 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Added
 
+- teste de carga do cenário Q-01 (KAN-78): `scripts/load/run-q01.sh` roda o k6 a
+  20 req/s nas listagens principais e calcula a taxa de hit do cache pelo log do
+  backend. Em 25/11/2026, o p95 foi de 17,7 ms a 54,9 ms (este com os limites de
+  CPU e memória de produção) e o hit no catálogo foi de 99,6%; os resultados estão
+  em `docs/architecture/quality-scenarios.md`.
+
 - lembrete por e-mail 24h antes do agendamento (KAN-76): o notification-service
   guarda o lembrete num sorted set do Redis e o move para a fila quando vence;
   remarcar move o lembrete, cancelar, concluir ou remover o tira. O evento
@@ -21,11 +27,22 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
   profissional, e o notification-service envia texto e HTML com o horário de
   Brasília. Cliente sem e-mail ou agendamento já concluído continua só no log.
 
+- e-mail ao cliente quando o agendamento é cancelado, remarcado ou reaberto
+  (KAN-84): o `appointment.updated` leva o horário e o status anteriores, e o
+  notification-service manda o aviso de cancelamento, o de remarcação (com o
+  horário antigo) ou de novo o de horário agendado. Observação, confirmação,
+  exclusão e cancelamento de horário passado não geram e-mail.
+
 - snapshot do Jira de 24/11/2026 em `docs/jira/status-2026-11-24.md`, com 81 cards,
   nove erros e a versão 1.5.0 liberada.
 
 ### Changed
 
+- o convite de profissional passa a ser enviado pelo notification-service (KAN-83):
+  a API entrega o e-mail em `POST /api/v1/notifications` e ganha as novas tentativas
+  e a dead-letter da fila. A API deixa de usar nodemailer e as variáveis `SMTP_*`
+  e `MAIL_*`; entra `NOTIFICATION_SERVICE_URL`. Em modo log, o notification-service
+  registra o e-mail inteiro, com o link de ativação.
 - ambiente de demonstração republicado em 24/11/2026 com a versão 1.5.0 (imagens
   `4de4c58`); o registro está em `docs/deployment-strategy.md`.
 - ambiente de demonstração republicado em 24/11/2026 à noite com o KAN-82 e o
@@ -34,8 +51,16 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Fixed
 
+- duas criações ou remarcações simultâneas no mesmo horário e profissional (ou
+  sala) eram salvas juntas, porque o conflito era conferido antes da escrita
+  (KAN-77). Agora a checagem e a escrita rodam numa transação que trava o
+  profissional e a sala; a segunda recebe `409 TIME_CONFLICT`.
 - links do `mobile/README.md` e do `mobile/docs/VALIDACAO.md` apontavam para
   documentos que foram reorganizados em `mobile/docs/`.
+- reabrir um agendamento cancelado futuro não conferia conflito, e ele voltava em
+  cima de outro marcado no mesmo horário (KAN-85). Agora reabrir confere a agenda
+  como um agendamento novo; no passado segue livre, para dar para reabrir e
+  concluir o que já aconteceu.
 
 ## [1.5.0] - 2026-11-24
 

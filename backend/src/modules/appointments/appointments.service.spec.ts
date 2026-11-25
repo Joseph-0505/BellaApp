@@ -23,6 +23,7 @@ jest.mock("./appointments.repository", () => ({
     findProfessionalById: jest.fn(),
     findRoomById: jest.fn(),
     findAppointmentsForDay: jest.fn(),
+    lockScheduleResources: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     markAsCompleted: jest.fn(),
@@ -180,11 +181,18 @@ describe("appointmentsService", () => {
     ).toHaveBeenCalledWith("user-1", "professional-1");
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
-    ).toHaveBeenCalledWith({
-      clinicId: "user-1",
-      scheduledAt,
-      professionalId: "professional-1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        clinicId: "user-1",
+        scheduledAt,
+        professionalId: "professional-1",
+      },
+      mockPrisma,
+    );
+    expect(mockedAppointmentsRepository.lockScheduleResources).toHaveBeenCalledWith(
+      expect.objectContaining({ professionalId: "professional-1" }),
+      mockPrisma,
+    );
   });
 
   it("deve ignorar agendamentos cancelados e concluídos na validação de conflito", async () => {
@@ -260,15 +268,18 @@ describe("appointmentsService", () => {
       status: "SCHEDULED",
     });
 
-    expect(mockedAppointmentsRepository.create).toHaveBeenCalledWith({
-      userId: "user-1",
-      clinicId: "user-1",
-      clientId: "client-1",
-      serviceId: "service-1",
-      professionalId: "professional-1",
-      scheduledAt,
-      status: AppointmentStatus.SCHEDULED,
-    });
+    expect(mockedAppointmentsRepository.create).toHaveBeenCalledWith(
+      {
+        userId: "user-1",
+        clinicId: "user-1",
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt,
+        status: AppointmentStatus.SCHEDULED,
+      },
+      mockPrisma,
+    );
     expect(result).toEqual({
       id: "appointment-new",
       clientId: "client-1",
@@ -351,12 +362,15 @@ describe("appointmentsService", () => {
 
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
-    ).toHaveBeenCalledWith({
-      clinicId: "user-1",
-      scheduledAt,
-      professionalId: "professional-1",
-      roomId: "room-1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        clinicId: "user-1",
+        scheduledAt,
+        professionalId: "professional-1",
+        roomId: "room-1",
+      },
+      mockPrisma,
+    );
   });
 
   it("deve permitir atualizar somente status de agendamento passado sem revalidar data nem perder profissional e sala", async () => {
@@ -553,8 +567,52 @@ describe("appointmentsService", () => {
         clientEmail: "maria@example.com",
         serviceName: "Limpeza de pele",
         professionalName: "Ana",
+        previousScheduledAt: scheduledAt.toISOString(),
+        previousStatus: AppointmentStatus.SCHEDULED,
       },
     });
+  });
+
+  it("deve conferir conflito ao reabrir um agendamento cancelado futuro", async () => {
+    const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    mockedAppointmentsRepository.findById.mockResolvedValue({
+      id: "appointment-1",
+      userId: "user-1",
+      clientId: "client-1",
+      serviceId: "service-1",
+      professionalId: "professional-1",
+      roomId: null,
+      scheduledAt,
+      status: AppointmentStatus.CANCELED,
+      receivedBy: "CLINIC",
+      notes: null,
+      billing: null,
+    } as never);
+    mockedAppointmentsRepository.findClientById.mockResolvedValue({ id: "client-1" } as never);
+    mockedAppointmentsRepository.findServiceById.mockResolvedValue({
+      id: "service-1",
+      durationMinutes: 60,
+    } as never);
+    mockedAppointmentsRepository.findProfessionalById.mockResolvedValue({ id: "professional-1" } as never);
+    mockedAppointmentsRepository.findAppointmentsForDay.mockResolvedValue([
+      {
+        id: "appointment-2",
+        scheduledAt,
+        status: AppointmentStatus.SCHEDULED,
+        service: { durationMinutes: 60 },
+      },
+    ] as never);
+
+    await expect(
+      appointmentsService.update("user-1", "appointment-1", {
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt: scheduledAt.toISOString(),
+        status: "SCHEDULED",
+      }),
+    ).rejects.toMatchObject({ statusCode: 409, code: "TIME_CONFLICT" });
+    expect(mockedAppointmentsRepository.update).not.toHaveBeenCalled();
   });
 
   describe("conclusão e escopo do profissional", () => {

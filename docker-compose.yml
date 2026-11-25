@@ -73,6 +73,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       REDIS_ENABLED: "true"
+      NOTIFICATION_SERVICE_URL: http://notification-service:3001
 
     command: sh -c "npx prisma migrate deploy && node dist/app/server.js"
 
