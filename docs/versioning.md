@@ -93,4 +93,5 @@ autoagendamento por link (KAN-79, US-14) não ficou pronto e passou para a nova
 versão "v1.7.0 Autoagendamento" do Jira, em vez de segurar a entrega das demais.
 A tag `v1.6.0` e a GitHub Release
 <https://github.com/Joseph-0505/BellaApp/releases/tag/v1.6.0> marcam o merge do
-PR de promoção em `main`.
+PR de promoção em `main`. Detalhes em
+[jira/status-2026-11-25.md](jira/status-2026-11-25.md).
