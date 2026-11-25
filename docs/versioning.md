@@ -43,6 +43,7 @@ considerada fechada depois de tag, GitHub Release e versão Jira liberada existi
 | v1.3.0 | `bffa2e4` (PR #16) | 2026-11-10 | notificações com Redis Streams, OpenAPI, CI/CD, SLOs, runbooks e Cynefin |
 | v1.4.0 | merge do PR de promoção do branch `feature/KAN-45-ajustes-rubrica` | 2026-11-11 | OpenAPI completo, documentação consolidada, user stories e mapa da rubrica |
 | v1.5.0 | `4de4c58` (PR #24) | 2026-11-24 | circuit breaker e limite de tempo no Redis, testes de conclusão com cobrança e de escopo, logs reais de cache e Pub/Sub, ambiente de demonstração publicado e 404 no envelope padrão |
+| v1.6.0 | merge do PR de promoção do branch `feature/KAN-86-release-1.6.0` | 2026-11-25 | e-mails ao cliente (confirmação, lembrete de 24h, cancelamento e remarcação), envio de e-mail unificado no notification-service, trava de concorrência na agenda, teste de carga do Q-01 e reabertura de cancelado com checagem de conflito |
 
 As tags v1.1.0, v1.2.0 e v1.3.0 foram criadas depois, sobre os commits de merge
 reais que levaram cada entrega para `main`. Nenhum commit foi reescrito; a tag
@@ -62,6 +63,8 @@ git tag -a v1.4.0 <sha-do-merge> -m "BellaApp v1.4.0"
 git push origin v1.1.0 v1.2.0 v1.3.0 v1.4.0
 git tag -a v1.5.0 <sha-do-merge> -m "BellaApp v1.5.0"
 git push origin v1.5.0
+git tag -a v1.6.0 <sha-do-merge> -m "BellaApp v1.6.0"
+git push origin v1.6.0
 ```
 
 As notas de cada GitHub Release são a seção correspondente do `CHANGELOG.md`.
@@ -82,3 +85,12 @@ resiliência" do Jira foi liberada na mesma data, com dez cards concluídos. A
 v1.6.0 Evolução continua planejada, com quatro itens no backlog. Detalhes em
 [jira/status-2026-11-24.md](jira/status-2026-11-24.md).
 
+## Situação em 25/11/2026
+
+A v1.6.0 fecha o que foi entregue da "v1.6.0 Evolução" do Jira: KAN-76, KAN-77,
+KAN-78, KAN-82, KAN-83, KAN-84 e KAN-85, com o fechamento no KAN-86. O
+autoagendamento por link (KAN-79, US-14) não ficou pronto e passou para a nova
+versão "v1.7.0 Autoagendamento" do Jira, em vez de segurar a entrega das demais.
+A tag `v1.6.0` e a GitHub Release
+<https://github.com/Joseph-0505/BellaApp/releases/tag/v1.6.0> marcam o merge do
+PR de promoção em `main`.

@@ -9,6 +9,8 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-25
+
 ### Added
 
 - teste de carga do cenário Q-01 (KAN-78): `scripts/load/run-q01.sh` roda o k6 a
@@ -51,6 +53,8 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 - ambiente de demonstração republicado em 25/11/2026 com o KAN-83, KAN-77, KAN-85
   e KAN-84 (imagens `b2ad11c`); o servidor ganhou `NOTIFICATION_SERVICE_URL` no
   compose do backend. O registro está em `docs/deployment-strategy.md`.
+- versões dos pacotes e do contrato OpenAPI passam a 1.6.0. O autoagendamento
+  por link (KAN-79, US-14) sai desta versão e fica planejado para a v1.7.0.
 
 ### Fixed
 
@@ -168,7 +172,8 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 - Nginx como proxy reverso com HTTPS local e cabeçalhos de segurança;
 - testes E2E com Playwright e hooks de qualidade com Husky.
 
-[Unreleased]: https://github.com/Joseph-0505/BellaApp/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/Joseph-0505/BellaApp/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Joseph-0505/BellaApp/compare/v1.2.0...v1.3.0
