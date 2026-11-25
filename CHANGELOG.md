@@ -21,6 +21,12 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
   profissional, e o notification-service envia texto e HTML com o horário de
   Brasília. Cliente sem e-mail ou agendamento já concluído continua só no log.
 
+- e-mail ao cliente quando o agendamento é cancelado, remarcado ou reaberto
+  (KAN-84): o `appointment.updated` leva o horário e o status anteriores, e o
+  notification-service manda o aviso de cancelamento, o de remarcação (com o
+  horário antigo) ou de novo o de horário agendado. Observação, confirmação,
+  exclusão e cancelamento de horário passado não geram e-mail.
+
 - snapshot do Jira de 24/11/2026 em `docs/jira/status-2026-11-24.md`, com 81 cards,
   nove erros e a versão 1.5.0 liberada.
 
