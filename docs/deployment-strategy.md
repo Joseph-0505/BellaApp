@@ -181,10 +181,28 @@ de concorrência na agenda), KAN-85 (reabrir cancelado confere conflito) e KAN-8
 O convite de profissional, que antes só ia para o log do backend no servidor,
 passa a sair de verdade pelo SMTP do notification-service.
 
-As imagens `5cd2e64`, `4de4c58`, `03c3320` e `3a5ae9f` continuam no servidor.
-Para voltar à `3a5ae9f`, restaurar `.env.bak-3a5ae9f` e
-`docker-compose.yml.bak-3a5ae9f` e repetir o comando de subida; para a versão
-1.5.0, restaurar `.env.bak-4de4c58` e o mesmo `docker-compose.yml.bak-3a5ae9f`.
+Republicação feita em 25/11/2026 (11h31 em Brasília) com a tag `02e05c0`, o
+merge do PR #46 em `main` marcado como `v1.6.0`. Desde `b2ad11c` só mudaram os
+números de versão dos pacotes e do OpenAPI, além de documentação:
+
+- as três imagens foram construídas a partir de um worktree limpo da tag
+  `v1.6.0`, porque o `package.json` do frontend também mudou; depois do
+  `docker load`, os IDs bateram dos dois lados (backend `47bb587c68fe`,
+  notification-service `de0dc78018b1`, frontend `582a7d4a7418`);
+- no servidor só mudou o `BELLAAPP_TAG` no `.env`, com cópia `.env.bak-b2ad11c`;
+  o `docker-compose.yml` e o `compose.production.yaml` já eram os da tag (mesmo
+  hash). O `up -d --no-build` recriou backend, frontend e notificações em 22 s,
+  sem recriar MySQL, Redis e Nginx;
+- `/docs/json` informa a versão 1.6.0; `GET /api/v1/health` com 200 e
+  dependências `up`; `/` e `/docs/` com 200; rota inexistente com 404; o backend
+  alcança o notification-service; os outros sites do servidor responderam com o
+  mesmo status antes e depois.
+
+As imagens `5cd2e64`, `4de4c58`, `03c3320`, `3a5ae9f` e `b2ad11c` continuam no
+servidor. Para voltar à `b2ad11c`, restaurar `.env.bak-b2ad11c` e repetir o
+comando de subida. Para a `3a5ae9f`, restaurar `.env.bak-3a5ae9f` e
+`docker-compose.yml.bak-3a5ae9f`; para a versão 1.5.0, restaurar
+`.env.bak-4de4c58` e o mesmo `docker-compose.yml.bak-3a5ae9f`.
 
 Remoção do ambiente: `docker compose -p bellaapp down`, restaurar o backup do
 Caddyfile e `caddy reload`. O ambiente é temporário e será removido depois da
