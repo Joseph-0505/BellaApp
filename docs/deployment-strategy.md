@@ -93,7 +93,9 @@ que já é dono das portas 80/443 e encerra o TLS. Por isso ele não usa o job
   (`horarius_web`); MySQL, Redis e backend ficam na rede interna.
 - **Segredos gerados no servidor.** `.env` e `backend/.env` são criados lá com
   valores aleatórios e `chmod 600`, com `NODE_ENV=production`, `LOG_LEVEL=info`,
-  CORS e `APP_BASE_URL` no domínio público e e-mail apenas em log.
+  CORS e `APP_BASE_URL` no domínio público e e-mail apenas em log. Desde a
+  republicação de 24/11 à noite, o notification-service envia por SMTP (conta
+  Google Workspace); os convites do backend continuam em log.
 - **Proxy.** O bloco `bella.flynnapp.com.br` → `bellaapp-nginx:80` foi acrescentado
   ao Caddyfile depois de um backup, validado com `caddy validate` e aplicado com
   `caddy reload`, sem reiniciar o proxy. O mesmo bloco foi versionado no
@@ -126,8 +128,30 @@ Republicação feita em 24/11/2026, com a tag `4de4c58` (versão 1.5.0):
   (KAN-81);
 - os outros sites do servidor responderam 200 antes e depois da troca.
 
-As imagens `5cd2e64` continuam no servidor. Para voltar à versão anterior, basta
-restaurar o valor de `BELLAAPP_TAG` e repetir o comando de subida.
+Republicações feitas em 24/11/2026 à noite (21h19 e 21h28 em Brasília, 25/11 em
+UTC), com o e-mail de confirmação (KAN-82, tag `03c3320`) e depois o lembrete de
+24h (KAN-76, tag `3a5ae9f`), ambas sobre commits de merge em `main`:
+
+- as imagens do backend e do notification-service foram construídas a partir de
+  um worktree limpo de `main` no commit da tag; depois do `docker load`, os IDs
+  bateram dos dois lados (`458b153cae3f`/`95297dc68208` e
+  `0806d01b2fa6`/`3303a7c8b29c`);
+- o frontend não mudou desde `4de4c58` (`git diff` vazio em `Frontend/`), então a
+  mesma imagem (`73c1e0613dee`) recebeu as novas tags no servidor, sem novo envio;
+- no `.env` do servidor, com cópias `.env.bak-4de4c58` e `.env.bak-03c3320`,
+  mudou o `BELLAAPP_TAG` e entraram `NOTIFICATION_MAIL_DELIVERY_MODE=smtp` e as
+  variáveis `NOTIFICATION_SMTP_*`, sem valores versionados. O mesmo
+  `up -d --no-build` recriou backend, frontend e notificações, sem recriar MySQL,
+  Redis e Nginx;
+- `GET /api/v1/health` e `/` com 200 pelo domínio; os outros sites do servidor
+  responderam 200 antes e depois de cada troca;
+- de dentro do contêiner, `nodemailer.verify()` autenticou no `smtp.gmail.com:587`;
+- um agendamento criado pela API pública gerou `notification.delivered` com
+  `transport: smtp`, e o lembrete entrou no sorted set
+  `bellaapp:notifications:reminders` (contagem de 0 para 1).
+
+As imagens `5cd2e64` e `4de4c58` continuam no servidor. Para voltar à versão
+1.5.0, basta restaurar `.env.bak-4de4c58` e repetir o comando de subida.
 
 Remoção do ambiente: `docker compose -p bellaapp down`, restaurar o backup do
 Caddyfile e `caddy reload`. O ambiente é temporário e será removido depois da
