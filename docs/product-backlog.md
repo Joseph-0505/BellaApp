@@ -33,6 +33,7 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 | 10 | KAN-53 | US-04 Mensagens de erro claras | Média | v1.3.0 |
 | 11 | KAN-54 | US-05 Documentação navegável | Média | v1.3.0 |
 | 12 | KAN-55 | US-06 Ambiente com um comando | Média | v1.1.0 |
+| 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 (Unreleased) |
 
 ## Regra usada
 
@@ -170,6 +171,26 @@ que a agenda dos colegas fique protegida.
      agenda da clínica.
   3. **Dado** que o horário foi ocupado antes da confirmação, **quando** confirmo,
      **então** sou avisada e escolho outro.
+
+### KAN-82 / US-15 — E-mail de confirmação de agendamento
+
+**Como** cliente da clínica, **quero** receber um e-mail quando meu horário for
+agendado, **para** ter a confirmação com serviço, data e profissional.
+
+- Prioridade: Alta. Versão planejada: v1.6.0 Evolução.
+- Critérios de aceite:
+  1. **Dado** um agendamento novo, agendado ou confirmado, de cliente com e-mail,
+     **quando** ele é criado, **então** um e-mail com serviço, data e horário de
+     Brasília e profissional entra na fila de notificações.
+  2. **Dado** um cliente sem e-mail ou um agendamento criado já concluído,
+     **quando** ele é criado, **então** nada é enviado ao cliente e o evento segue
+     só no log.
+  3. **Dado** uma falha de entrega, **quando** as tentativas se esgotam, **então**
+     o envio vai para a dead-letter.
+- Testes: `notification-service/src/domain-events.spec.ts` (critérios 1 e 2),
+  `notification-service/src/queue.spec.ts` (critério 3: retry e dead-letter) e
+  `backend/src/modules/appointments/appointments.service.spec.ts` (dados do
+  cliente no evento).
 
 ## Histórias técnicas e de qualidade
 

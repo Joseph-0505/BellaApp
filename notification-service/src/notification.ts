@@ -7,6 +7,7 @@ export const notificationInputSchema = z
     recipient: z.string().trim().min(1).max(320),
     subject: z.string().trim().min(1).max(200),
     message: z.string().trim().min(1).max(10_000),
+    html: z.string().trim().min(1).max(50_000).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .superRefine((value, context) => {

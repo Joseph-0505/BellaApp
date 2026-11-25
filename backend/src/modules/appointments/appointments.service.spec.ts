@@ -193,10 +193,13 @@ describe("appointmentsService", () => {
     mockedAppointmentsRepository.findClientById.mockResolvedValue({
       id: "client-1",
       userId: "user-1",
+      name: "Maria",
+      email: "maria@example.com",
     } as never);
     mockedAppointmentsRepository.findServiceById.mockResolvedValue({
       id: "service-1",
       userId: "user-1",
+      name: "Limpeza de pele",
       durationMinutes: 60,
     } as never);
     mockedAppointmentsRepository.findAppointmentsForDay.mockResolvedValue([
@@ -291,6 +294,11 @@ describe("appointmentsService", () => {
         serviceId: "service-1",
         professionalId: "professional-1",
         scheduledAt: scheduledAt.toISOString(),
+        status: AppointmentStatus.SCHEDULED,
+        clientName: "Maria",
+        clientEmail: "maria@example.com",
+        serviceName: "Limpeza de pele",
+        professionalName: null,
       },
     });
   });

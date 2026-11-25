@@ -48,6 +48,7 @@ export class NotificationDelivery {
       to: job.recipient,
       subject: job.subject,
       text: job.message,
+      html: job.html,
     });
 
     this.logger.info(
