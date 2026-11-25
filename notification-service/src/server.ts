@@ -4,6 +4,7 @@ import { env } from "./config";
 import { NotificationDelivery } from "./delivery";
 import { DomainEventBridge } from "./domain-events";
 import { NotificationQueue, NotificationWorker } from "./queue";
+import { REMINDER_POLL_MS, ReminderScheduler } from "./reminders";
 
 async function start(): Promise<void> {
   const redis = createClient({ url: env.REDIS_URL });
@@ -21,7 +22,18 @@ async function start(): Promise<void> {
     (job) => delivery.send(job),
     app.log,
   );
-  const bridge = new DomainEventBridge(subscriberRedis, producerQueue, app.log);
+  const reminders = new ReminderScheduler(redis, producerQueue);
+  const bridge = new DomainEventBridge(subscriberRedis, producerQueue, app.log, reminders);
+  const reminderTimer = setInterval(() => {
+    reminders.releaseDue().then(
+      (released) => {
+        if (released > 0) {
+          app.log.info({ event: "notification.reminders_released", released }, "Due reminders moved to queue");
+        }
+      },
+      (error) => app.log.error({ err: error, event: "notification.reminders_error" }, "Reminder release failed"),
+    );
+  }, REMINDER_POLL_MS);
 
   redis.on("error", (error) => app.log.error({ err: error, component: "redis-producer" }, "Redis error"));
   workerRedis.on("error", (error) => app.log.error({ err: error, component: "redis-worker" }, "Redis error"));
@@ -36,6 +48,7 @@ async function start(): Promise<void> {
     if (stopping) return;
     stopping = true;
     app.log.info({ signal }, "Stopping notification service");
+    clearInterval(reminderTimer);
 
     await app.close();
     await bridge.stop();

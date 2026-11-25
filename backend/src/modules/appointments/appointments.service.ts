@@ -110,8 +110,11 @@ class AppointmentsService {
     });
   }
 
-  private buildCreatedEventMetadata(
-    appointment: AppointmentCreateData,
+  private buildAppointmentEventMetadata(
+    appointment: Pick<
+      AppointmentCreateData,
+      "clientId" | "serviceId" | "scheduledAt" | "status"
+    > & { professionalId?: string | null },
     relations: AppointmentRelations,
   ) {
     // Nome e e-mail vão no evento porque o notification-service não acessa o banco.
@@ -587,7 +590,7 @@ class AppointmentsService {
         actorId: userId,
         appointmentId: result.appointment.id,
         clinicId: context.clinicId,
-        metadata: this.buildCreatedEventMetadata(appointmentData, relations),
+        metadata: this.buildAppointmentEventMetadata(appointmentData, relations),
         type: "appointment.created",
       });
       return result.appointment;
@@ -598,7 +601,7 @@ class AppointmentsService {
       actorId: userId,
       appointmentId: appointment.id,
       clinicId: context.clinicId,
-      metadata: this.buildCreatedEventMetadata(appointmentData, relations),
+      metadata: this.buildAppointmentEventMetadata(appointmentData, relations),
       type: "appointment.created",
     });
     return toAppointmentResponse(appointment);
@@ -707,10 +710,16 @@ class AppointmentsService {
       id,
       this.buildUpdateData(normalizedInput, updateContext),
     );
+    // O lembrete (KAN-76) é reagendado a partir destes dados; as FKs garantem que existem.
+    const relations = await this.assertAppointmentRelations(
+      context.clinicId,
+      this.toRelationsInput(updatedAppointment),
+    );
     await this.recordMutation({
       actorId: userId,
       appointmentId: updatedAppointment.id,
       clinicId: context.clinicId,
+      metadata: this.buildAppointmentEventMetadata(updatedAppointment, relations),
       type: "appointment.updated",
     });
     return toAppointmentResponse(updatedAppointment);

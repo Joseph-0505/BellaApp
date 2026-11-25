@@ -60,6 +60,12 @@ usar **Redis Streams** como fila:
    `CONFIRMED`, vira e-mail para o cliente (texto e HTML, horário de Brasília).
    O backend manda nome e e-mail do cliente, serviço e profissional no evento,
    porque o serviço não acessa o banco. Os demais eventos seguem só no log.
+7. O lembrete de 24h (KAN-76) fica no sorted set
+   `bellaapp:notifications:reminders` (score = horário de envio, um por
+   agendamento). A cada 30 s os vencidos entram na stream e seguem o mesmo retry
+   e dead-letter. `appointment.updated` reagenda; status cancelado ou concluído,
+   `appointment.completed` e `appointment.deleted` removem. Se o processo cair
+   entre retirar o lembrete do conjunto e enfileirá-lo, ele se perde.
 
 ## Consequências positivas
 

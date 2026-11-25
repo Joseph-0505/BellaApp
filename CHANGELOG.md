@@ -11,6 +11,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Added
 
+- lembrete por e-mail 24h antes do agendamento (KAN-76): o notification-service
+  guarda o lembrete num sorted set do Redis e o move para a fila quando vence;
+  remarcar move o lembrete, cancelar, concluir ou remover o tira. O evento
+  `appointment.updated` passa a levar os mesmos dados do cliente.
+
 - e-mail de confirmação para o cliente quando um agendamento é criado (KAN-82):
   o evento `appointment.created` leva nome e e-mail do cliente, serviço e
   profissional, e o notification-service envia texto e HTML com o horário de
