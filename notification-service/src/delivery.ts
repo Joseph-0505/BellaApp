@@ -11,24 +11,22 @@ export class NotificationDelivery {
   private getTransporter(): Transporter {
     if (this.transporter) return this.transporter;
 
-    this.transporter =
-      env.MAIL_DELIVERY_MODE === "smtp"
-        ? nodemailer.createTransport({
-            host: env.SMTP_HOST,
-            port: env.SMTP_PORT,
-            secure: env.SMTP_SECURE,
-            auth:
-              env.SMTP_USER && env.SMTP_PASS
-                ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
-                : undefined,
-          })
-        : nodemailer.createTransport({ jsonTransport: true });
+    this.transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      auth:
+        env.SMTP_USER && env.SMTP_PASS
+          ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
+          : undefined,
+    });
 
     return this.transporter;
   }
 
   async send(job: NotificationJob): Promise<void> {
-    if (job.channel === "log") {
+    // Sem SMTP, o e-mail vai inteiro para o log: é assim que se pega o link do convite em desenvolvimento.
+    if (job.channel === "log" || env.MAIL_DELIVERY_MODE === "log") {
       this.logger.info(
         {
           event: "notification.delivered",

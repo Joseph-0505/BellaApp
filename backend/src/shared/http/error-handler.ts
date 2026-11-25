@@ -159,9 +159,13 @@ export function registerErrorHandler(app: FastifyInstance): void {
       }
     }
 
-    const authError = error as { statusCode?: number; code?: string };
+    // code nem sempre é string: o DOMException de timeout do fetch traz code numérico.
+    const authError = error as { statusCode?: number; code?: unknown };
 
-    if (authError.statusCode === 401 || authError.code?.startsWith("FST_JWT")) {
+    if (
+      authError.statusCode === 401
+      || (typeof authError.code === "string" && authError.code.startsWith("FST_JWT"))
+    ) {
       const errorPayload = {
         code: "INVALID_TOKEN",
         message: "Token inválido ou expirado.",
