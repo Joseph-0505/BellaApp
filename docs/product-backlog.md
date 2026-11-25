@@ -12,8 +12,7 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 
 ### Pendente (v1.6.0 Evolução)
 
-1. **KAN-78 / ARQ-08 — Teste de carga (Média):** mede os SLOs de latência que ainda são metas.
-2. **KAN-79 / US-14 — Autoagendamento por link (Média):** dependia do controle de concorrência (KAN-77, entregue), porque aumenta a disputa por horários.
+1. **KAN-79 / US-14 — Autoagendamento por link (Média):** dependia do controle de concorrência (KAN-77, entregue), porque aumenta a disputa por horários.
 
 ### Entregue
 
@@ -34,6 +33,9 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 | 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 (Unreleased) |
 | 14 | KAN-76 | US-13 Lembrete de agendamento | Alta | v1.6.0 (Unreleased) |
 | 15 | KAN-77 | BE-08 Concorrência no conflito de agenda | Alta | v1.6.0 (Unreleased) |
+| 16 | KAN-83 | ARQ-09 Envio de e-mail unificado no notification-service | Alta | v1.6.0 (Unreleased) |
+| 17 | KAN-84 | US-16 E-mail de cancelamento e remarcação | Média | v1.6.0 (Unreleased) |
+| 18 | KAN-78 | ARQ-08 Teste de carga dos SLOs de leitura | Média | v1.6.0 (Unreleased) |
 
 ## Regra usada
 
