@@ -58,8 +58,9 @@ test("agendamento novo de cliente com e-mail vira e-mail para o cliente", () => 
   assert.equal(notification?.metadata?.domainEventId, baseEvent.eventId);
 });
 
-// KAN-84: o appointment.updated leva o estado anterior; os horários ficam no futuro para valer em qualquer data.
-const future = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+// KAN-84: o appointment.updated leva o estado anterior; o horário fica no futuro para valer em qualquer data.
+// Um valor só: duas chamadas a Date.now() podem cair em milissegundos diferentes e parecer remarcação.
+const inThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 const updatedEvent = (metadata: Record<string, unknown>) => ({
   ...baseEvent,
   type: "appointment.updated",
@@ -68,9 +69,9 @@ const updatedEvent = (metadata: Record<string, unknown>) => ({
     clientName: "Maria",
     serviceName: "Limpeza de pele",
     professionalName: "Ana",
-    scheduledAt: future(3),
+    scheduledAt: inThreeDays,
     status: "SCHEDULED",
-    previousScheduledAt: future(3),
+    previousScheduledAt: inThreeDays,
     previousStatus: "SCHEDULED",
     ...metadata,
   },
