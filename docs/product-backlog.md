@@ -10,7 +10,7 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 
 ## Ordem priorizada
 
-### Pendente (v1.6.0 Evolução)
+### Pendente (v1.7.0 Autoagendamento)
 
 1. **KAN-79 / US-14 — Autoagendamento por link (Média):** dependia do controle de concorrência (KAN-77, entregue), porque aumenta a disputa por horários.
 
@@ -30,12 +30,12 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 | 10 | KAN-53 | US-04 Mensagens de erro claras | Média | v1.3.0 |
 | 11 | KAN-54 | US-05 Documentação navegável | Média | v1.3.0 |
 | 12 | KAN-55 | US-06 Ambiente com um comando | Média | v1.1.0 |
-| 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 (Unreleased) |
-| 14 | KAN-76 | US-13 Lembrete de agendamento | Alta | v1.6.0 (Unreleased) |
-| 15 | KAN-77 | BE-08 Concorrência no conflito de agenda | Alta | v1.6.0 (Unreleased) |
-| 16 | KAN-83 | ARQ-09 Envio de e-mail unificado no notification-service | Alta | v1.6.0 (Unreleased) |
-| 17 | KAN-84 | US-16 E-mail de cancelamento e remarcação | Média | v1.6.0 (Unreleased) |
-| 18 | KAN-78 | ARQ-08 Teste de carga dos SLOs de leitura | Média | v1.6.0 (Unreleased) |
+| 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 |
+| 14 | KAN-76 | US-13 Lembrete de agendamento | Alta | v1.6.0 |
+| 15 | KAN-77 | BE-08 Concorrência no conflito de agenda | Alta | v1.6.0 |
+| 16 | KAN-83 | ARQ-09 Envio de e-mail unificado no notification-service | Alta | v1.6.0 |
+| 17 | KAN-84 | US-16 E-mail de cancelamento e remarcação | Média | v1.6.0 |
+| 18 | KAN-78 | ARQ-08 Teste de carga dos SLOs de leitura | Média | v1.6.0 |
 
 ## Regra usada
 
@@ -171,7 +171,7 @@ que a agenda dos colegas fique protegida.
 **Como** cliente da clínica, **quero** escolher serviço e horário por um link,
 **para** agendar sem depender do telefone.
 
-- Prioridade: Média. Versão planejada: v1.6.0 Evolução.
+- Prioridade: Média. Versão planejada: v1.7.0 Autoagendamento (saiu da v1.6.0).
 - Critérios de aceite:
   1. **Dado** o link da clínica, **quando** abro, **então** vejo somente serviços
      ativos e horários livres.
