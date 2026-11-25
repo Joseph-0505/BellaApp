@@ -475,10 +475,16 @@ class AppointmentsService {
     currentAppointment: AppointmentRecord,
     updateContext: AppointmentUpdateContext,
   ): boolean {
-    return !this.isOnlyStatusOrNotesChange(
-      input,
-      currentAppointment,
-      updateContext,
+    // KAN-85: reabrir um cancelado futuro volta a ocupar o horário, então confere a agenda como um
+    // agendamento novo. No passado segue livre, para dar para reabrir e concluir o que já aconteceu.
+    const isReopening =
+      CONFLICT_BLOCKING_STATUS_SET.has(input.status as AppointmentStatus) &&
+      !CONFLICT_BLOCKING_STATUS_SET.has(currentAppointment.status) &&
+      updateContext.scheduledAt.getTime() > Date.now();
+
+    return (
+      isReopening ||
+      !this.isOnlyStatusOrNotesChange(input, currentAppointment, updateContext)
     );
   }
 

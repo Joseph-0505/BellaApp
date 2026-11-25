@@ -557,6 +557,48 @@ describe("appointmentsService", () => {
     });
   });
 
+  it("deve conferir conflito ao reabrir um agendamento cancelado futuro", async () => {
+    const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    mockedAppointmentsRepository.findById.mockResolvedValue({
+      id: "appointment-1",
+      userId: "user-1",
+      clientId: "client-1",
+      serviceId: "service-1",
+      professionalId: "professional-1",
+      roomId: null,
+      scheduledAt,
+      status: AppointmentStatus.CANCELED,
+      receivedBy: "CLINIC",
+      notes: null,
+      billing: null,
+    } as never);
+    mockedAppointmentsRepository.findClientById.mockResolvedValue({ id: "client-1" } as never);
+    mockedAppointmentsRepository.findServiceById.mockResolvedValue({
+      id: "service-1",
+      durationMinutes: 60,
+    } as never);
+    mockedAppointmentsRepository.findProfessionalById.mockResolvedValue({ id: "professional-1" } as never);
+    mockedAppointmentsRepository.findAppointmentsForDay.mockResolvedValue([
+      {
+        id: "appointment-2",
+        scheduledAt,
+        status: AppointmentStatus.SCHEDULED,
+        service: { durationMinutes: 60 },
+      },
+    ] as never);
+
+    await expect(
+      appointmentsService.update("user-1", "appointment-1", {
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt: scheduledAt.toISOString(),
+        status: "SCHEDULED",
+      }),
+    ).rejects.toMatchObject({ statusCode: 409, code: "TIME_CONFLICT" });
+    expect(mockedAppointmentsRepository.update).not.toHaveBeenCalled();
+  });
+
   describe("conclusão e escopo do profissional", () => {
     const appointmentRecord = (overrides: Record<string, unknown> = {}) =>
       ({

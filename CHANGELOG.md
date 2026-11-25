@@ -36,6 +36,10 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 - links do `mobile/README.md` e do `mobile/docs/VALIDACAO.md` apontavam para
   documentos que foram reorganizados em `mobile/docs/`.
+- reabrir um agendamento cancelado futuro não conferia conflito, e ele voltava em
+  cima de outro marcado no mesmo horário (KAN-85). Agora reabrir confere a agenda
+  como um agendamento novo; no passado segue livre, para dar para reabrir e
+  concluir o que já aconteceu.
 
 ## [1.5.0] - 2026-11-24
 
