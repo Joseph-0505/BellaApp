@@ -9,6 +9,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
+### Changed
+
+- ambiente de demonstração republicado em 25/11/2026 com a versão 1.6.0
+  (imagens `02e05c0`, tag `v1.6.0`); o registro está em `docs/deployment-strategy.md`.
+
 ## [1.6.0] - 2026-11-25
 
 ### Added
