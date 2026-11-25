@@ -150,8 +150,41 @@ UTC), com o e-mail de confirmação (KAN-82, tag `03c3320`) e depois o lembrete 
   `transport: smtp`, e o lembrete entrou no sorted set
   `bellaapp:notifications:reminders` (contagem de 0 para 1).
 
-As imagens `5cd2e64` e `4de4c58` continuam no servidor. Para voltar à versão
-1.5.0, basta restaurar `.env.bak-4de4c58` e repetir o comando de subida.
+Republicação feita em 25/11/2026 (10h38 em Brasília), tag `b2ad11c` (merge do
+PR #41 em `main`), com KAN-83 (convite pelo notification-service), KAN-77 (trava
+de concorrência na agenda), KAN-85 (reabrir cancelado confere conflito) e KAN-84
+(e-mail ao cancelar, remarcar ou reabrir):
+
+- as imagens do backend e do notification-service foram construídas a partir de
+  um worktree limpo de `main` em `b2ad11c`; depois do `docker load`, os IDs
+  bateram dos dois lados (`95edf786634c` e `2d72a12b8721`). O frontend não mudou
+  desde `3a5ae9f`, e a mesma imagem (`73c1e0613dee`) recebeu a tag nova;
+- antes de subir, o conteúdo das imagens foi conferido: backend sem `nodemailer`,
+  com `NOTIFICATION_SERVICE_URL`, a trava `FOR UPDATE` e o estado anterior no
+  `appointment.updated`; notification-service com os textos de cancelamento e
+  remarcação;
+- no servidor, com cópias `.env.bak-3a5ae9f` e `docker-compose.yml.bak-3a5ae9f`,
+  mudou o `BELLAAPP_TAG` e o `docker-compose.yml` ganhou só a linha
+  `NOTIFICATION_SERVICE_URL: http://notification-service:3001` no backend
+  (`docker compose config` validou antes da subida). Sem migração de banco. O
+  mesmo `up -d --no-build` recriou backend, frontend e notificações em 22 s, sem
+  recriar MySQL, Redis e Nginx;
+- `GET /api/v1/health` com 200 e dependências `up`; `/` e `/docs/` com 200; rota
+  inexistente com 404 `ROUTE_NOT_FOUND`; os outros sites do servidor responderam
+  com o mesmo status antes e depois da troca;
+- de dentro do backend, `NOTIFICATION_SERVICE_URL/health` respondeu 200 com fila
+  e dead-letter vazias; de dentro do notification-service, `nodemailer.verify()`
+  autenticou no SMTP;
+- não houve envio de e-mail de teste em produção: convite, cancelamento e
+  remarcação foram verificados ponta a ponta só no stack local, em modo log.
+
+O convite de profissional, que antes só ia para o log do backend no servidor,
+passa a sair de verdade pelo SMTP do notification-service.
+
+As imagens `5cd2e64`, `4de4c58`, `03c3320` e `3a5ae9f` continuam no servidor.
+Para voltar à `3a5ae9f`, restaurar `.env.bak-3a5ae9f` e
+`docker-compose.yml.bak-3a5ae9f` e repetir o comando de subida; para a versão
+1.5.0, restaurar `.env.bak-4de4c58` e o mesmo `docker-compose.yml.bak-3a5ae9f`.
 
 Remoção do ambiente: `docker compose -p bellaapp down`, restaurar o backup do
 Caddyfile e `caddy reload`. O ambiente é temporário e será removido depois da

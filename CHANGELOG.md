@@ -48,6 +48,9 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 - ambiente de demonstração republicado em 24/11/2026 à noite com o KAN-82 e o
   KAN-76 (imagens `03c3320` e depois `3a5ae9f`) e notificações por SMTP; o
   registro está em `docs/deployment-strategy.md`.
+- ambiente de demonstração republicado em 25/11/2026 com o KAN-83, KAN-77, KAN-85
+  e KAN-84 (imagens `b2ad11c`); o servidor ganhou `NOTIFICATION_SERVICE_URL` no
+  compose do backend. O registro está em `docs/deployment-strategy.md`.
 
 ### Fixed
 
