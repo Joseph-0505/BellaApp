@@ -28,6 +28,9 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 - ambiente de demonstração republicado em 24/11/2026 com a versão 1.5.0 (imagens
   `4de4c58`); o registro está em `docs/deployment-strategy.md`.
+- ambiente de demonstração republicado em 24/11/2026 à noite com o KAN-82 e o
+  KAN-76 (imagens `03c3320` e depois `3a5ae9f`) e notificações por SMTP; o
+  registro está em `docs/deployment-strategy.md`.
 
 ### Fixed
 
