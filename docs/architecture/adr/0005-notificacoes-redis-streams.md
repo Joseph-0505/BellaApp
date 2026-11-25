@@ -56,6 +56,10 @@ usar **Redis Streams** como fila:
    `bellaapp:notifications:dead-letter` com data e motivo da falha.
 5. A entrega padrão é por log estruturado. O modo SMTP é ativado por variáveis
    de ambiente, sem segredos versionados.
+6. `appointment.created` de cliente com e-mail, em status `SCHEDULED` ou
+   `CONFIRMED`, vira e-mail para o cliente (texto e HTML, horário de Brasília).
+   O backend manda nome e e-mail do cliente, serviço e profissional no evento,
+   porque o serviço não acessa o banco. Os demais eventos seguem só no log.
 
 ## Consequências positivas
 

@@ -34,6 +34,50 @@ test("converte evento de agendamento em notificacao de fila", () => {
   );
 });
 
+test("agendamento novo de cliente com e-mail vira e-mail para o cliente", () => {
+  const notification = mapDomainEventToNotification({
+    ...baseEvent,
+    type: "appointment.created",
+    metadata: {
+      clientEmail: "maria@example.com",
+      clientName: "Maria <Silva>",
+      serviceName: "Limpeza de pele",
+      professionalName: "Ana",
+      scheduledAt: "2026-11-10T12:00:00.000Z",
+      status: "SCHEDULED",
+    },
+  });
+
+  assert.equal(notification?.channel, "email");
+  assert.equal(notification?.recipient, "maria@example.com");
+  assert.equal(notification?.subject, "Seu horário está agendado: Limpeza de pele");
+  // 12:00 UTC = 09:00 em Brasília
+  assert.match(notification?.message ?? "", /Quando: .*10 de novembro de 2026.*09:00/);
+  assert.match(notification?.message ?? "", /Profissional: Ana/);
+  assert.match(notification?.html ?? "", /Maria &lt;Silva&gt;/);
+  assert.equal(notification?.metadata?.domainEventId, baseEvent.eventId);
+});
+
+test("agendamento sem e-mail do cliente ou ja concluido continua so no log", () => {
+  const metadata = {
+    clientName: "Maria",
+    serviceName: "Limpeza de pele",
+    scheduledAt: "2026-11-10T12:00:00.000Z",
+    status: "SCHEDULED",
+  };
+
+  for (const extra of [{ clientEmail: null }, { clientEmail: "maria@example.com", status: "COMPLETED" }]) {
+    const notification = mapDomainEventToNotification({
+      ...baseEvent,
+      type: "appointment.created",
+      metadata: { ...metadata, ...extra },
+    });
+    assert.equal(notification?.channel, "log");
+    assert.equal(notification?.recipient, "clinic:clinic-1");
+    assert.equal(notification?.html, undefined);
+  }
+});
+
 test("ignora evento que nao gera notificacao", () => {
   const notification = mapDomainEventToNotification({
     ...baseEvent,
