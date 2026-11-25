@@ -12,10 +12,9 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 
 ### Pendente (v1.6.0 Evolução)
 
-1. **KAN-76 / US-13 — Lembrete de agendamento (Alta):** ataca faltas, a principal perda da agenda, e reaproveita a fila de notificações.
-2. **KAN-77 / BE-08 — Concorrência no conflito de agenda (Alta):** fecha a limitação registrada no modelo de domínio antes de abrir novos canais de agendamento.
-3. **KAN-78 / ARQ-08 — Teste de carga (Média):** mede os SLOs de latência que ainda são metas.
-4. **KAN-79 / US-14 — Autoagendamento por link (Média):** depende do controle de concorrência, porque aumenta a disputa por horários.
+1. **KAN-77 / BE-08 — Concorrência no conflito de agenda (Alta):** fecha a limitação registrada no modelo de domínio antes de abrir novos canais de agendamento.
+2. **KAN-78 / ARQ-08 — Teste de carga (Média):** mede os SLOs de latência que ainda são metas.
+3. **KAN-79 / US-14 — Autoagendamento por link (Média):** depende do controle de concorrência, porque aumenta a disputa por horários.
 
 ### Entregue
 
@@ -34,6 +33,7 @@ Registro de apoio ao card KAN-40. A fonte operacional continua sendo o Jira.
 | 11 | KAN-54 | US-05 Documentação navegável | Média | v1.3.0 |
 | 12 | KAN-55 | US-06 Ambiente com um comando | Média | v1.1.0 |
 | 13 | KAN-82 | US-15 E-mail de confirmação de agendamento | Alta | v1.6.0 (Unreleased) |
+| 14 | KAN-76 | US-13 Lembrete de agendamento | Alta | v1.6.0 (Unreleased) |
 
 ## Regra usada
 
@@ -157,6 +157,12 @@ que a agenda dos colegas fique protegida.
      do lembrete, **então** nada é enviado.
   3. **Dado** uma falha de entrega, **quando** as tentativas se esgotam, **então** o
      envio vai para a dead-letter.
+- Entrega: lembrete 24h antes para agendamento agendado ou confirmado de cliente
+  com e-mail; remarcar move o lembrete, cancelar, concluir ou remover o tira.
+- Testes: `notification-service/src/reminders.spec.ts` (critérios 1 e 2),
+  `notification-service/src/queue.spec.ts` (critério 3) e
+  `backend/src/modules/appointments/appointments.service.spec.ts` (dados do
+  cliente no evento de atualização).
 
 ### KAN-79 / US-14 — Autoagendamento por link público
 

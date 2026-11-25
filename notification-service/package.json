@@ -8,7 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "test": "tsx --test src/app.spec.ts src/domain-events.spec.ts src/notification.spec.ts src/queue.spec.ts",
+    "test": "tsx --test src/app.spec.ts src/domain-events.spec.ts src/notification.spec.ts src/queue.spec.ts src/reminders.spec.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
