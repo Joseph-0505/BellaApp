@@ -567,6 +567,8 @@ describe("appointmentsService", () => {
         clientEmail: "maria@example.com",
         serviceName: "Limpeza de pele",
         professionalName: "Ana",
+        previousScheduledAt: scheduledAt.toISOString(),
+        previousStatus: AppointmentStatus.SCHEDULED,
       },
     });
   });

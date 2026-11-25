@@ -741,7 +741,12 @@ class AppointmentsService {
       actorId: userId,
       appointmentId: updatedAppointment.id,
       clinicId: context.clinicId,
-      metadata: this.buildAppointmentEventMetadata(updatedAppointment, relations),
+      metadata: {
+        ...this.buildAppointmentEventMetadata(updatedAppointment, relations),
+        // KAN-84: com o estado anterior, o notification-service sabe se foi cancelamento ou remarcação.
+        previousScheduledAt: currentAppointment.scheduledAt.toISOString(),
+        previousStatus: currentAppointment.status,
+      },
       type: "appointment.updated",
     });
     return toAppointmentResponse(updatedAppointment);

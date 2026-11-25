@@ -198,6 +198,29 @@ agendado, **para** ter a confirmação com serviço, data e profissional.
   `backend/src/modules/appointments/appointments.service.spec.ts` (dados do
   cliente no evento).
 
+### KAN-84 / US-16 — E-mail de cancelamento e remarcação
+
+**Como** cliente da clínica, **quero** receber um e-mail quando meu horário for
+cancelado, remarcado ou reaberto, **para** não ir à clínica no horário errado.
+
+- Prioridade: Média. Versão planejada: v1.6.0 Evolução.
+- Critérios de aceite:
+  1. **Dado** um agendamento futuro em aberto de cliente com e-mail, **quando** ele
+     é cancelado, **então** um e-mail de cancelamento com serviço e horário entra
+     na fila de notificações.
+  2. **Dado** um agendamento em aberto, **quando** o horário muda, **então** um
+     e-mail de remarcação com o horário novo e o anterior entra na fila.
+  3. **Dado** um agendamento cancelado, **quando** ele volta a ficar agendado ou
+     confirmado, **então** o cliente recebe de novo o e-mail de horário agendado.
+  4. **Dado** só uma mudança de observação, de agendado para confirmado, ou a
+     exclusão do agendamento, **então** nada é enviado ao cliente e o evento segue
+     só no log.
+  5. **Dado** o cancelamento de um horário que já passou, **então** nada é enviado
+     ao cliente.
+- Testes: `notification-service/src/domain-events.spec.ts` (critérios 1 a 5) e
+  `backend/src/modules/appointments/appointments.service.spec.ts` (estado
+  anterior no evento).
+
 ## Histórias técnicas e de qualidade
 
 ### KAN-50 / US-01 — Catálogo rápido

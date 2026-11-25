@@ -58,6 +58,68 @@ test("agendamento novo de cliente com e-mail vira e-mail para o cliente", () => 
   assert.equal(notification?.metadata?.domainEventId, baseEvent.eventId);
 });
 
+// KAN-84: o appointment.updated leva o estado anterior; os horários ficam no futuro para valer em qualquer data.
+const future = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+const updatedEvent = (metadata: Record<string, unknown>) => ({
+  ...baseEvent,
+  type: "appointment.updated",
+  metadata: {
+    clientEmail: "maria@example.com",
+    clientName: "Maria",
+    serviceName: "Limpeza de pele",
+    professionalName: "Ana",
+    scheduledAt: future(3),
+    status: "SCHEDULED",
+    previousScheduledAt: future(3),
+    previousStatus: "SCHEDULED",
+    ...metadata,
+  },
+});
+
+test("cancelar um agendamento futuro em aberto vira e-mail de cancelamento", () => {
+  const notification = mapDomainEventToNotification(updatedEvent({ status: "CANCELED" }));
+
+  assert.equal(notification?.channel, "email");
+  assert.equal(notification?.recipient, "maria@example.com");
+  assert.equal(notification?.subject, "Seu horário foi cancelado: Limpeza de pele");
+});
+
+test("remarcar vira e-mail com o horario novo e o anterior", () => {
+  const notification = mapDomainEventToNotification(
+    updatedEvent({ scheduledAt: "2030-01-10T15:00:00.000Z", previousScheduledAt: "2030-01-09T12:00:00.000Z" }),
+  );
+
+  assert.equal(notification?.channel, "email");
+  assert.equal(notification?.subject, "Seu horário foi remarcado: Limpeza de pele");
+  // 15:00 e 12:00 UTC = 12:00 e 09:00 em Brasília
+  assert.match(notification?.message ?? "", /antes era .*9 de janeiro de 2030.*09:00/);
+  assert.match(notification?.message ?? "", /Quando: .*10 de janeiro de 2030.*12:00/);
+});
+
+test("reabrir um cancelado manda de novo o e-mail de horario agendado", () => {
+  const notification = mapDomainEventToNotification(
+    updatedEvent({ status: "CONFIRMED", previousStatus: "CANCELED" }),
+  );
+
+  assert.equal(notification?.subject, "Seu horário está agendado: Limpeza de pele");
+});
+
+test("observacao, confirmacao, exclusao ou cancelamento passado ficam so no log", () => {
+  const cases = [
+    updatedEvent({}),
+    updatedEvent({ status: "CONFIRMED" }),
+    updatedEvent({ status: "CANCELED", scheduledAt: "2020-01-01T12:00:00.000Z", previousScheduledAt: "2020-01-01T12:00:00.000Z" }),
+    updatedEvent({ previousStatus: undefined, previousScheduledAt: undefined, status: "CANCELED" }),
+    { ...baseEvent, type: "appointment.deleted" },
+  ];
+
+  for (const event of cases) {
+    const notification = mapDomainEventToNotification(event);
+    assert.equal(notification?.channel, "log", JSON.stringify(event.metadata));
+    assert.equal(notification?.recipient, "clinic:clinic-1");
+  }
+});
+
 test("agendamento sem e-mail do cliente ou ja concluido continua so no log", () => {
   const metadata = {
     clientName: "Maria",
