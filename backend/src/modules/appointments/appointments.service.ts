@@ -77,6 +77,8 @@ type AppointmentConflictInput = {
   excludeId?: string;
 };
 
+type SlotReservation = AppointmentConflictInput & { durationMinutes: number };
+
 type AppointmentRelations = {
   client: Client;
   service: Service;
@@ -432,42 +434,60 @@ class AppointmentsService {
     };
   }
 
-  private async ensureNoConflict(
+  private async prepareSlot(
     input: AppointmentConflictInput,
-  ): Promise<AppointmentRelations> {
-    const { clinicId, scheduledAt, relations, excludeId } = input;
-    const foundRelations = await this.assertAppointmentRelations(
-      clinicId,
-      relations,
+  ): Promise<{ slot: SlotReservation; relations: AppointmentRelations }> {
+    const relations = await this.assertAppointmentRelations(
+      input.clinicId,
+      input.relations,
     );
-    const { service } = foundRelations;
+
+    return {
+      slot: { ...input, durationMinutes: relations.service.durationMinutes },
+      relations,
+    };
+  }
+
+  // KAN-77: a trava é o primeiro comando da transação, porque em REPEATABLE READ o
+  // snapshot nasce na primeira leitura comum; assim a agenda lida já inclui quem gravou antes.
+  private async assertSlotAvailable(
+    db: Prisma.TransactionClient,
+    slot: SlotReservation,
+  ): Promise<void> {
+    const { clinicId, scheduledAt, relations, excludeId, durationMinutes } = slot;
+    await appointmentsRepository.lockScheduleResources(relations, db);
 
     const appointmentsForDay =
-      await appointmentsRepository.findAppointmentsForDay({
-        clinicId,
-        scheduledAt,
-        ...(excludeId ? { excludeId } : {}),
-        ...(relations.professionalId
-          ? { professionalId: relations.professionalId }
-          : {}),
-        ...(relations.roomId ? { roomId: relations.roomId } : {}),
-      });
+      await appointmentsRepository.findAppointmentsForDay(
+        {
+          clinicId,
+          scheduledAt,
+          ...(excludeId ? { excludeId } : {}),
+          ...(relations.professionalId
+            ? { professionalId: relations.professionalId }
+            : {}),
+          ...(relations.roomId ? { roomId: relations.roomId } : {}),
+        },
+        db,
+      );
 
-    if (
-      this.hasTimeConflict(
-        scheduledAt,
-        service.durationMinutes,
-        appointmentsForDay,
-      )
-    ) {
+    if (this.hasTimeConflict(scheduledAt, durationMinutes, appointmentsForDay)) {
       throw new AppError(
         409,
         "TIME_CONFLICT",
         "Já existe um agendamento nesse horário.",
       );
     }
+  }
 
-    return foundRelations;
+  private withReservedSlot<T>(
+    slot: SlotReservation | null,
+    write: (db: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    return prisma.$transaction(async (transaction) => {
+      if (slot) await this.assertSlotAvailable(transaction, slot);
+      return write(transaction);
+    });
   }
 
   private shouldValidateScheduleChange(
@@ -487,9 +507,9 @@ class AppointmentsService {
     id: string,
     input: AppointmentRequestDto,
     updateContext: AppointmentUpdateContext,
-  ): Promise<void> {
+  ): Promise<SlotReservation> {
     this.assertFutureDate(updateContext.scheduledAt);
-    await this.ensureNoConflict({
+    const { slot } = await this.prepareSlot({
       clinicId,
       scheduledAt: updateContext.scheduledAt,
       relations: this.toRelationsInput({
@@ -500,6 +520,8 @@ class AppointmentsService {
       }),
       excludeId: id,
     });
+
+    return slot;
   }
 
   async list(
@@ -560,7 +582,7 @@ class AppointmentsService {
     });
     this.assertFutureDate(appointmentData.scheduledAt);
 
-    const relations = await this.ensureNoConflict({
+    const { slot, relations } = await this.prepareSlot({
       clinicId: context.clinicId,
       scheduledAt: appointmentData.scheduledAt,
       relations: this.toRelationsInput({
@@ -571,32 +593,25 @@ class AppointmentsService {
       }),
     });
 
-    if (appointmentData.status === AppointmentStatus.COMPLETED) {
-      const result = await prisma.$transaction(async (transaction) => {
-        const appointment = await appointmentsRepository.create(
-          appointmentData,
-          transaction,
-        );
+    const appointment = await this.withReservedSlot(slot, async (transaction) => {
+      const created = await appointmentsRepository.create(
+        appointmentData,
+        transaction,
+      );
 
-        return this.syncCompletedAppointment({
-          userId,
-          id: appointment.id,
-          receivedBy: appointment.receivedBy,
-          transaction,
-        });
-      });
+      if (appointmentData.status !== AppointmentStatus.COMPLETED) {
+        return toAppointmentResponse(created);
+      }
 
-      await this.recordMutation({
-        actorId: userId,
-        appointmentId: result.appointment.id,
-        clinicId: context.clinicId,
-        metadata: this.buildAppointmentEventMetadata(appointmentData, relations),
-        type: "appointment.created",
+      const result = await this.syncCompletedAppointment({
+        userId,
+        id: created.id,
+        receivedBy: created.receivedBy,
+        transaction,
       });
       return result.appointment;
-    }
+    });
 
-    const appointment = await appointmentsRepository.create(appointmentData);
     await this.recordMutation({
       actorId: userId,
       appointmentId: appointment.id,
@@ -604,7 +619,7 @@ class AppointmentsService {
       metadata: this.buildAppointmentEventMetadata(appointmentData, relations),
       type: "appointment.created",
     });
-    return toAppointmentResponse(appointment);
+    return appointment;
   }
 
   async getById(
@@ -666,23 +681,21 @@ class AppointmentsService {
       updateContext,
     );
 
-    if (
-      this.shouldValidateScheduleChange(
-        normalizedInput,
-        currentAppointment,
-        updateContext,
-      )
-    ) {
-      await this.validateScheduleChange(
-        context.clinicId,
-        id,
-        normalizedInput,
-        updateContext,
-      );
-    }
+    const slot = this.shouldValidateScheduleChange(
+      normalizedInput,
+      currentAppointment,
+      updateContext,
+    )
+      ? await this.validateScheduleChange(
+          context.clinicId,
+          id,
+          normalizedInput,
+          updateContext,
+        )
+      : null;
 
     if (normalizedInput.status === AppointmentStatus.COMPLETED) {
-      const result = await prisma.$transaction(async (transaction) => {
+      const result = await this.withReservedSlot(slot, async (transaction) => {
         await appointmentsRepository.update(
           id,
           this.buildUpdateData(normalizedInput, updateContext),
@@ -706,9 +719,12 @@ class AppointmentsService {
       return result.appointment;
     }
 
-    const updatedAppointment = await appointmentsRepository.update(
-      id,
-      this.buildUpdateData(normalizedInput, updateContext),
+    const updatedAppointment = await this.withReservedSlot(slot, (transaction) =>
+      appointmentsRepository.update(
+        id,
+        this.buildUpdateData(normalizedInput, updateContext),
+        transaction,
+      ),
     );
     // O lembrete (KAN-76) é reagendado a partir destes dados; as FKs garantem que existem.
     const relations = await this.assertAppointmentRelations(

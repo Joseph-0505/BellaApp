@@ -244,9 +244,12 @@ classDiagram
 - O agregado é protegido pelo service, não por métodos de uma classe rica; uma
   futura refatoração pode encapsular `TimeSlot` e transições de estado sem mudar
   o contrato HTTP.
-- A checagem de conflito é feita antes da escrita e não substitui controle de
-  concorrência no banco. Para alta disputa, considerar lock transacional ou
-  restrição/serialização específica.
+- A checagem de conflito e a escrita rodam na mesma transação (KAN-77): antes de
+  ler a agenda, a transação trava com `SELECT ... FOR UPDATE` a linha do
+  profissional e, se houver, a da sala, sempre nessa ordem. Duas criações ou
+  remarcações para o mesmo recurso passam uma de cada vez, e a segunda recebe
+  `409 TIME_CONFLICT`. O custo é serializar as escritas por profissional, não
+  por clínica.
 - Redis Pub/Sub não é adequado para integração financeira obrigatória. A
   transação local garante a cobrança atual; integrações externas futuras devem
   adotar Outbox e consumidor idempotente.

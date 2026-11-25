@@ -39,6 +39,10 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Fixed
 
+- duas criações ou remarcações simultâneas no mesmo horário e profissional (ou
+  sala) eram salvas juntas, porque o conflito era conferido antes da escrita
+  (KAN-77). Agora a checagem e a escrita rodam numa transação que trava o
+  profissional e a sala; a segunda recebe `409 TIME_CONFLICT`.
 - links do `mobile/README.md` e do `mobile/docs/VALIDACAO.md` apontavam para
   documentos que foram reorganizados em `mobile/docs/`.
 
