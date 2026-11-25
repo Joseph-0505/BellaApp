@@ -11,6 +11,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Added
 
+- e-mail de confirmação para o cliente quando um agendamento é criado (KAN-82):
+  o evento `appointment.created` leva nome e e-mail do cliente, serviço e
+  profissional, e o notification-service envia texto e HTML com o horário de
+  Brasília. Cliente sem e-mail ou agendamento já concluído continua só no log.
+
 - snapshot do Jira de 24/11/2026 em `docs/jira/status-2026-11-24.md`, com 81 cards,
   nove erros e a versão 1.5.0 liberada.
 

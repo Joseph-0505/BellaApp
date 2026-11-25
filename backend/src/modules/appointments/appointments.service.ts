@@ -1,4 +1,11 @@
-import { AppointmentStatus, Prisma, ReceivedBy } from "@prisma/client";
+import {
+  AppointmentStatus,
+  Client,
+  Prisma,
+  Professional,
+  ReceivedBy,
+  Service,
+} from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import {
@@ -70,6 +77,12 @@ type AppointmentConflictInput = {
   excludeId?: string;
 };
 
+type AppointmentRelations = {
+  client: Client;
+  service: Service;
+  professional: Professional | null;
+};
+
 class AppointmentsService {
   private async invalidateRelatedCaches(clinicId: string): Promise<void> {
     await cacheService.invalidate(clinicId, [
@@ -97,12 +110,21 @@ class AppointmentsService {
     });
   }
 
-  private buildCreatedEventMetadata(appointment: AppointmentCreateData) {
+  private buildCreatedEventMetadata(
+    appointment: AppointmentCreateData,
+    relations: AppointmentRelations,
+  ) {
+    // Nome e e-mail vão no evento porque o notification-service não acessa o banco.
     return {
       clientId: appointment.clientId,
       serviceId: appointment.serviceId,
       professionalId: appointment.professionalId ?? null,
       scheduledAt: appointment.scheduledAt.toISOString(),
+      status: appointment.status,
+      clientName: relations.client.name,
+      clientEmail: relations.client.email,
+      serviceName: relations.service.name,
+      professionalName: relations.professional?.name ?? null,
     };
   }
 
@@ -197,7 +219,7 @@ class AppointmentsService {
       );
     }
 
-    return { service };
+    return { client, service, professional };
   }
 
   private buildFilters(query: AppointmentsQueryDto): AppointmentListQuery {
@@ -409,12 +431,13 @@ class AppointmentsService {
 
   private async ensureNoConflict(
     input: AppointmentConflictInput,
-  ): Promise<void> {
+  ): Promise<AppointmentRelations> {
     const { clinicId, scheduledAt, relations, excludeId } = input;
-    const { service } = await this.assertAppointmentRelations(
+    const foundRelations = await this.assertAppointmentRelations(
       clinicId,
       relations,
     );
+    const { service } = foundRelations;
 
     const appointmentsForDay =
       await appointmentsRepository.findAppointmentsForDay({
@@ -440,6 +463,8 @@ class AppointmentsService {
         "Já existe um agendamento nesse horário.",
       );
     }
+
+    return foundRelations;
   }
 
   private shouldValidateScheduleChange(
@@ -532,7 +557,7 @@ class AppointmentsService {
     });
     this.assertFutureDate(appointmentData.scheduledAt);
 
-    await this.ensureNoConflict({
+    const relations = await this.ensureNoConflict({
       clinicId: context.clinicId,
       scheduledAt: appointmentData.scheduledAt,
       relations: this.toRelationsInput({
@@ -562,7 +587,7 @@ class AppointmentsService {
         actorId: userId,
         appointmentId: result.appointment.id,
         clinicId: context.clinicId,
-        metadata: this.buildCreatedEventMetadata(appointmentData),
+        metadata: this.buildCreatedEventMetadata(appointmentData, relations),
         type: "appointment.created",
       });
       return result.appointment;
@@ -573,7 +598,7 @@ class AppointmentsService {
       actorId: userId,
       appointmentId: appointment.id,
       clinicId: context.clinicId,
-      metadata: this.buildCreatedEventMetadata(appointmentData),
+      metadata: this.buildCreatedEventMetadata(appointmentData, relations),
       type: "appointment.created",
     });
     return toAppointmentResponse(appointment);
