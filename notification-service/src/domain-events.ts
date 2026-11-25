@@ -4,6 +4,7 @@ import { env } from "./config";
 import { ServiceLogger } from "./logger";
 import { NotificationInput } from "./notification";
 import { NotificationQueue } from "./queue";
+import { REMINDER_LEAD_MS, ReminderScheduler } from "./reminders";
 
 const supportedDomainEventTypes = [
   "appointment.created",
@@ -59,14 +60,14 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function buildClientAppointmentEmail(
-  event: DomainEvent,
-): Pick<NotificationInput, "channel" | "recipient" | "subject" | "message" | "html"> | null {
-  if (event.type !== "appointment.created") return null;
-  const parsed = clientAppointmentEmailSchema.safeParse(event.metadata);
-  if (!parsed.success) return null;
+type ClientAppointmentEmailData = z.infer<typeof clientAppointmentEmailSchema>;
+type EmailCopy = { subject: string; heading: string; intro: string };
 
-  const { clientEmail, clientName, serviceName, professionalName, scheduledAt } = parsed.data;
+function renderClientAppointmentEmail(
+  data: ClientAppointmentEmailData,
+  copy: EmailCopy,
+): Pick<NotificationInput, "channel" | "recipient" | "subject" | "message" | "html"> {
+  const { clientEmail, clientName, serviceName, professionalName, scheduledAt } = data;
   const when = scheduledAtFormatter.format(new Date(scheduledAt));
   const details: Array<[string, string]> = [
     ["Serviço", serviceName],
@@ -87,11 +88,11 @@ function buildClientAppointmentEmail(
   return {
     channel: "email",
     recipient: clientEmail,
-    subject: `Seu horário está agendado: ${serviceName}`,
+    subject: copy.subject,
     message: [
       `Olá, ${clientName}!`,
       "",
-      "Seu horário foi agendado.",
+      copy.intro,
       "",
       ...details.map(([label, value]) => `${label}: ${value}`),
       "",
@@ -99,9 +100,9 @@ function buildClientAppointmentEmail(
     ].join("\n"),
     html: `
       <div style="font-family: Arial, sans-serif; color: #25324a; line-height: 1.6; max-width: 520px;">
-        <h2 style="margin-bottom: 12px; color: #d97ea4;">Seu horário está agendado</h2>
+        <h2 style="margin-bottom: 12px; color: #d97ea4;">${escapeHtml(copy.heading)}</h2>
         <p>Olá, ${escapeHtml(clientName)}!</p>
-        <p>Confira os detalhes do seu atendimento:</p>
+        <p>${escapeHtml(copy.intro)} Confira os detalhes do seu atendimento:</p>
         <table style="border-collapse: collapse; margin: 16px 0; width: 100%;">${rows}
         </table>
         <p>Se precisar remarcar ou cancelar, fale com a clínica.</p>
@@ -109,6 +110,62 @@ function buildClientAppointmentEmail(
       </div>
     `,
   };
+}
+
+function buildClientAppointmentEmail(event: DomainEvent) {
+  if (event.type !== "appointment.created") return null;
+  const parsed = clientAppointmentEmailSchema.safeParse(event.metadata);
+  if (!parsed.success) return null;
+  return renderClientAppointmentEmail(parsed.data, {
+    subject: `Seu horário está agendado: ${parsed.data.serviceName}`,
+    heading: "Seu horário está agendado",
+    intro: "Seu horário foi agendado.",
+  });
+}
+
+// KAN-76: lembrete 24h antes para agendamento em aberto de cliente com e-mail.
+export function buildAppointmentReminder(
+  event: DomainEvent,
+  now = Date.now(),
+): { dueAt: number; notification: NotificationInput } | null {
+  if (event.type !== "appointment.created" && event.type !== "appointment.updated") return null;
+  const parsed = clientAppointmentEmailSchema.safeParse(event.metadata);
+  if (!parsed.success) return null;
+
+  const dueAt = Date.parse(parsed.data.scheduledAt) - REMINDER_LEAD_MS;
+  if (dueAt <= now) return null;
+
+  return {
+    dueAt,
+    notification: {
+      ...renderClientAppointmentEmail(parsed.data, {
+        subject: `Lembrete: seu horário de ${parsed.data.serviceName} é amanhã`,
+        heading: "Seu horário é amanhã",
+        intro: "Passando para lembrar do seu horário.",
+      }),
+      metadata: {
+        source: "reminder",
+        domainEventId: event.eventId,
+        clinicId: event.clinicId,
+        aggregateId: event.aggregateId,
+      },
+    },
+  };
+}
+
+// Criar ou atualizar (re)agenda o lembrete; cancelar, concluir, remover ou perder o e-mail o tira.
+export async function syncAppointmentReminder(
+  reminders: Pick<ReminderScheduler, "schedule" | "cancel">,
+  event: DomainEvent,
+  now = Date.now(),
+): Promise<void> {
+  if (!event.type.startsWith("appointment.")) return;
+  const reminder = buildAppointmentReminder(event, now);
+  if (reminder) {
+    await reminders.schedule(event.aggregateId, reminder.notification, reminder.dueAt);
+    return;
+  }
+  await reminders.cancel(event.aggregateId);
 }
 
 function isSupportedType(
@@ -152,6 +209,7 @@ export class DomainEventBridge {
     >,
     private readonly queue: NotificationQueue,
     private readonly logger: ServiceLogger,
+    private readonly reminders?: Pick<ReminderScheduler, "schedule" | "cancel">,
   ) {}
 
   async start(): Promise<void> {
@@ -161,6 +219,7 @@ export class DomainEventBridge {
     await this.subscriber.subscribe(env.PUBSUB_CHANNEL, async (rawMessage) => {
       try {
         const event = domainEventSchema.parse(JSON.parse(rawMessage));
+        if (this.reminders) await syncAppointmentReminder(this.reminders, event);
         const notification = mapDomainEventToNotification(event);
         if (!notification) return;
 

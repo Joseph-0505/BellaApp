@@ -493,6 +493,70 @@ describe("appointmentsService", () => {
     });
   });
 
+  it("deve publicar os dados do cliente ao confirmar um agendamento, para o lembrete", async () => {
+    const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const record = {
+      id: "appointment-1",
+      userId: "user-1",
+      clientId: "client-1",
+      serviceId: "service-1",
+      professionalId: "professional-1",
+      roomId: null,
+      scheduledAt,
+      status: AppointmentStatus.SCHEDULED,
+      receivedBy: "CLINIC",
+      notes: null,
+      billing: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mockedAppointmentsRepository.findById.mockResolvedValue(record as never);
+    mockedAppointmentsRepository.update.mockResolvedValue({
+      ...record,
+      status: AppointmentStatus.CONFIRMED,
+    } as never);
+    mockedAppointmentsRepository.findClientById.mockResolvedValue({
+      id: "client-1",
+      name: "Maria",
+      email: "maria@example.com",
+    } as never);
+    mockedAppointmentsRepository.findServiceById.mockResolvedValue({
+      id: "service-1",
+      name: "Limpeza de pele",
+      durationMinutes: 60,
+    } as never);
+    mockedAppointmentsRepository.findProfessionalById.mockResolvedValue({
+      id: "professional-1",
+      name: "Ana",
+    } as never);
+
+    await appointmentsService.update("user-1", "appointment-1", {
+      clientId: "client-1",
+      serviceId: "service-1",
+      professionalId: "professional-1",
+      scheduledAt: scheduledAt.toISOString(),
+      status: "CONFIRMED",
+    });
+
+    expect(mockPublishDomainEvent).toHaveBeenCalledWith({
+      type: "appointment.updated",
+      clinicId: "user-1",
+      aggregateId: "appointment-1",
+      actorId: "user-1",
+      metadata: {
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt: scheduledAt.toISOString(),
+        status: AppointmentStatus.CONFIRMED,
+        clientName: "Maria",
+        clientEmail: "maria@example.com",
+        serviceName: "Limpeza de pele",
+        professionalName: "Ana",
+      },
+    });
+  });
+
   describe("conclusão e escopo do profissional", () => {
     const appointmentRecord = (overrides: Record<string, unknown> = {}) =>
       ({
