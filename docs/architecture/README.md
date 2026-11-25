@@ -94,5 +94,6 @@ backend aprovados.
   em Redis Streams, com retry e dead-letter ([ADR-0005](adr/0005-notificacoes-redis-streams.md)).
   Um evento publicado enquanto o serviço de notificações está desconectado ainda
   pode ser perdido antes de chegar à fila.
-- As metas de latência deste pacote não são resultados históricos. Precisam ser
-  validadas por teste de carga antes de serem tratadas como SLO cumprido.
+- As metas de latência de leitura e de cache foram validadas por teste de carga
+  a 20 req/s (KAN-78, cenário Q-01); a de escrita ainda não. Nenhuma delas é
+  resultado histórico de 28 dias em produção.

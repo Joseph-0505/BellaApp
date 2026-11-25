@@ -11,6 +11,12 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Added
 
+- teste de carga do cenário Q-01 (KAN-78): `scripts/load/run-q01.sh` roda o k6 a
+  20 req/s nas listagens principais e calcula a taxa de hit do cache pelo log do
+  backend. Em 25/11/2026, o p95 foi de 17,7 ms a 54,9 ms (este com os limites de
+  CPU e memória de produção) e o hit no catálogo foi de 99,6%; os resultados estão
+  em `docs/architecture/quality-scenarios.md`.
+
 - lembrete por e-mail 24h antes do agendamento (KAN-76): o notification-service
   guarda o lembrete num sorted set do Redis e o move para a fila quando vence;
   remarcar move o lembrete, cancelar, concluir ou remover o tira. O evento
