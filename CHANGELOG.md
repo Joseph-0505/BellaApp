@@ -26,6 +26,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ### Changed
 
+- o convite de profissional passa a ser enviado pelo notification-service (KAN-83):
+  a API entrega o e-mail em `POST /api/v1/notifications` e ganha as novas tentativas
+  e a dead-letter da fila. A API deixa de usar nodemailer e as variáveis `SMTP_*`
+  e `MAIL_*`; entra `NOTIFICATION_SERVICE_URL`. Em modo log, o notification-service
+  registra o e-mail inteiro, com o link de ativação.
 - ambiente de demonstração republicado em 24/11/2026 com a versão 1.5.0 (imagens
   `4de4c58`); o registro está em `docs/deployment-strategy.md`.
 - ambiente de demonstração republicado em 24/11/2026 à noite com o KAN-82 e o
