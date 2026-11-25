@@ -23,6 +23,7 @@ jest.mock("./appointments.repository", () => ({
     findProfessionalById: jest.fn(),
     findRoomById: jest.fn(),
     findAppointmentsForDay: jest.fn(),
+    lockScheduleResources: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     markAsCompleted: jest.fn(),
@@ -180,11 +181,18 @@ describe("appointmentsService", () => {
     ).toHaveBeenCalledWith("user-1", "professional-1");
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
-    ).toHaveBeenCalledWith({
-      clinicId: "user-1",
-      scheduledAt,
-      professionalId: "professional-1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        clinicId: "user-1",
+        scheduledAt,
+        professionalId: "professional-1",
+      },
+      mockPrisma,
+    );
+    expect(mockedAppointmentsRepository.lockScheduleResources).toHaveBeenCalledWith(
+      expect.objectContaining({ professionalId: "professional-1" }),
+      mockPrisma,
+    );
   });
 
   it("deve ignorar agendamentos cancelados e concluídos na validação de conflito", async () => {
@@ -260,15 +268,18 @@ describe("appointmentsService", () => {
       status: "SCHEDULED",
     });
 
-    expect(mockedAppointmentsRepository.create).toHaveBeenCalledWith({
-      userId: "user-1",
-      clinicId: "user-1",
-      clientId: "client-1",
-      serviceId: "service-1",
-      professionalId: "professional-1",
-      scheduledAt,
-      status: AppointmentStatus.SCHEDULED,
-    });
+    expect(mockedAppointmentsRepository.create).toHaveBeenCalledWith(
+      {
+        userId: "user-1",
+        clinicId: "user-1",
+        clientId: "client-1",
+        serviceId: "service-1",
+        professionalId: "professional-1",
+        scheduledAt,
+        status: AppointmentStatus.SCHEDULED,
+      },
+      mockPrisma,
+    );
     expect(result).toEqual({
       id: "appointment-new",
       clientId: "client-1",
@@ -351,12 +362,15 @@ describe("appointmentsService", () => {
 
     expect(
       mockedAppointmentsRepository.findAppointmentsForDay,
-    ).toHaveBeenCalledWith({
-      clinicId: "user-1",
-      scheduledAt,
-      professionalId: "professional-1",
-      roomId: "room-1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        clinicId: "user-1",
+        scheduledAt,
+        professionalId: "professional-1",
+        roomId: "room-1",
+      },
+      mockPrisma,
+    );
   });
 
   it("deve permitir atualizar somente status de agendamento passado sem revalidar data nem perder profissional e sala", async () => {
