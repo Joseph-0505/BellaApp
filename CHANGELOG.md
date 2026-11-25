@@ -9,6 +9,11 @@ commits reais de `main` que as publicaram. Veja `docs/versioning.md`.
 
 ## [Unreleased]
 
+### Added
+
+- snapshot do Jira de 25/11/2026 em `docs/jira/status-2026-11-25.md`, com 86 cards,
+  dez erros, a versão 1.6.0 liberada, a v1.7.0 planejada e os responsáveis por tipo.
+
 ### Changed
 
 - ambiente de demonstração republicado em 25/11/2026 com a versão 1.6.0
