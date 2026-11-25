@@ -24,8 +24,28 @@ a fonte única das metas; os cenários descrevem como cada uma é provocada e me
 | Medida | Após aquecimento, taxa de hit ≥ 80% no catálogo de serviços e latência p95 de leitura ≤ 400 ms (SLOs de cache e de latência de leitura); leitura em miss p95 ≤ 1.500 ms |
 
 **Evidência atual:** o fluxo miss → hit, a existência das chaves, TTL e mudança
-de versão após mutação foram comprovados no Docker. As metas de carga e p95 são
-metas propostas e ainda precisam de k6/Artillery ou ferramenta equivalente.
+de versão após mutação foram comprovados no Docker.
+
+**Teste de carga (KAN-78, 25/11/2026):** `scripts/load/run-q01.sh` roda o k6
+(`scripts/load/q01-listagens.js`) por 2 min a 20 req/s, alternando as listagens
+de serviços, clientes, profissionais, salas e agenda com os mesmos filtros
+(`limit=50`, 20 serviços, 20 clientes e 10 agendamentos numa clínica criada pelo
+próprio teste). Depois conta `cache.hit` e `cache.miss` no log do backend.
+Stack Docker local; na terceira rodada, o backend com os limites de produção do
+`compose.production.yaml` (0,5 CPU e 256 MB).
+
+| Rodada | Requisições | Falhas | p95 das listagens | p99 | Hit em `services` |
+|---|---:|---:|---:|---:|---:|
+| 1, sem limite | 2.400 | 0 | 17,7 ms | 25,2 ms | 99,6% (478/480) |
+| 2, sem limite | 2.401 | 0 | 19,5 ms | 26,5 ms | 99,6% (479/481) |
+| 3, 0,5 CPU e 256 MB | 2.401 | 0 | 54,9 ms | 97,2 ms | 99,6% (479/481) |
+
+As metas de p95 ≤ 400 ms e hit ≥ 80% foram cumpridas nas três rodadas, e o p95
+de cada listagem ficou abaixo de 56 ms. Os misses são as expirações de TTL (60 s
+no catálogo e 20 s na agenda, que teve 98,8% de hit). A meta de miss p95 ≤ 1.500 ms
+não teve medição própria porque houve poucos misses, mas nenhuma leitura passou
+de 457 ms. Fora do teste ficaram o Nginx na frente da API e a VPS de
+demonstração, que não recebeu carga.
 
 ## Q-02 — Disponibilidade diante de falha do cache
 
@@ -117,7 +137,7 @@ por isso o teste anterior não o revelava.
 
 | Cenário | Automatizado hoje | Demonstração recomendada |
 |---|---|---|
-| Q-01 | Parcial: testes de cache | Duas leituras e comparação de logs/chaves; depois teste de carga |
+| Q-01 | Sim: testes de cache e teste de carga k6 em `scripts/load/` (KAN-78), rodado à mão | Duas leituras e comparação de logs/chaves; depois `scripts/load/run-q01.sh` |
 | Q-02 | Sim: testes unitários e `scripts/validate-redis-degradation.mjs` | Executar o script com o stack no ar e mostrar `redis.circuit_open` e `redis.circuit_closed` nos logs |
 | Q-03 | Parcial: health e erros | Pausar MySQL em ambiente isolado e observar 503/log sanitizado |
 | Q-04 | Parcial: testes de papéis/escopo | Duas clínicas, tentativa cruzada e inspeção do cache |
